@@ -164,6 +164,129 @@ void test_vector_int_binary_operations() {
     assert_equal(4, v_and.get_at(3), "AND at index 3 should be 4&5=4");
 }
 
+// Test binary operations between vector_int instances of different sizes
+void test_vector_int_mixed_precision_operations() {
+    begin_test("vector_int - Mixed Precision Binary Operations");
+    
+    // Define vectors with different bit precisions
+    using vint_small = bitwise::vector_int<uint8_t, 2>; // 2-bit precision
+    using vint_medium = bitwise::vector_int<uint8_t, 3>; // 3-bit precision
+    using vint_large = bitwise::vector_int<uint8_t, 4>; // 4-bit precision
+    
+    // Create instances
+    vint_small small;
+    vint_medium medium;
+    vint_large large;
+    
+    // Set values to test with
+    // small: 2 bits can represent 0-3
+    small.set_at(0, 1);  // 01
+    small.set_at(1, 2);  // 10
+    small.set_at(2, 3);  // 11
+    
+    // medium: 3 bits can represent 0-7
+    medium.set_at(0, 3);  // 011
+    medium.set_at(1, 5);  // 101
+    medium.set_at(2, 6);  // 110
+    
+    // large: 4 bits can represent 0-15
+    large.set_at(0, 7);   // 0111
+    large.set_at(1, 10);  // 1010
+    large.set_at(2, 12);  // 1100
+    
+    // CASE 1: Small vector operating with medium vector
+    std::cout << "  Testing small + medium operations:" << std::endl;
+    
+    // Addition (should return a vector with the larger precision)
+    auto small_plus_medium = medium.get_added(small);
+    std::cout << "  result type is: " << decltype(small_plus_medium)::type_info() << std::endl; 
+    assert_equal(4, small_plus_medium.get_at(0), "Small + Medium at index 0 should be 1+3=4");
+    assert_equal(7, small_plus_medium.get_at(1), "Small + Medium at index 1 should be 2+5=7");
+    assert_equal(1, small_plus_medium.get_at(2), "Small + Medium at index 2 should be 3+6=9 mod 8 = 1");
+    
+    // OR
+    auto small_or_medium = medium.get_ored(small);
+    assert_equal(3, small_or_medium.get_at(0), "Small | Medium at index 0 should be 1|3=3");
+    assert_equal(7, small_or_medium.get_at(1), "Small | Medium at index 1 should be 2|5=7");
+    assert_equal(7, small_or_medium.get_at(2), "Small | Medium at index 2 should be 3|6=7");
+    
+    // AND
+    auto small_and_medium = medium.get_anded(small);
+    assert_equal(1, small_and_medium.get_at(0), "Small & Medium at index 0 should be 1&3=1");
+    assert_equal(0, small_and_medium.get_at(1), "Small & Medium at index 1 should be 2&5=0");
+    assert_equal(2, small_and_medium.get_at(2), "Small & Medium at index 2 should be 3&6=2");
+    
+    // XOR
+    auto small_xor_medium = medium.get_xored(small);
+    assert_equal(2, small_xor_medium.get_at(0), "Small ^ Medium at index 0 should be 1^3=2");
+    assert_equal(7, small_xor_medium.get_at(1), "Small ^ Medium at index 1 should be 2^5=7");
+    assert_equal(5, small_xor_medium.get_at(2), "Small ^ Medium at index 2 should be 3^6=5");
+    
+    // CASE 2: Medium vector operating with large vector
+    std::cout << "  Testing medium + large operations:" << std::endl;
+    
+    // Addition
+    auto medium_plus_large = large.get_added(medium);
+    assert_equal(10, medium_plus_large.get_at(0), "Medium + Large at index 0 should be 3+7=10");
+    assert_equal(15, medium_plus_large.get_at(1), "Medium + Large at index 1 should be 5+10=15");
+    assert_equal(2, medium_plus_large.get_at(2), "Medium + Large at index 2 should be 6+12=18 mod 16 = 2");
+    
+    // OR
+    auto medium_or_large = large.get_ored(medium);
+    assert_equal(7, medium_or_large.get_at(0), "Medium | Large at index 0 should be 3|7=7");
+    assert_equal(15, medium_or_large.get_at(1), "Medium | Large at index 1 should be 5|10=15");
+    assert_equal(14, medium_or_large.get_at(2), "Medium | Large at index 2 should be 6|12=14");
+    
+    // AND
+    auto medium_and_large = large.get_anded(medium);
+    assert_equal(3, medium_and_large.get_at(0), "Medium & Large at index 0 should be 3&7=3");
+    assert_equal(0, medium_and_large.get_at(1), "Medium & Large at index 1 should be 5&10=0");
+    assert_equal(4, medium_and_large.get_at(2), "Medium & Large at index 2 should be 6&12=4");
+    
+    // XOR
+    auto medium_xor_large = large.get_xored(medium);
+    assert_equal(4, medium_xor_large.get_at(0), "Medium ^ Large at index 0 should be 3^7=4");
+    assert_equal(15, medium_xor_large.get_at(1), "Medium ^ Large at index 1 should be 5^10=15");
+    assert_equal(10, medium_xor_large.get_at(2), "Medium ^ Large at index 2 should be 6^12=10");
+    
+    // CASE 3: Small vector operating with large vector
+    std::cout << "  Testing small + large operations:" << std::endl;
+    
+    // Addition
+    auto small_plus_large = large.get_added(small);
+    assert_equal(8, small_plus_large.get_at(0), "Small + Large at index 0 should be 1+7=8");
+    assert_equal(12, small_plus_large.get_at(1), "Small + Large at index 1 should be 2+10=12");
+    assert_equal(15, small_plus_large.get_at(2), "Small + Large at index 2 should be 3+12=15");
+    
+    // OR
+    auto small_or_large = large.get_ored(small);
+    assert_equal(7, small_or_large.get_at(0), "Small | Large at index 0 should be 1|7=7");
+    assert_equal(10, small_or_large.get_at(1), "Small | Large at index 1 should be 2|10=10");
+    assert_equal(15, small_or_large.get_at(2), "Small | Large at index 2 should be 3|12=15");
+    
+    // AND
+    auto small_and_large = large.get_anded(small);
+    assert_equal(1, small_and_large.get_at(0), "Small & Large at index 0 should be 1&7=1");
+    assert_equal(2, small_and_large.get_at(1), "Small & Large at index 1 should be 2&10=2");
+    assert_equal(0, small_and_large.get_at(2), "Small & Large at index 2 should be 3&12=0");
+    
+    // XOR
+    auto small_xor_large = large.get_xored(small);
+    assert_equal(6, small_xor_large.get_at(0), "Small ^ Large at index 0 should be 1^7=6");
+    assert_equal(8, small_xor_large.get_at(1), "Small ^ Large at index 1 should be 2^10=8");
+    assert_equal(15, small_xor_large.get_at(2), "Small ^ Large at index 2 should be 3^12=15");
+    
+    // Verify return type precision
+    static_assert(std::is_same_v<decltype(small_plus_medium), bitwise::vector_int<uint8_t, 3>>, 
+                 "Small + Medium should return a vector with medium precision (3 bits)");
+    
+    static_assert(std::is_same_v<decltype(medium_plus_large), bitwise::vector_int<uint8_t, 4>>, 
+                 "Medium + Large should return a vector with large precision (4 bits)");
+    
+    static_assert(std::is_same_v<decltype(small_plus_large), bitwise::vector_int<uint8_t, 4>>, 
+                 "Small + Large should return a vector with large precision (4 bits)");
+}
+
 // Test shift operations
 void test_vector_int_shifts() {
     begin_test("vector_int - Shift Operations");
@@ -243,7 +366,7 @@ void test_vector_int_constant_operations() {
         auto expected = v.get_at(i) | 3;
         assert_equal(expected, v_or_const.get_at(i), "OR with constant 3 at index " + std::to_string(i));
     }
-    
+     
     // Test XOR with constant
     auto v_xor_const = v.get_xored<5>(); // XOR with 101
     for (int i = 0; i < 8; i++) {
@@ -345,6 +468,7 @@ int main() {
     // Run all tests
     test_vector_int_basics();
     test_vector_int_binary_operations();
+    test_vector_int_mixed_precision_operations();
     test_vector_int_shifts();
     test_vector_int_not();
     test_vector_int_constant_operations();

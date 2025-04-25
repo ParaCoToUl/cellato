@@ -302,12 +302,19 @@ struct op_not {
 template <typename vector_store_type, int bits>
 class vector_int {
   public:
+    template <typename T, int N>
+    friend class vector_int;
+    
     using store_t = repeated_tuple_t<vector_store_type, bits>;
     static constexpr int width_in_bits = sizeof(vector_store_type) * 8;
 
     template <int other_bits>
     using vector_int_higher_precision_t = vector_int<vector_store_type, (bits > other_bits ? bits : other_bits)>;
     
+    static std::string type_info() {
+        return "vector_int<" + std::to_string(bits) + ">";
+    }
+
     template <typename val_t>
     void set_at(int index, val_t value) {
         if (index > width_in_bits) {
@@ -379,19 +386,53 @@ class vector_int {
             carry = (a & b) | (carry & bit_xor);
         });
 
+        if constexpr (other_bits > bits) {
+            // Fix: Properly propagate carry through all bits of the larger vector
+            for_each_in<other_bits - bits>([&]<std::size_t i>() {
+                constexpr auto bit_idx = min_bits + i;
+                
+                // Get bit from the larger vector
+                auto a = std::get<bit_idx>(other.numbers);
+                
+                // XOR with carry for the result
+                std::get<bit_idx>(result.numbers) = a ^ carry;
+                
+                // Update carry - if both the bit and current carry are 1, we need a new carry
+                carry = carry & a;
+            });
+        } else if constexpr (other_bits < bits) {
+            // Fix: Same correction for when the first vector is larger
+            for_each_in<bits - other_bits>([&]<std::size_t i>() {
+                constexpr auto bit_idx = min_bits + i;
+                
+                // Get bit from the larger vector
+                auto a = std::get<bit_idx>(numbers);
+                
+                // XOR with carry for the result
+                std::get<bit_idx>(result.numbers) = a ^ carry;
+                
+                // Update carry
+                carry = carry & a;
+            });
+        }
+
         return result;
     }
     
     template <int other_bits>
     vector_int<vector_store_type, bits> get_ored(
         vector_int<vector_store_type, other_bits> other) const {
-            
+        
+        static_assert(other_bits <= bits, "The other vector must have less or equal bits than this one");
+
         return get_oped<other_bits, op_or>(other);
     }
 
     template <int other_bits>
     vector_int<vector_store_type, bits> get_xored(
         vector_int<vector_store_type, other_bits> other) const {
+        
+        static_assert(other_bits <= bits, "The other vector must have less or equal bits than this one");
         
         return get_oped<other_bits, op_xor>(other);
     }
@@ -400,7 +441,22 @@ class vector_int {
     vector_int<vector_store_type, bits> get_anded(
         vector_int<vector_store_type, other_bits> other) const {
         
+        static_assert(other_bits <= bits, "The other vector must have less or equal bits than this one");
+        
         return get_oped<other_bits, op_and>(other);
+    }
+
+    template <int target_bits>
+    vector_int<vector_store_type, target> to_vector_with_bits() const {
+        vector_int<vector_store_type, target_bits> result;
+        constexpr auto min_bits = (target_bits < bits ? target_bits : bits);
+
+        for_each_in<min_bits>([&]<std::size_t i>() {
+            auto word = std::get<i>(numbers);
+            std::get<i>(result.numbers) = word;
+        });
+
+        return result;
     }
 
     vector_int<vector_store_type, bits> get_right_shifted_vector(int shift) const {
@@ -542,6 +598,21 @@ class vector_int {
         return result;
     }
 
+    template <bit_action action>
+    vector_store_type apply_action(vector_store_type word) const {
+        if constexpr (action == bit_action::SET_ZERO) {
+            return 0;
+        } else if constexpr (action == bit_action::SET_ONE) {
+            return constats_ops<vector_store_type>::ones;
+        } else if constexpr (action == bit_action::FLIP) {
+            return ~word;
+        } else if constexpr (action == bit_action::NO_ACTION) {
+            return word;
+        } else {
+            static_assert("Unknown action for bit operation");
+        }
+    }
+
     template <int other_bits, typename op_t>
     vector_int<vector_store_type, bits> get_oped(
         vector_int<vector_store_type, other_bits> other) const {
@@ -555,6 +626,13 @@ class vector_int {
             auto b = std::get<i>(other.numbers);
             
             std::get<i>(result.numbers) = op_t::apply(a, b);
+        });
+
+        for_each_in<bits - min_bits>([&]<std::size_t i>() {
+            constexpr auto action = op_t::template action_for_bit<int, 0>(0);
+            
+            auto a = std::get<min_bits + i>(numbers);
+            std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
         });
 
         return result;
@@ -579,20 +657,10 @@ class vector_int {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
-            auto word = std::get<i>(numbers);
             constexpr auto action = op_t::template action_for_bit<int, constant>(i);
-            
-            if constexpr (action == bit_action::SET_ZERO) {
-                std::get<i>(result.numbers) = 0;
-            } else if constexpr (action == bit_action::SET_ONE) {
-                std::get<i>(result.numbers) = constats_ops<vector_store_type>::ones;
-            } else if constexpr (action == bit_action::FLIP) {
-                std::get<i>(result.numbers) = ~word;
-            } else if constexpr (action == bit_action::NO_ACTION) {
-                std::get<i>(result.numbers) = word;
-            } else {
-                static_assert("Unknown action for bit operation");
-            }
+
+            auto word = std::get<i>(numbers);
+            std::get<i>(result.numbers) = apply_action<action>(word);
         });
 
         return result;
