@@ -447,7 +447,7 @@ class vector_int {
     }
 
     template <int target_bits>
-    vector_int<vector_store_type, target> to_vector_with_bits() const {
+    vector_int<vector_store_type, target_bits> to_vector_with_bits() const {
         vector_int<vector_store_type, target_bits> result;
         constexpr auto min_bits = (target_bits < bits ? target_bits : bits);
 

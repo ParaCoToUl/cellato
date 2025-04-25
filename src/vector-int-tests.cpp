@@ -460,6 +460,150 @@ void test_vector_int_equals_to() {
                 "equals_to<1> should have bit 0 set for vector with 1 at position 0");
 }
 
+// Test random operations between vector_int instances of different sizes
+void test_vector_int_random_operations() {
+    begin_test("vector_int - Random Operations");
+    
+    // Set random seed for reproducible tests
+    std::srand(42);
+    
+    // Define vectors with different bit precisions
+    using vint_small = bitwise::vector_int<uint8_t, 2>;  // 2-bit precision (0-3)
+    using vint_medium = bitwise::vector_int<uint8_t, 3>; // 3-bit precision (0-7)
+    using vint_large = bitwise::vector_int<uint8_t, 4>;  // 4-bit precision (0-15)
+    
+    const int num_iterations = 1000;
+    const int max_idx = 7; // Test up to 8 cells
+    
+    // Save previous verbosity setting and disable it for this test
+    bool original_verbose = verbose_output;
+    verbose_output = false;
+    
+    std::cout << "  Running " << num_iterations << " random operation tests..." << std::endl;
+    
+    for (int iter = 0; iter < num_iterations; iter++) {
+        // Create vector instances
+        vint_small small;
+        vint_medium medium;
+        vint_large large;
+        
+        // Fill with random values within their valid ranges
+        for (int i = 0; i <= max_idx; i++) {
+            int small_val = std::rand() % 4;   // 0-3 (2 bits)
+            int medium_val = std::rand() % 8;  // 0-7 (3 bits)
+            int large_val = std::rand() % 16;  // 0-15 (4 bits)
+            
+            small.set_at(i, small_val);
+            medium.set_at(i, medium_val);
+            large.set_at(i, large_val);
+        }
+        
+        // Test index to verify (also random)
+        int test_idx = std::rand() % (max_idx + 1);
+        
+        // Get the values at the test index
+        int small_val = small.get_at(test_idx);
+        int medium_val = medium.get_at(test_idx);
+        int large_val = large.get_at(test_idx);
+        
+        // Test 1: Addition between different precision vectors
+        // Note: addition returns vector with the larger precision
+        
+        // Small + Medium (returns Medium precision)
+        auto small_plus_medium = small.get_added(medium);
+        int expected_sum1 = (small_val + medium_val) % 8;  // Result must fit in 3 bits
+        assert_equal(expected_sum1, small_plus_medium.get_at(test_idx), 
+                     "Random Small + Medium at index " + std::to_string(test_idx));
+        
+        // Medium + Large (returns Large precision)
+        auto medium_plus_large = medium.get_added(large);
+        int expected_sum2 = (medium_val + large_val) % 16;  // Result must fit in 4 bits
+        assert_equal(expected_sum2, medium_plus_large.get_at(test_idx),
+                     "Random Medium + Large at index " + std::to_string(test_idx));
+        
+        // Small + Large (returns Large precision)
+        auto small_plus_large = small.get_added(large);
+        int expected_sum3 = (small_val + large_val) % 16;  // Result must fit in 4 bits
+        assert_equal(expected_sum3, small_plus_large.get_at(test_idx),
+                     "Random Small + Large at index " + std::to_string(test_idx));
+        
+        // Test 2: Bitwise operations (only smaller bit vector can be given as parameter)
+        
+        // Large OR Small
+        auto large_or_small = large.get_ored(small);
+        int expected_or1 = large_val | small_val;
+        assert_equal(expected_or1, large_or_small.get_at(test_idx),
+                     "Random Large | Small at index " + std::to_string(test_idx));
+        
+        // Large AND Small
+        auto large_and_small = large.get_anded(small);
+        int expected_and1 = large_val & small_val;
+        assert_equal(expected_and1, large_and_small.get_at(test_idx),
+                     "Random Large & Small at index " + std::to_string(test_idx));
+        
+        // Large XOR Small
+        auto large_xor_small = large.get_xored(small);
+        int expected_xor1 = large_val ^ small_val;
+        assert_equal(expected_xor1, large_xor_small.get_at(test_idx),
+                     "Random Large ^ Small at index " + std::to_string(test_idx));
+        
+        // Medium OR Small
+        auto medium_or_small = medium.get_ored(small);
+        int expected_or2 = medium_val | small_val;
+        assert_equal(expected_or2, medium_or_small.get_at(test_idx),
+                     "Random Medium | Small at index " + std::to_string(test_idx));
+        
+        // Medium AND Small
+        auto medium_and_small = medium.get_anded(small);
+        int expected_and2 = medium_val & small_val;
+        assert_equal(expected_and2, medium_and_small.get_at(test_idx),
+                     "Random Medium & Small at index " + std::to_string(test_idx));
+        
+        // Medium XOR Small
+        auto medium_xor_small = medium.get_xored(small);
+        int expected_xor2 = medium_val ^ small_val;
+        assert_equal(expected_xor2, medium_xor_small.get_at(test_idx),
+                     "Random Medium ^ Small at index " + std::to_string(test_idx));
+        
+        // Test 3: Constant operations (random constant based on vector size)
+        int small_const = std::rand() % 4;  // Random 2-bit constant
+        
+        // Small AND Constant
+        auto small_and_const = small.get_anded<2>();  // Using 2 as constant for simplicity
+        int expected_and_const = small_val & 2;
+        assert_equal(expected_and_const, small_and_const.get_at(test_idx),
+                     "Random Small & Const at index " + std::to_string(test_idx));
+        
+        // Test 4: Shift operations with random shift amount
+        int shift_amount = 1 + (std::rand() % 3);  // Random shift 1-3 positions
+        
+        // Shift operations depend on implementation details, so we calculate expected result
+        // based on how your implementation works
+        
+        // Left shift
+        auto small_left_shift = small.get_left_shifted_vector(shift_amount);
+        int expected_left_shift = (test_idx >= shift_amount) ? 
+                                  small.get_at(test_idx - shift_amount) : 0;
+        assert_equal(expected_left_shift, small_left_shift.get_at(test_idx),
+                     "Random left shift by " + std::to_string(shift_amount) + 
+                     " at index " + std::to_string(test_idx));
+        
+        // Right shift
+        auto medium_right_shift = medium.get_right_shifted_vector(shift_amount);
+        int expected_right_shift = (test_idx + shift_amount <= max_idx) ? 
+                                   medium.get_at(test_idx + shift_amount) : 0;
+        assert_equal(expected_right_shift, medium_right_shift.get_at(test_idx),
+                     "Random right shift by " + std::to_string(shift_amount) + 
+                     " at index " + std::to_string(test_idx));
+    }
+    
+    // Print summary of this random test
+    std::cout << GREEN << "  Completed " << num_iterations << " random tests" << RESET << std::endl;
+    
+    // Restore original verbosity
+    verbose_output = original_verbose;
+}
+
 int main() {
     std::cout << CYAN << "========================================" << std::endl;
     std::cout << "   RUNNING VECTOR_INT CLASS UNIT TESTS" << std::endl;
@@ -474,6 +618,7 @@ int main() {
     test_vector_int_constant_operations();
     test_vector_int_load_from();
     test_vector_int_equals_to();
+    test_vector_int_random_operations(); // Add the new random tests
     
     print_summary();
     
