@@ -1,53 +1,358 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <string>
 #include "bit-mode.hpp"
 
-int main() {
+// ANSI color codes for terminal output
+const std::string RESET = "\033[0m";
+const std::string RED = "\033[31m";
+const std::string GREEN = "\033[32m";
+const std::string YELLOW = "\033[33m";
+const std::string BLUE = "\033[34m";
+const std::string CYAN = "\033[36m";
+
+int tests_run = 0;
+int tests_passed = 0;
+int failed_tests_count = 0;
+
+// Global test settings
+bool verbose_output = true;  // Can be set to false for less output
+std::vector<std::string> failed_tests;
+
+void begin_test(const std::string& name) {
+    std::cout << BLUE << "\n====== TEST: " << name << " ======" << RESET << std::endl;
+    tests_run++;
+}
+
+template<typename T, typename U>
+void assert_equal(T expected, U actual, const std::string& message, bool always_print = false) {
+    if (expected == actual) {
+        if (verbose_output || always_print) {
+            std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;
+        }
+        tests_passed++;
+    } else {
+        std::string failure_msg = message + " (Expected: " + std::to_string(expected) + ", Got: " + std::to_string(actual) + ")";
+        if (verbose_output || always_print) {
+            std::cout << RED << "✗ FAIL: " << failure_msg << RESET << std::endl;
+        }
+        failed_tests.push_back(failure_msg);
+        failed_tests_count++;
+    }
+}
+
+void assert_true(bool condition, const std::string& message, bool always_print = false) {
+    if (condition) {
+        if (verbose_output || always_print) {
+            std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;
+        }
+        tests_passed++;
+    } else {
+        if (verbose_output || always_print) {
+            std::cout << RED << "✗ FAIL: " << message << RESET << std::endl;
+        }
+        failed_tests.push_back(message);
+        failed_tests_count++;
+    }
+}
+
+void print_summary() {
+    std::cout << YELLOW << "\n====== TEST SUMMARY ======" << RESET << std::endl << std::endl;
+    std::cout << BLUE << "Tests run: " << tests_run << std::endl;
+    
+    std::cout << GREEN << "  Asserts passed: " << tests_passed << RESET << std::endl;
+    std::cout << RED << "  Asserts failed: " << failed_tests_count << RESET << std::endl << std::endl;
+
+    if (failed_tests.size() > 0) {
+        std::cout << RED << "Failed tests: " << failed_tests_count << RESET << std::endl;
+        for (size_t i = 0; i < failed_tests.size(); ++i) {
+            std::cout << RED << (i+1) << ". " << failed_tests[i] << RESET << std::endl;
+        }
+    } else {
+        std::cout << GREEN << "All tests passed!" << RESET << std::endl << std::endl;
+    }
+}
+
+// Test basic properties and operations of vector_int
+void test_vector_int_basics() {
+    begin_test("vector_int - Basic Properties and Operations");
+    
+    // Create a vector_int with 3 bits of precision
     using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v;
+    
+    // Test setting and getting values
+    v.set_at(0, 1);  // 001
+    assert_equal(1, v.get_at(0), "Should correctly set and get value at index 0");
+    
+    v.set_at(1, 2);  // 010
+    assert_equal(2, v.get_at(1), "Should correctly set and get value at index 1");
+    
+    v.set_at(2, 3);  // 011
+    assert_equal(3, v.get_at(2), "Should correctly set and get value at index 2");
+    
+    v.set_at(3, 7);  // 111
+    assert_equal(7, v.get_at(3), "Should correctly set and get value at index 3");
+    
+    // Test out of range handling
+    try {
+        v.set_at(9, 5);
+        std::cout << RED << "✗ FAIL: Should throw exception for out of bounds set_at" << RESET << std::endl;
+        failed_tests_count++;
+    } catch (const std::out_of_range&) {
+        std::cout << GREEN << "✓ PASS: Correctly throws exception for out of bounds set_at" << RESET << std::endl;
+        tests_passed++;
+    }
+    
+    try {
+        v.get_at(9);
+        std::cout << RED << "✗ FAIL: Should throw exception for out of bounds get_at" << RESET << std::endl;
+        failed_tests_count++;
+    } catch (const std::out_of_range&) {
+        std::cout << GREEN << "✓ PASS: Correctly throws exception for out of bounds get_at" << RESET << std::endl;
+        tests_passed++;
+    }
+}
 
-    vint v1;
-
+// Test binary operations between vector_int instances
+void test_vector_int_binary_operations() {
+    begin_test("vector_int - Binary Operations");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v1, v2;
+    
+    // Set up test values
+    // v1: First 4 cells set to 1, 2, 3, 4
     v1.set_at(0, 1);
     v1.set_at(1, 2);
     v1.set_at(2, 3);
     v1.set_at(3, 4);
-    v1.set_at(4, 5);
-    v1.set_at(5, 6);
-    v1.set_at(6, 7);
-    v1.set_at(7, 15);
-    // v1.set_at(8, 9);
-    // v1.set_at(9, 10);
-    // v1.set_at(10, 11);
-    // v1.set_at(11, 12);
-    // v1.set_at(12, 13);
-    // v1.set_at(13, 14);
-    // v1.set_at(14, 15);
-    // v1.set_at(15, 16);
-
-
-    std::cout << "v1:" << std::endl;
-    std::cout << v1.to_str() << std::endl;
-
-    std::vector<uint8_t> b0 = {0xF0, 0b10101010, 0x00, 0x00};
-    std::vector<uint8_t> b1 = {0x0F, 0b11001100, 0x00, 0x00};
-    std::vector<uint8_t> b2 = {0x00, 0b11110000, 0x00, 0x00};
-
-    std::tuple<uint8_t*, uint8_t*, uint8_t*> storage = {b0.data(), b1.data(), b2.data()};
-    std::tuple<uint8_t*, uint8_t*> storage_small = {b0.data(), b1.data()};
-
     
-    vint v2 = vint::load_from(storage, 1);
+    // v2: First 4 cells set to 2, 3, 1, 5
+    v2.set_at(0, 2);
+    v2.set_at(1, 3);
+    v2.set_at(2, 1);
+    v2.set_at(3, 5);
+    
+    // Test addition
+    auto v_add = v1.get_added(v2);
+    assert_equal(3, v_add.get_at(0), "Addition at index 0 should be 1+2=3");
+    assert_equal(5, v_add.get_at(1), "Addition at index 1 should be 2+3=5");
+    assert_equal(4, v_add.get_at(2), "Addition at index 2 should be 3+1=4");
+    assert_equal(1, v_add.get_at(3), "Addition at index 3 should be 4+5=9 i.e. 1 mod 8");
+    
+    // Test OR operation
+    auto v_or = v1.get_ored(v2);
+    assert_equal(3, v_or.get_at(0), "OR at index 0 should be 1|2=3");
+    assert_equal(3, v_or.get_at(1), "OR at index 1 should be 2|3=3");
+    assert_equal(3, v_or.get_at(2), "OR at index 2 should be 3|1=3");
+    assert_equal(5, v_or.get_at(3), "OR at index 3 should be 4|5=5");
+    
+    // Test XOR operation
+    auto v_xor = v1.get_xored(v2);
+    assert_equal(3, v_xor.get_at(0), "XOR at index 0 should be 1^2=3");
+    assert_equal(1, v_xor.get_at(1), "XOR at index 1 should be 2^3=1");
+    assert_equal(2, v_xor.get_at(2), "XOR at index 2 should be 3^1=2");
+    assert_equal(1, v_xor.get_at(3), "XOR at index 3 should be 4^5=1");
+    
+    // Test AND operation
+    auto v_and = v1.get_anded(v2);
+    assert_equal(0, v_and.get_at(0), "AND at index 0 should be 1&2=0");
+    assert_equal(2, v_and.get_at(1), "AND at index 1 should be 2&3=2");
+    assert_equal(1, v_and.get_at(2), "AND at index 2 should be 3&1=1");
+    assert_equal(4, v_and.get_at(3), "AND at index 3 should be 4&5=4");
+}
 
-    std::cout << "v2:" << std::endl;
-    std::cout << v2.to_str() << std::endl;
+// Test shift operations
+void test_vector_int_shifts() {
+    begin_test("vector_int - Shift Operations");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v;
+    
+    // Set up test values - fill with a pattern
+    for (int i = 0; i < 8; i++) {
+        v.set_at(i, i % 4); // Pattern: 0,1,2,3,0,1,2,3
+    }
+    
+    // Test right shift
+    auto v_right = v.get_right_shifted_vector(1);
+    assert_equal(1, v_right.get_at(0), "Right shift by 1 should move values right");
+    assert_equal(2, v_right.get_at(1), "Right shift by 1 should move values right");
+    assert_equal(3, v_right.get_at(2), "Right shift by 1 should move values right");
+    
+    // Test left shift
+    auto v_left = v.get_left_shifted_vector(1);
+    assert_equal(0, v_left.get_at(0), "Left shift by 1 should move values left");
+    assert_equal(0, v_left.get_at(1), "Left shift by 1 should move values left");
+    assert_equal(1, v_left.get_at(2), "Left shift by 1 should move values left");
+    
+    // Test larger shifts
+    auto v_right_2 = v.get_right_shifted_vector(2);
+    assert_equal(2, v_right_2.get_at(0), "Right shift by 2 should move values right by 2");
+    assert_equal(3, v_right_2.get_at(1), "Right shift by 2 should move values right by 2");
+    assert_equal(0, v_right_2.get_at(2), "Right shift by 2 should move values right by 2");
+    assert_equal(1, v_right_2.get_at(3), "Right shift by 2 should move values right by 2");
+    assert_equal(2, v_right_2.get_at(4), "Right shift by 2 should move values right by 2");
+}
 
-    vint v3 = vint::load_from(storage_small, 1);
+// Test NOT operation
+void test_vector_int_not() {
+    begin_test("vector_int - NOT Operation");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v;
+    
+    // Set alternating pattern of 0s and 1s
+    for (int i = 0; i < 8; i++) {
+        v.set_at(i, i % 2);
+    }
+    
+    auto v_not = v.get_noted();
+    
+    // Check that all bits are inverted
+    for (int i = 0; i < 8; i++) {
+        auto expected = (v.get_at(i) == 0) ? 7 : 6; // NOT 0 = 7 (111), NOT 1 = 6 (110)
+        assert_equal(expected, v_not.get_at(i), "NOT operation should invert all bits at index " + std::to_string(i));
+    }
+}
 
-    // std::cout << "v3:" << std::endl;
-    // std::cout << v3.to_str() << std::endl;
+// Test constant operations
+void test_vector_int_constant_operations() {
+    begin_test("vector_int - Constant Operations");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v;
+    
+    // Fill with consecutive values
+    for (int i = 0; i < 8; i++) {
+        v.set_at(i, i); // 0, 1, 2, 3, 4, 5, 6, 7
+    }
+    
+    // Test AND with constant
+    auto v_and_const = v.get_anded<2>(); // AND with 010
+    for (int i = 0; i < 8; i++) {
+        auto expected = v.get_at(i) & 2;
+        assert_equal(expected, v_and_const.get_at(i), "AND with constant 2 at index " + std::to_string(i));
+    }
+    
+    // Test OR with constant
+    auto v_or_const = v.get_ored<3>(); // OR with 011
+    for (int i = 0; i < 8; i++) {
+        auto expected = v.get_at(i) | 3;
+        assert_equal(expected, v_or_const.get_at(i), "OR with constant 3 at index " + std::to_string(i));
+    }
+    
+    // Test XOR with constant
+    auto v_xor_const = v.get_xored<5>(); // XOR with 101
+    for (int i = 0; i < 8; i++) {
+        auto expected = v.get_at(i) ^ 5;
+        assert_equal(expected, v_xor_const.get_at(i), "XOR with constant 5 at index " + std::to_string(i));
+    }
+}
 
-    auto v1_plus_v2 = v1.get_added(v2);
-    std::cout << "v1 + v2 = \n" << v1_plus_v2.to_str() << std::endl;
+// Test loading from storage
+void test_vector_int_load_from() {
+    begin_test("vector_int - Load From Storage");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    
+    // Create storage vectors with test data
+    std::vector<uint8_t> b0 = {0xF0, 0xAA, 0x00, 0x00};  // 11110000, 10101010
+    std::vector<uint8_t> b1 = {0x0F, 0xCC, 0x00, 0x00};  // 00001111, 11001100
+    std::vector<uint8_t> b2 = {0x00, 0xF0, 0x00, 0x00};  // 00000000, 11110000
+    
+    // Create storage tuples
+    std::tuple<uint8_t*, uint8_t*, uint8_t*> storage = {b0.data(), b1.data(), b2.data()};
+    
+    // Load from storage at offset 0
+    vint v0 = vint::load_from(storage, 0);
+    assert_equal(2, v0.get_at(0), "First bit from storage at offset 0 should be 2");
+    assert_equal(2, v0.get_at(1), "Second bit from storage at offset 0 should be 2");
+    assert_equal(2, v0.get_at(2), "Third bit from storage at offset 0 should be 2");
+    assert_equal(2, v0.get_at(3), "Fourth bit from storage at offset 0 should be 2");
+    assert_equal(1, v0.get_at(4), "Fifth bit from storage at offset 0 should be 1");
+    
+    // Load from storage at offset 1
+    vint v1 = vint::load_from(storage, 1);
+    assert_equal(0, v1.get_at(0), "First bit from storage at offset 1 should be 0");
+    assert_equal(1, v1.get_at(1), "Second bit from storage at offset 1 should be 1");
+    assert_equal(2, v1.get_at(2), "Third bit from storage at offset 1 should be 2");
+    assert_equal(3, v1.get_at(3), "Fourth bit from storage at offset 1 should be 3");
+    assert_equal(4, v1.get_at(4), "Fifth bit from storage at offset 1 should be 4");
+    
+    // Test with smaller storage
+    std::tuple<uint8_t*, uint8_t*> storage_small = {b0.data(), b1.data()};
+    vint v2 = vint::load_from(storage_small, 1);
+    
+    assert_equal(0, v2.get_at(0), "First bit from small storage should be 0");
+    assert_equal(1, v2.get_at(1), "Second bit from small storage should be 0");
+    // Third bit should be zeroed since storage doesn't have it
+}
 
+// Test equals_to operations
+void test_vector_int_equals_to() {
+    begin_test("vector_int - Equals To Operations");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v1, v2, v3;
+    
+    // Set up test values
+    v1.set_at(0, 1);
+    v1.set_at(1, 2);
+    v1.set_at(2, 3);
+    v1.set_at(3, 4);
+    
+    // v2 is identical to v1
+    v2.set_at(0, 1);
+    v2.set_at(1, 2);
+    v2.set_at(2, 3);
+    v2.set_at(3, 4);
+    
+    // v3 is different
+    v3.set_at(0, 2);
+    v3.set_at(1, 2); 
+    v3.set_at(2, 3);
+    v3.set_at(3, 5);
+    
+    // Test equals_to between vectors
+    auto eq1_2 = v1.equals_to(v2);
+    auto eq1_3 = v1.equals_to(v3);
+    
+    // Since equals_to returns a mask with 1s where equal
+    // For identical vectors, we expect all 1s (0xFF)
+    assert_equal(static_cast<int>(0xFF), static_cast<int>(eq1_2), 
+                "equals_to should return all ones for identical vectors");
+    
+    // For different vectors, we expect some 0s
+    assert_true(eq1_3 != 0xFF, 
+                "equals_to should not return all ones for different vectors");
+    
+    // Test equals_to with constant
+    auto eq1_const = v1.equals_to<1>();
+    
+    // Since v1[0] = 1, we expect bit 0 to be set in the equals_to result
+    assert_true((eq1_const & 0x01) != 0, 
+                "equals_to<1> should have bit 0 set for vector with 1 at position 0");
+}
+
+int main() {
+    std::cout << CYAN << "========================================" << std::endl;
+    std::cout << "   RUNNING VECTOR_INT CLASS UNIT TESTS" << std::endl;
+    std::cout << "========================================" << RESET << std::endl;
+    
+    // Run all tests
+    test_vector_int_basics();
+    test_vector_int_binary_operations();
+    test_vector_int_shifts();
+    test_vector_int_not();
+    test_vector_int_constant_operations();
+    test_vector_int_load_from();
+    test_vector_int_equals_to();
+    
+    print_summary();
+    
+    // Return success if all tests pass
+    return tests_passed == tests_run ? 0 : 1;
 }

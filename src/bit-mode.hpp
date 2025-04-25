@@ -185,80 +185,13 @@ class bit_grid {
     }
 };
 
-struct op_shift_right {
-    template <typename T, typename U>
-    static auto apply(T a, U b) {
-        return a >> b;
-    }
-
-    template <typename const_t, const_t value, typename T>
-    static auto apply_const(T a) {
-        return a >> value;
-    }
-};
-
-struct op_shift_left {
-    template <typename T, typename U>
-    static auto apply(T a, U b) {
-        return a << b;
-    }
-
-    template <typename const_t, const_t value, typename T>
-    static auto apply_const(T a) {
-        return a << value;
-    }
-};
-
-struct op_and {
-    template <typename T, typename U>
-    static auto apply(T a, U b) {
-        return a & b;
-    }
-
-    template <typename const_t, const_t value, typename T>
-    static auto apply_const(T a) {
-        return a & value;
-    }
-};
-
-struct op_or {
-    template <typename T, typename U>
-    static auto apply(T a, U b) {
-        return a | b;
-    }
-
-    template <typename const_t, const_t value, typename T>
-    static auto apply_const(T a) {
-        return a | value;
-    }
-};
-
-struct op_xor {
-    template <typename T, typename U>
-    static auto apply(T a, U b) {
-        return a ^ b;
-    }
-
-    template <typename const_t, const_t value, typename T>
-    static auto apply_const(T a) {
-        return a ^ value;
-    }
-};
-
-struct op_not {
-    template <typename T>
-    static auto apply(T a) {
-        return ~a;
-    }
-};
-
 template <typename const_t>
 struct constats_ops {
 
     static constexpr const_t ones = ~static_cast<const_t>(0);
 
     template <const_t value>
-    static constexpr int get_highest_set_bit() const {
+    static constexpr int get_highest_set_bit() {
         if (value == 0) {
             return -1; // No bits are set
         }
@@ -282,7 +215,89 @@ struct constats_ops {
     static constexpr const_t is_set_at(int bit_idx) {
         return ((value >> bit_idx) & 1) * ones;
     }
-}
+};
+
+enum class bit_action {
+    NO_ACTION = 0,
+    SET_ZERO = 1,
+    SET_ONE = 2,
+    FLIP = 3,
+};
+
+struct op_shift_right {
+    template <typename T, typename U>
+    static auto apply(T a, U b) {
+        return a >> b;
+    }
+};
+
+struct op_shift_left {
+    template <typename T, typename U>
+    static auto apply(T a, U b) {
+        return a << b;
+    }
+};
+
+struct op_and {
+    template <typename T, typename U>
+    static auto apply(T a, U b) {
+        return a & b;
+    }
+
+    template <typename const_t, const_t value>
+    static constexpr bit_action action_for_bit(int bit_idx) {
+        auto bit_value = (value >> bit_idx) & 1;
+
+        if (bit_value == 0) {
+            return bit_action::SET_ZERO;
+        } else {
+            return bit_action::NO_ACTION;
+        }
+    }
+};
+
+struct op_or {
+    template <typename T, typename U>
+    static auto apply(T a, U b) {
+        return a | b;
+    }
+
+    template <typename const_t, const_t value>
+    static constexpr bit_action action_for_bit(int bit_idx) {
+        auto bit_value = (value >> bit_idx) & 1;
+
+        if (bit_value == 1) {
+            return bit_action::SET_ONE;
+        } else {
+            return bit_action::NO_ACTION;
+        }
+    }
+};
+
+struct op_xor {
+    template <typename T, typename U>
+    static auto apply(T a, U b) {
+        return a ^ b;
+    }
+
+    template <typename const_t, const_t value>
+    static constexpr bit_action action_for_bit(int bit_idx) {
+        auto bit_value = (value >> bit_idx) & 1;
+        
+        if (bit_value == 1) {
+            return bit_action::FLIP;
+        } else {
+            return bit_action::NO_ACTION;
+        }
+    }
+};
+
+struct op_not {
+    template <typename T>
+    static auto apply(T a) {
+        return ~a;
+    }
+};
 
 template <typename vector_store_type, int bits>
 class vector_int {
@@ -368,32 +383,32 @@ class vector_int {
     }
     
     template <int other_bits>
-    vector_int<store_word_type, bits> get_ored(
+    vector_int<vector_store_type, bits> get_ored(
         vector_int<vector_store_type, other_bits> other) const {
             
         return get_oped<other_bits, op_or>(other);
     }
 
     template <int other_bits>
-    vector_int<store_word_type, bits> get_xored(
+    vector_int<vector_store_type, bits> get_xored(
         vector_int<vector_store_type, other_bits> other) const {
         
         return get_oped<other_bits, op_xor>(other);
     }
 
     template <int other_bits>
-    vector_int<store_word_type, bits> get_anded(
+    vector_int<vector_store_type, bits> get_anded(
         vector_int<vector_store_type, other_bits> other) const {
         
         return get_oped<other_bits, op_and>(other);
     }
 
-    vector_int<vector_store_type, bits> get_right_shifted(int shift) const {
-        return get_shifted<op_shift_right>(shift);
+    vector_int<vector_store_type, bits> get_right_shifted_vector(int shift) const {
+        return get_shifted_vector<op_shift_right>(shift);
     }
 
-    vector_int<vector_store_type, bits> get_left_shifted(int shift) const {
-        return get_shifted<op_shift_left>(shift);
+    vector_int<vector_store_type, bits> get_left_shifted_vector(int shift) const {
+        return get_shifted_vector<op_shift_left>(shift);
     }
 
     vector_int<vector_store_type, bits> get_noted() const {
@@ -416,13 +431,13 @@ class vector_int {
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_shifted() const {
-        return get_shifted<op_shift_left, constant>();
+    vector_int<vector_store_type, bits> get_left_shifted_vector() const {
+        return get_shifted_vector<op_shift_left, constant>();
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_shifted() const {
-        return get_shifted<op_shift_right, constant>();
+    vector_int<vector_store_type, bits> get_right_shifted_vector() const {
+        return get_shifted_vector<op_shift_right, constant>();
     }
 
     template <typename tuple_of_pointers_storage_t>
@@ -483,7 +498,7 @@ class vector_int {
             auto a = std::get<i>(numbers);
 
             constexpr auto constant_is_set = 
-                constats_ops<vector_store_type>::is_set_at<constant>(i);
+                constats_ops<vector_store_type>::template is_set_at<constant>(i);
             
             if constexpr (constant_is_set) {
                 result &= a;
@@ -513,8 +528,8 @@ class vector_int {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});
     }
 
-    template <template shift_op_t>
-    vector_int<vector_store_type, bits> get_shifted(int shift) const {
+    template <typename shift_op_t>
+    vector_int<vector_store_type, bits> get_shifted_vector(int shift) const {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
@@ -561,19 +576,26 @@ class vector_int {
 
     template <typename op_t, int constant>
     vector_int<vector_store_type, bits> get_oped() const {
-        constexpr auto constat_bits = constats_ops<int>::get_highest_set_bit<constant>();
-        constexpr auto min_bits = (bits < constat_bits ? bits : constat_bits);
-
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<min_bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<std::size_t i>() {
             auto word = std::get<i>(numbers);
-            constexpr auto constant_word = constats_ops<int>::get_bit_row_at<constant>(i);
-
-            auto oped_word = op_t::apply_const<constant_word>(word);
-
-            std::get<i>(result.numbers) = oped_word;
+            constexpr auto action = op_t::template action_for_bit<int, constant>(i);
+            
+            if constexpr (action == bit_action::SET_ZERO) {
+                std::get<i>(result.numbers) = 0;
+            } else if constexpr (action == bit_action::SET_ONE) {
+                std::get<i>(result.numbers) = constats_ops<vector_store_type>::ones;
+            } else if constexpr (action == bit_action::FLIP) {
+                std::get<i>(result.numbers) = ~word;
+            } else if constexpr (action == bit_action::NO_ACTION) {
+                std::get<i>(result.numbers) = word;
+            } else {
+                static_assert("Unknown action for bit operation");
+            }
         });
+
+        return result;
     }
 };
 
