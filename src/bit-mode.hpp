@@ -299,11 +299,15 @@ struct op_not {
     }
 };
 
+struct vector_int_factory;
+
 template <typename vector_store_type, int bits>
 class vector_int {
   public:
     template <typename T, int N>
     friend class vector_int;
+
+    friend class vector_int_factory;
     
     using store_t = repeated_tuple_t<vector_store_type, bits>;
     static constexpr int width_in_bits = sizeof(vector_store_type) * 8;
@@ -675,11 +679,15 @@ struct vector_int_factory {
     template <typename vector_store_type, int constant>
     static auto from_constant() {
         constexpr auto bits 
-            = constats_ops<int>::get_highest_set_bit<constant>();
+            = constats_ops<int>::get_highest_set_bit<constant>() + 1;
+    
+        if constexpr (bits == 0) {
+            return vector_int<vector_store_type, 1>{};
+        }
 
-        vector_int<vector_store_type, bits> result;
+        vector_int<vector_store_type, bits + 1> result;
 
-        for_each_bit([&]<std::size_t bit_idx>() {
+        for_each_in<bits + 1>([&]<std::size_t bit_idx>() {
             constexpr auto is_set 
                 = constats_ops<vector_store_type>::template is_set_at<constant>(bit_idx);
 
@@ -690,9 +698,16 @@ struct vector_int_factory {
                 std::get<bit_idx>(result.numbers) = 0;
             }
         });
+
+        return result;
     }
 
   private:
+    template <typename Callback, std::size_t... Is>
+    static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
+        (cb.template operator()<Is>(), ...);
+    }
+
     template <int count, typename Callback>
     static void for_each_in(Callback&& cb) {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});

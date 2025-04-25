@@ -695,6 +695,76 @@ void test_vector_int_random_operations() {
     verbose_output = original_verbose;
 }
 
+// Test vector_int_factory's from_constant method
+void test_vector_int_factory_from_constant() {
+    begin_test("vector_int_factory - from_constant Method");
+    
+    // Test with constant 0 (should create a vector with all zeros)
+    auto zero_vector = bitwise::vector_int_factory::from_constant<uint8_t, 0>();
+
+    for (int i = 0; i < 8; i++) {
+        assert_equal(0, zero_vector.get_at(i), "Constant 0 should produce vector with 0 at index " + std::to_string(i));
+    }
+    
+    // Test with constant 1 (bit 0 set)
+    auto one_vector = bitwise::vector_int_factory::from_constant<uint8_t, 1>();
+    for (int i = 0; i < 8; i++) {
+        assert_equal(1, one_vector.get_at(i), "Constant 1 should produce vector with 1 at index " + std::to_string(i));
+    }
+
+    // Test with constant 2 (bit 1 set)
+    auto two_vector = bitwise::vector_int_factory::from_constant<uint8_t, 2>();
+    for (int i = 0; i < 8; i++) {
+        assert_equal(2, two_vector.get_at(i), "Constant 2 should produce vector with 2 at index " + std::to_string(i));
+    }
+    
+    // Test with constant 3 (bits 0 and 1 set)
+    auto three_vector = bitwise::vector_int_factory::from_constant<uint8_t, 3>();
+    for (int i = 0; i < 8; i++) {
+        assert_equal(3, three_vector.get_at(i), "Constant 3 should produce vector with 3 at index " + std::to_string(i));
+    }
+    
+    // Test with constant 5 (bits 0 and 2 set, binary 101)
+    auto five_vector = bitwise::vector_int_factory::from_constant<uint8_t, 5>();
+    for (int i = 0; i < 8; i++) {
+        assert_equal(5, five_vector.get_at(i), "Constant 5 should produce vector with 5 at index " + std::to_string(i));
+    }
+    
+    // Test with constant 10 (bits 1 and 3 set, binary 1010)
+    auto ten_vector = bitwise::vector_int_factory::from_constant<uint8_t, 10>();
+    for (int i = 0; i < 8; i++) {
+        assert_equal(10, ten_vector.get_at(i), "Constant 10 should produce vector with 10 at index " + std::to_string(i));
+    }
+
+    // Test with a larger constant (bits 3, 5, and 6 set, binary 1101000 = 104)
+    auto large_vector = bitwise::vector_int_factory::from_constant<uint8_t, 104>();
+    for (int i = 0; i < 8; i++) {
+        assert_equal(104, large_vector.get_at(i), "Constant 104 should produce vector with 104 at index " + std::to_string(i));
+    }
+    
+    // Static assertions to verify the bit precision of each vector at compile time
+    static_assert(std::is_same_v<decltype(zero_vector), bitwise::vector_int<uint8_t, 1>>, 
+                  "Constant 0 should create a 1-bit vector");
+                 
+    static_assert(std::is_same_v<decltype(one_vector), bitwise::vector_int<uint8_t, 2>>, 
+                  "Constant 1 should create a 2-bit vector");
+                 
+    static_assert(std::is_same_v<decltype(two_vector), bitwise::vector_int<uint8_t, 3>>, 
+                  "Constant 2 should create a 3-bit vector");
+                 
+    static_assert(std::is_same_v<decltype(three_vector), bitwise::vector_int<uint8_t, 3>>, 
+                  "Constant 3 should create a 3-bit vector");
+                 
+    static_assert(std::is_same_v<decltype(five_vector), bitwise::vector_int<uint8_t, 4>>, 
+                  "Constant 5 should create a 4-bit vector");
+                 
+    static_assert(std::is_same_v<decltype(ten_vector), bitwise::vector_int<uint8_t, 5>>, 
+                  "Constant 10 should create a 5-bit vector");
+                 
+    static_assert(std::is_same_v<decltype(large_vector), bitwise::vector_int<uint8_t, 8>>, 
+                  "Constant 104 should create a 8-bit vector");
+}
+
 int main() {
     std::cout << CYAN << "========================================" << std::endl;
     std::cout << "   RUNNING VECTOR_INT CLASS UNIT TESTS" << std::endl;
@@ -709,7 +779,8 @@ int main() {
     test_vector_int_constant_operations();
     test_vector_int_load_from();
     test_vector_int_equals_to();
-    test_vector_int_random_operations(); // Add the new random tests
+    test_vector_int_random_operations();
+    test_vector_int_factory_from_constant();
     
     print_summary();
     
