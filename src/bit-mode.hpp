@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <utility>
 #include <iostream>
-#include <cstdint> // Add missing include
+#include <cstdint>
 
 #include "constructs.hpp" 
 
@@ -420,28 +420,22 @@ class vector_int {
     }
     
     template <int other_bits>
-    vector_int<vector_store_type, bits> get_ored(
+    vector_int_higher_precision_t<other_bits> get_ored(
         vector_int<vector_store_type, other_bits> other) const {
         
-        static_assert(other_bits <= bits, "The other vector must have less or equal bits than this one");
-
         return get_oped<other_bits, op_or>(other);
     }
 
     template <int other_bits>
-    vector_int<vector_store_type, bits> get_xored(
+    vector_int_higher_precision_t<other_bits> get_xored(
         vector_int<vector_store_type, other_bits> other) const {
-        
-        static_assert(other_bits <= bits, "The other vector must have less or equal bits than this one");
         
         return get_oped<other_bits, op_xor>(other);
     }
 
     template <int other_bits>
-    vector_int<vector_store_type, bits> get_anded(
+    vector_int_higher_precision_t<other_bits> get_anded(
         vector_int<vector_store_type, other_bits> other) const {
-        
-        static_assert(other_bits <= bits, "The other vector must have less or equal bits than this one");
         
         return get_oped<other_bits, op_and>(other);
     }
@@ -614,12 +608,13 @@ class vector_int {
     }
 
     template <int other_bits, typename op_t>
-    vector_int<vector_store_type, bits> get_oped(
+    vector_int_higher_precision_t<other_bits> get_oped(
         vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
+        constexpr int max_bits = (bits > other_bits ? bits : other_bits);
 
-        vector_int<vector_store_type, bits> result;
+        vector_int<vector_store_type, max_bits> result;
 
         for_each_in<min_bits>([&]<std::size_t i>() {
             auto a = std::get<i>(numbers);
@@ -628,12 +623,21 @@ class vector_int {
             std::get<i>(result.numbers) = op_t::apply(a, b);
         });
 
-        for_each_in<bits - min_bits>([&]<std::size_t i>() {
-            constexpr auto action = op_t::template action_for_bit<int, 0>(0);
-            
-            auto a = std::get<min_bits + i>(numbers);
-            std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
-        });
+        if constexpr (other_bits < bits) {
+            for_each_in<bits - min_bits>([&]<std::size_t i>() {
+                constexpr auto action = op_t::template action_for_bit<int, 0>(0);
+                
+                auto a = std::get<min_bits + i>(numbers);
+                std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
+            });
+        } else if constexpr (other_bits > bits) {
+            for_each_in<other_bits - min_bits>([&]<std::size_t i>() {
+                constexpr auto action = op_t::template action_for_bit<int, 0>(0);
+                
+                auto a = std::get<min_bits + i>(other.numbers);
+                std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
+            });
+        }
 
         return result;
     }
@@ -664,6 +668,34 @@ class vector_int {
         });
 
         return result;
+    }
+};
+
+struct vector_int_factory {
+    template <typename vector_store_type, int constant>
+    static auto from_constant() {
+        constexpr auto bits 
+            = constats_ops<int>::get_highest_set_bit<constant>();
+
+        vector_int<vector_store_type, bits> result;
+
+        for_each_bit([&]<std::size_t bit_idx>() {
+            constexpr auto is_set 
+                = constats_ops<vector_store_type>::template is_set_at<constant>(bit_idx);
+
+            if constexpr (is_set) {
+                std::get<bit_idx>(result.numbers) 
+                    = constats_ops<vector_store_type>::ones;
+            } else {
+                std::get<bit_idx>(result.numbers) = 0;
+            }
+        });
+    }
+
+  private:
+    template <int count, typename Callback>
+    static void for_each_in(Callback&& cb) {
+        for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});
     }
 };
 

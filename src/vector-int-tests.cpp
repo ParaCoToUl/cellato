@@ -285,6 +285,60 @@ void test_vector_int_mixed_precision_operations() {
     
     static_assert(std::is_same_v<decltype(small_plus_large), bitwise::vector_int<uint8_t, 4>>, 
                  "Small + Large should return a vector with large precision (4 bits)");
+    
+    // NEW SECTION: Test operations when calling from smaller to larger vector
+    std::cout << "  Testing small.operation(large) - Small calling operations on larger vector:" << std::endl;
+    
+    // Small OR Large
+    auto small_or_large_reverse = small.get_ored(large);
+    assert_equal(7, small_or_large_reverse.get_at(0), "Small.get_ored(Large) at index 0 should be 1|7=7");
+    assert_equal(10, small_or_large_reverse.get_at(1), "Small.get_ored(Large) at index 1 should be 2|10=10");
+    assert_equal(15, small_or_large_reverse.get_at(2), "Small.get_ored(Large) at index 2 should be 3|12=15");
+    
+    // Check that result has same size as small (2 bits)
+    static_assert(std::is_same_v<decltype(small_or_large_reverse), bitwise::vector_int<uint8_t, 4>>, 
+                 "Small.get_ored(Large) should return a vector with small's precision (2 bits)");
+    
+    // Small AND Large
+    auto small_and_large_reverse = small.get_anded(large);
+    assert_equal(1, small_and_large_reverse.get_at(0), "Small.get_anded(Large) at index 0 should be 1&7=1");
+    assert_equal(2, small_and_large_reverse.get_at(1), "Small.get_anded(Large) at index 1 should be 2&10=2");
+    assert_equal(0, small_and_large_reverse.get_at(2), "Small.get_anded(Large) at index 2 should be 3&12=0");
+    
+    // Check that result has same size as small (2 bits)
+    static_assert(std::is_same_v<decltype(small_and_large_reverse), bitwise::vector_int<uint8_t, 4>>, 
+                 "Small.get_anded(Large) should return a vector with small's precision (2 bits)");
+    
+    // Small XOR Large
+    auto small_xor_large_reverse = small.get_xored(large);
+    assert_equal(6, small_xor_large_reverse.get_at(0), "Small.get_xored(Large) at index 0 should be 1^7=6");
+    assert_equal(8, small_xor_large_reverse.get_at(1), "Small.get_xored(Large) at index 1 should be 2^10=8");
+    assert_equal(15, small_xor_large_reverse.get_at(2), "Small.get_xored(Large) at index 2 should be 3^12=15");
+    
+    // Check that result has same size as small (2 bits)
+    static_assert(std::is_same_v<decltype(small_xor_large_reverse), bitwise::vector_int<uint8_t, 4>>, 
+                 "Small.get_xored(Large) should return a vector with small's precision (2 bits)");
+    
+    // Test medium.operation(large)
+    std::cout << "  Testing medium.operation(large) - Medium calling operations on larger vector:" << std::endl;
+    
+    // Medium OR Large
+    auto medium_or_large_reverse = medium.get_ored(large);
+    assert_equal(7, medium_or_large_reverse.get_at(0), "Medium.get_ored(Large) at index 0 should be 3|7=7");
+    assert_equal(15, medium_or_large_reverse.get_at(1), "Medium.get_ored(Large) at index 1 should be 5|10=15");
+    assert_equal(14, medium_or_large_reverse.get_at(2), "Medium.get_ored(Large) at index 2 should be 6|12=14");
+    
+    // Medium AND Large
+    auto medium_and_large_reverse = medium.get_anded(large);
+    assert_equal(3, medium_and_large_reverse.get_at(0), "Medium.get_anded(Large) at index 0 should be 3&7=3");
+    assert_equal(0, medium_and_large_reverse.get_at(1), "Medium.get_anded(Large) at index 1 should be 5&10=0");
+    assert_equal(4, medium_and_large_reverse.get_at(2), "Medium.get_anded(Large) at index 2 should be 6&12=4");
+    
+    // Medium XOR Large
+    auto medium_xor_large_reverse = medium.get_xored(large);
+    assert_equal(4, medium_xor_large_reverse.get_at(0), "Medium.get_xored(Large) at index 0 should be 3^7=4");
+    assert_equal(15, medium_xor_large_reverse.get_at(1), "Medium.get_xored(Large) at index 1 should be 5^10=15");
+    assert_equal(10, medium_xor_large_reverse.get_at(2), "Medium.get_xored(Large) at index 2 should be 6^12=10");
 }
 
 // Test shift operations
@@ -564,6 +618,43 @@ void test_vector_int_random_operations() {
         int expected_xor2 = medium_val ^ small_val;
         assert_equal(expected_xor2, medium_xor_small.get_at(test_idx),
                      "Random Medium ^ Small at index " + std::to_string(test_idx));
+        
+        // NEW SECTION: Testing Small.operation(Large) - small vector calling operations on larger vector
+        // Small OR Large
+        auto small_or_large_reverse = small.get_ored(large);
+        int expected_or1_rev = small_val | large_val;
+        assert_equal(expected_or1_rev, small_or_large_reverse.get_at(test_idx),
+                     "Random Small.get_ored(Large) at index " + std::to_string(test_idx));
+        
+        // Small AND Large
+        auto small_and_large_reverse = small.get_anded(large);
+        int expected_and1_rev = small_val & large_val;
+        assert_equal(expected_and1_rev, small_and_large_reverse.get_at(test_idx),
+                     "Random Small.get_anded(Large) at index " + std::to_string(test_idx));
+        
+        // Small XOR Large
+        auto small_xor_large_reverse = small.get_xored(large);
+        int expected_xor1_rev = small_val ^ large_val;
+        assert_equal(expected_xor1_rev, small_xor_large_reverse.get_at(test_idx),
+                     "Random Small.get_xored(Large) at index " + std::to_string(test_idx));
+        
+        // Medium OR Large
+        auto medium_or_large_reverse = medium.get_ored(large);
+        int expected_or2_rev = medium_val | large_val;
+        assert_equal(expected_or2_rev, medium_or_large_reverse.get_at(test_idx),
+                     "Random Medium.get_ored(Large) at index " + std::to_string(test_idx));
+        
+        // Medium AND Large
+        auto medium_and_large_reverse = medium.get_anded(large);
+        int expected_and2_rev = medium_val & large_val;
+        assert_equal(expected_and2_rev, medium_and_large_reverse.get_at(test_idx),
+                     "Random Medium.get_anded(Large) at index " + std::to_string(test_idx));
+        
+        // Medium XOR Large
+        auto medium_xor_large_reverse = medium.get_xored(large);
+        int expected_xor2_rev = medium_val ^ large_val;
+        assert_equal(expected_xor2_rev, medium_xor_large_reverse.get_at(test_idx),
+                     "Random Medium.get_xored(Large) at index " + std::to_string(test_idx));
         
         // Test 3: Constant operations (random constant based on vector size)
         int small_const = std::rand() % 4;  // Random 2-bit constant
