@@ -95,7 +95,7 @@ class bit_grid {
         });
 
         for_each_bit([&]<std::size_t bit_idx>() {
-            std::get<bit_idx>(grid_pointers)[bit_idx] = std::get<bit_idx>(grid).data();
+            std::get<bit_idx>(grid_pointers) = std::get<bit_idx>(grid).data();
         });
 
         for (std::size_t y = 0; y < y_size_physical(); ++y) {
@@ -166,6 +166,10 @@ class bit_grid {
     std::size_t y_size_physical() const {
         return _y_size;
     }
+    
+    storage_tuple_of_pointers data() const {
+        return grid_pointers;
+    }
 
   private:
   
@@ -229,11 +233,21 @@ struct op_shift_right {
     static auto apply(T a, U b) {
         return a >> b;
     }
+
+    template <int b, typename T>
+    static auto apply(T a) {
+        return a >> b;
+    }
 };
 
 struct op_shift_left {
     template <typename T, typename U>
     static auto apply(T a, U b) {
+        return a << b;
+    }
+
+    template <int b, typename T>
+    static auto apply(T a) {
         return a << b;
     }
 };
@@ -444,6 +458,20 @@ class vector_int {
         return get_oped<other_bits, op_and>(other);
     }
 
+    vector_int<vector_store_type, bits> mask_out_columns(
+        vector_store_type mask) const {
+        vector_int<vector_store_type, bits> result;
+    
+        for_each_in<bits>([&]<std::size_t i>() {
+            auto word = std::get<i>(numbers);
+            auto masked_word = word & mask;
+            
+            std::get<i>(result.numbers) = masked_word;
+        });
+
+        return result;
+    }
+
     template <int target_bits>
     vector_int<vector_store_type, target_bits> to_vector_with_bits() const {
         vector_int<vector_store_type, target_bits> result;
@@ -511,6 +539,18 @@ class vector_int {
         return result;
     }
 
+    template <typename tuple_of_pointers_storage_t>
+    void save_to(tuple_of_pointers_storage_t storage, std::size_t offset) const {
+        
+        constexpr auto storage_size = std::tuple_size_v<tuple_of_pointers_storage_t>;
+        constexpr auto saved_bits = std::min<int>(storage_size, bits);
+        
+        for_each_in<saved_bits>([&]<std::size_t bit_idx>() {
+            auto ptr_to_ith_storage = std::get<bit_idx>(storage);
+            ptr_to_ith_storage[offset] = std::get<bit_idx>(numbers);
+        });
+    }
+
     template <int other_bits>
     vector_store_type equals_to(
         vector_int<vector_store_type, other_bits> other) const {
@@ -535,6 +575,36 @@ class vector_int {
             for_each_in<other_bits - bits>([&]<std::size_t i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
                 result &= ~a;
+            });
+        }
+
+        return result;
+    }
+
+    template <int other_bits>
+    vector_store_type not_equal_to(
+        vector_int<vector_store_type, bits> other) const {
+        
+        constexpr int min_bits = (bits < other_bits ? bits : other_bits);
+        vector_store_type result = 0;
+
+        for_each_in<min_bits>([&]<std::size_t i>() {
+            auto a = std::get<i>(numbers);
+            auto b = std::get<i>(other.numbers);
+            
+            result |= a ^ b;
+        });
+
+        if constexpr (other_bits < bits) {
+            for_each_in<bits - other_bits>([&]<std::size_t i>() {
+                auto a = std::get<min_bits + i>(numbers);
+                result |= a;
+            });
+        }   
+        else if constexpr (other_bits > bits) {
+            for_each_in<other_bits - bits>([&]<std::size_t i>() {
+                auto a = std::get<min_bits + i>(other.numbers);
+                result |= a;
             });
         }
 
@@ -589,6 +659,20 @@ class vector_int {
         for_each_in<bits>([&]<std::size_t i>() {
             auto word = std::get<i>(numbers);
             auto shifted_word = shift_op_t::apply(word, shift); 
+
+            std::get<i>(result.numbers) = shifted_word;
+        });
+
+        return result;
+    }
+
+    template <typename shift_op_t, int shift>
+    vector_int<vector_store_type, bits> get_shifted_vector() const {
+        vector_int<vector_store_type, bits> result;
+
+        for_each_in<bits>([&]<std::size_t i>() {
+            auto word = std::get<i>(numbers);
+            auto shifted_word = shift_op_t::template apply<shift>(word); 
 
             std::get<i>(result.numbers) = shifted_word;
         });
@@ -700,6 +784,21 @@ struct vector_int_factory {
         });
 
         return result;
+    }
+
+    template <typename vector_store_type>
+    static auto from_condition_result(vector_store_type condition_result) {
+        vector_int<vector_store_type, 1> result;
+        std::get<0>(result.numbers) = condition_result;
+        return result;
+    }
+
+    template <typename vector_store_type, typename pointer_storage_t>
+    static auto load_from(pointer_storage_t storage, std::size_t offset) {
+        constexpr auto bits = std::tuple_size_v<pointer_storage_t>;
+        static_assert(bits > 0, "Storage must have at least one element");
+
+        return vector_int<vector_store_type, bits>::load_from(storage, offset);
     }
 
   private:

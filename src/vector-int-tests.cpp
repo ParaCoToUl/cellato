@@ -765,6 +765,62 @@ void test_vector_int_factory_from_constant() {
                   "Constant 104 should create a 8-bit vector");
 }
 
+// Test mask_out_columns operation
+void test_vector_int_mask_out_columns() {
+    begin_test("vector_int - Mask Out Columns Operation");
+    
+    using vint = bitwise::vector_int<uint8_t, 3>;
+    vint v;
+    
+    // Fill with known pattern
+    for (int i = 0; i < 8; i++) {
+        v.set_at(i, i);  // Values 0, 1, 2, 3, 4, 5, 6, 7
+    }
+    
+    // Test case 1: Mask with all bits set - should preserve all columns
+    uint8_t full_mask = 0xFF;  // All bits set
+    auto full_masked = v.mask_out_columns(full_mask);
+    for (int i = 0; i < 8; i++) {
+        assert_equal(v.get_at(i), full_masked.get_at(i), 
+                     "Full mask should preserve value at index " + std::to_string(i));
+    }
+    
+    // Test case 2: Mask with no bits set - should clear all columns
+    uint8_t zero_mask = 0x00;  // No bits set
+    auto zero_masked = v.mask_out_columns(zero_mask);
+    for (int i = 0; i < 8; i++) {
+        assert_equal(0, zero_masked.get_at(i), 
+                     "Zero mask should clear value at index " + std::to_string(i));
+    }
+    
+    // Test case 3: Mask with even bits set (0, 2, 4, 6) - should preserve even columns
+    uint8_t even_mask = 0x55;  // 01010101 in binary
+    auto even_masked = v.mask_out_columns(even_mask);
+    for (int i = 0; i < 8; i++) {
+        int expected = (i % 2 == 0) ? v.get_at(i) : 0;
+        assert_equal(expected, even_masked.get_at(i), 
+                     "Even mask should preserve only even indices at index " + std::to_string(i));
+    }
+    
+    // Test case 4: Mask with odd bits set (1, 3, 5, 7) - should preserve odd columns
+    uint8_t odd_mask = 0xAA;  // 10101010 in binary
+    auto odd_masked = v.mask_out_columns(odd_mask);
+    for (int i = 0; i < 8; i++) {
+        int expected = (i % 2 == 1) ? v.get_at(i) : 0;
+        assert_equal(expected, odd_masked.get_at(i), 
+                     "Odd mask should preserve only odd indices at index " + std::to_string(i));
+    }
+    
+    // Test case 5: Mask with specific pattern
+    uint8_t pattern_mask = 0xF0;  // 11110000 in binary - preserve first 4 indices
+    auto pattern_masked = v.mask_out_columns(pattern_mask);
+    for (int i = 0; i < 8; i++) {
+        int expected = (i < 4) ? 0 : v.get_at(i);
+        assert_equal(expected, pattern_masked.get_at(i), 
+                     "Pattern mask should preserve only indices 4-7 at index " + std::to_string(i));
+    }
+}
+
 int main() {
     std::cout << CYAN << "========================================" << std::endl;
     std::cout << "   RUNNING VECTOR_INT CLASS UNIT TESTS" << std::endl;
@@ -781,6 +837,7 @@ int main() {
     test_vector_int_equals_to();
     test_vector_int_random_operations();
     test_vector_int_factory_from_constant();
+    test_vector_int_mask_out_columns(); // New test for mask_out_columns
     
     print_summary();
     

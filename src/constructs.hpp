@@ -11,10 +11,23 @@ namespace expr_tree {
 
 template <typename value_t, value_t Value>
 struct constant {
+    using type = value_t;
     static constexpr value_t value = Value;
 };
 
+template <typename state_t, state_t Value>
+struct state_constant {
+    using type = state_t;
+    static constexpr state_t value = Value;
+};
+
 struct current_state {};
+
+template <int x_offset_val, int y_offset_val>
+struct neighbor_at {
+    static constexpr int x_offset = x_offset_val;
+    static constexpr int y_offset = y_offset_val;
+};
 
 struct moore_8_neighbors {};
 struct moore_4_neighbors {};
