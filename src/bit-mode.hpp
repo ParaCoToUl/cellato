@@ -81,6 +81,21 @@ class bit_grid {
 
     using original_state_t = typename states_dict_t::state_t;
 
+    bit_grid() = default;
+
+    bit_grid(std::size_t height, std::size_t width)
+        : _x_size(width / word_store_bits), _y_size(height) {
+        grid = storage_tuple_t{};
+        
+        for_each_bit([&]<std::size_t bit_idx>() {
+            std::get<bit_idx>(grid).resize(y_size_physical() * x_size_physical());
+        });
+
+        for_each_bit([&]<std::size_t bit_idx>() {
+            std::get<bit_idx>(grid_pointers) = std::get<bit_idx>(grid).data();
+        });
+    }
+
     bit_grid(std::size_t height, std::size_t width, const original_state_t* grid_input)
         : _x_size(width / word_store_bits), _y_size(height) {
 
