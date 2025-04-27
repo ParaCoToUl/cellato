@@ -96,7 +96,7 @@ struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static bool evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
@@ -151,7 +151,7 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
         auto shifted_center = shift_center(center);
         auto shifted_neighbor = shift_neighbor(neighbor);
 
-        return center.get_ored(shifted_center);
+        return shifted_center.get_ored(shifted_neighbor);
     }
 
   private:
@@ -159,21 +159,21 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
 
     static vint shift_center(vint center) {
         if constexpr (x_offset > 0) {
-            return center.template get_left_shifted_vector<x_offset>();
+            return center.template get_right_shifted_vector<x_offset>();
         } else if constexpr (x_offset < 0) {
-            return center.template get_right_shifted_vector<-x_offset>();
+            return center.template get_left_shifted_vector<-x_offset>();
         } else {
-            return center;
+            throw std::logic_error("Invalid x_offset value");
         }
     }
     
     static vint shift_neighbor(vint neighbor) {
         if constexpr (x_offset > 0) {
-            return neighbor.template get_right_shifted_vector<vector_width_bits - x_offset>();
+            return neighbor.template get_left_shifted_vector<vector_width_bits - x_offset>();
         } else if constexpr (x_offset < 0) {
-            return neighbor.template get_left_shifted_vector<vector_width_bits + x_offset>();
+            return neighbor.template get_right_shifted_vector<vector_width_bits + x_offset>();
         } else {
-            return neighbor;
+            throw std::logic_error("Invalid x_offset value");
         }
     }
 

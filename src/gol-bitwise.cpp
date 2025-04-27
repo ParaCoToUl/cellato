@@ -76,9 +76,10 @@ bit_grid<cell_row_t, cell_state_dictionary> standard_to_bitgrid(
     
     std::vector<cell_state> padded_grid(height * adjusted_width, cell_state::dead);
 
-    // Copy original grid with padding
     for (std::size_t y = 0; y < height; y++) {
-        std::copy(grid + y * width, grid + (y + 1) * width, padded_grid.data() + y * adjusted_width);
+        std::copy(grid + y * width, 
+                 grid + (y + 1) * width, 
+                 padded_grid.data() + y * adjusted_width + word_bits);
     }
 
     return bit_grid<cell_row_t, cell_state_dictionary>(height, adjusted_width, padded_grid.data());
@@ -97,6 +98,7 @@ std::vector<cell_state> bitgrid_to_standard(
     
     auto adjusted_grid = bit_grid.to_original_representation();
     
+    // Copy from the padded grid back to the standard grid, skipping the padding
     for (std::size_t y = 0; y < height; ++y) {
         for (std::size_t x = 0; x < width; ++x) {
             standard_grid[y * width + x] = adjusted_grid[y * adjusted_width + x + bits_per_word];
@@ -118,7 +120,7 @@ void run_algorithm_bitwise(std::size_t height, std::size_t width,
     // Get the adjusted width (may be padded)
     std::size_t adjusted_width = bit_input.x_size_original();
     std::size_t bits_per_word = sizeof(cell_row_t) * 8;
-    std::size_t adjusted_width_in_bit_grid = adjusted_width / bits_per_word;
+    std::size_t bit_grid_phys_width = bit_input.x_size_physical();
 
     // Create grid config for bitwise evaluation
     using grid_conf_t = grid_config<cell_row_t, cell_state_dictionary>;
@@ -126,21 +128,29 @@ void run_algorithm_bitwise(std::size_t height, std::size_t width,
     auto grid_data = bit_input.data();
     auto grid_data_out = bit_output.data();
 
-    // For each position
+    // For each position - note that the physical x coordinate needs to be offset
+    // to account for the padding we added
     for (std::size_t y = 1; y < height - 1; ++y) {
-        for (std::size_t x = 1; x < adjusted_width - 1; ++x) {
+        // Loop through the original width plus an additional word on each side
+        for (std::size_t x = 1; x < bit_grid_phys_width - 1; ++x) {
             // Create the state for this position
             grid_conf_t state;
             state.x = x;
             state.y = y;
-            state.width_b = adjusted_width_in_bit_grid;
+            state.width_b = bit_grid_phys_width;
             state.height_b = height;
             state.bit_grid = grid_data;
             
             // Evaluate algorithm and set result
+            // auto initial_state = evaluator<cell_row_t, cell_state_dictionary, current_state>::evaluate(state);
             auto result = evaluator<cell_row_t, cell_state_dictionary, Algorithm>::evaluate(state);
 
-            auto offset = y * state.width_b + x;
+            // Debug output
+            // std::cout << "Raw data:      " << static_cast<int>(std::get<0>(grid_data)[y * bit_grid_phys_width + x]) << std::endl;
+            // std::cout << "Initial state: " << initial_state.to_str() << std::endl;
+            // std::cout << "Result:        " << result.to_str() << std::endl << std::endl;
+
+            auto offset = y * bit_grid_phys_width + x;
             result.save_to(grid_data_out, offset);
         }
     }
