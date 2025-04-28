@@ -74,7 +74,7 @@ class bit_grid_simple_iterator {
         auto padded_grid = get_padded_data(grid, height, width);
 
         auto padded_width = width + 2 * word_width_bits;
-        auto padded_height = height + 1;
+        auto padded_height = height + 2;
 
         input_grid = grid_t(padded_height, padded_width, padded_grid.data());
         intermediate_grid = grid_t(padded_height, padded_width);
@@ -124,7 +124,7 @@ class bit_grid_simple_iterator {
         auto padded_width = final_grid->x_size_original();
         
         auto original_width = final_grid->x_size_original() - 2 * word_width_bits;
-        auto original_height = final_grid->y_size_original() - 1;
+        auto original_height = final_grid->y_size_original() - 2;
 
         std::vector<cell_orig_state_t> result(original_height * original_width);
 
@@ -148,7 +148,7 @@ class bit_grid_simple_iterator {
 
     std::vector<cell_orig_state_t> get_padded_data(const std::vector<cell_orig_state_t>& grid, std::size_t height, std::size_t width) {
         std::size_t padded_width = width + 2 * word_width_bits;
-        std::size_t padded_height = height + 1;
+        std::size_t padded_height = height + 2;
 
         std::vector<cell_orig_state_t> padded_data(padded_height * padded_width, state_dictionary_t::index_to_state(0));
 
@@ -163,7 +163,7 @@ class bit_grid_simple_iterator {
 
     void print_grid(grid_t& grid) const {
         auto not_padded_width = grid.x_size_original() - 2 * word_width_bits;
-        auto not_padded_height = grid.y_size_original() - 1;
+        auto not_padded_height = grid.y_size_original() - 2;
 
         for (std::size_t y = 0; y < not_padded_height; ++y) {
             for (std::size_t x = 0; x < not_padded_width; ++x) {

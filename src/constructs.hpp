@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <utility>
 #include <iostream>
+#include <string>
 
 namespace expr_tree {
 
@@ -150,6 +151,13 @@ struct evaluator<cell_type, constant<const_type, Value>> {
     }
 };
 
+template <typename cell_type, typename state_type, state_type Value>
+struct evaluator<cell_type, state_constant<state_type, Value>> {
+    static state_type evaluate(state_t<cell_type> state) {
+        return Value;
+    }
+};
+
 template <typename cell_type, typename Condition, typename Then, typename Else>
 struct evaluator<cell_type, if_then_else<Condition, Then, Else>> {
     static cell_type evaluate(state_t<cell_type> state) {
@@ -244,6 +252,125 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_4_neighbors>> 
             }
         }
         return sum;
+    }
+};
+
+}
+
+namespace iterators {
+
+template <typename config_t>
+class simple_grid_iterator {
+    using algorithm_t = typename config_t::algorithm_t;
+    using cell_state_t = typename config_t::cell_state_t;
+    using print_config_t = typename config_t::print_config_t;
+
+public:
+    simple_grid_iterator() : _height(0), _width(0), _padded_height(0), _padded_width(0), steps_(0) {}
+
+    void init(const std::vector<cell_state_t>& grid, std::size_t height, std::size_t width) {
+        _height = height;
+        _width = width;
+        
+        // Create padded grid with a border of 1 cell
+        _padded_height = height + 2;
+        _padded_width = width + 2;
+        
+        input_grid = create_padded_grid(grid, height, width);
+        intermediate_grid.resize(_padded_height * _padded_width);
+        std::copy(input_grid.begin(), input_grid.end(), intermediate_grid.begin());
+        
+        final_grid = &input_grid;
+    }
+
+    template <bool print = false>
+    void run(int steps) {
+        steps_ = steps;
+        
+        for (int step = 0; step < steps_; ++step) {
+            // Process cells (skip border)
+            for (std::size_t y = 1; y < _padded_height - 1; ++y) {
+                for (std::size_t x = 1; x < _padded_width - 1; ++x) {
+                    // Use simple evaluator
+                    simple_evaluator::grid_config<cell_state_t> state;
+                    state.grid = input_grid.data();
+                    state.height = _padded_height;
+                    state.width = _padded_width;
+                    state.x = x;
+                    state.y = y;
+                    
+                    // Evaluate using simple evaluator
+                    intermediate_grid[y * _padded_width + x] = 
+                        simple_evaluator::evaluator<cell_state_t, algorithm_t>::evaluate(state);
+                }
+            }
+            
+            if constexpr (print) {
+                std::cout << "Step " << step + 1 << ":\n";
+                print_grid(intermediate_grid);
+            }
+            
+            std::swap(input_grid, intermediate_grid);
+        }
+        
+        final_grid = &input_grid;
+    }
+
+    std::vector<cell_state_t> get_result() const {
+        // Extract the non-padded part of the grid
+        std::vector<cell_state_t> result(_height * _width);
+        
+        for (std::size_t y = 0; y < _height; ++y) {
+            for (std::size_t x = 0; x < _width; ++x) {
+                result[y * _width + x] = (*final_grid)[(y + 1) * _padded_width + (x + 1)];
+            }
+        }
+        
+        return result;
+    }
+
+    void print_current_grid() const {
+        print_grid(*final_grid);
+    }
+
+private:
+    std::vector<cell_state_t> input_grid;
+    std::vector<cell_state_t> intermediate_grid;
+    std::vector<cell_state_t>* final_grid;
+    
+    std::size_t _height;
+    std::size_t _width;
+    std::size_t _padded_height;
+    std::size_t _padded_width;
+    int steps_;
+
+    std::vector<cell_state_t> create_padded_grid(
+        const std::vector<cell_state_t>& grid, std::size_t height, std::size_t width) {
+        
+        std::vector<cell_state_t> padded_grid((_padded_height) * (_padded_width));
+        
+        // Fill padded grid with default values (assuming first enum value is the default)
+        std::fill(padded_grid.begin(), padded_grid.end(), static_cast<cell_state_t>(0));
+        
+        // Copy the inner grid
+        for (std::size_t y = 0; y < height; ++y) {
+            for (std::size_t x = 0; x < width; ++x) {
+                padded_grid[(y + 1) * _padded_width + (x + 1)] = grid[y * width + x];
+            }
+        }
+        
+        return padded_grid;
+    }
+
+    void print_grid(const std::vector<cell_state_t>& grid) const {
+        // Print the inner grid (non-padded part)
+        for (std::size_t y = 1; y < _padded_height - 1; ++y) {
+            for (std::size_t x = 1; x < _padded_width - 1; ++x) {
+                auto cell = grid[y * _padded_width + x];
+                std::cout << print_config_t::get_str(cell) << " ";
+            }
+            std::cout << "\n";
+        }
     }
 };
 
