@@ -11,6 +11,7 @@
 #include "bit-evaluator.hpp"
 #include "bitwise-iterator.hpp"
 #include "grid-utils.hpp"
+#include "fujita.hpp"
 
 // Control flags for execution modes
 namespace config {
@@ -37,8 +38,8 @@ namespace config {
     constexpr int SIMULATION_STEPS = 10;
     
     // Grid dimensions
-    constexpr std::size_t GRID_HEIGHT = 8 * 40 * 5;
-    constexpr std::size_t GRID_WIDTH = 32 * 20 * 5;  // Will be adjusted to word size
+    constexpr std::size_t GRID_HEIGHT = 8 * 40 * 10;
+    constexpr std::size_t GRID_WIDTH = 32 * 20 * 10;  // Will be adjusted to word size
     
     // Probability of alive cells in random grid
     constexpr double ALIVE_PROBABILITY = 0.3;
@@ -224,6 +225,38 @@ int main(int argc, char* argv[]) {
             "Simple", "Bitwise",
             config::PERFORMANCE_ITERATIONS
         );
+
+        // measure fujita performance
+        // TODO maybe fill with actual data ¯\_(ツ)_/¯
+
+        auto adjusted_width = width + 2 * sizeof(gol_config::cell_row_t) * 8;
+        adjusted_width /= sizeof(gol_config::cell_row_t) * 8;
+        auto adjusted_height = height + 2;
+        std::vector<gol_config::cell_row_t> fujita_grid_in(adjusted_height * adjusted_width, 0);
+        std::vector<gol_config::cell_row_t> fujita_grid_out(adjusted_height * adjusted_width, 0);
+
+        std::cout << "Fujita performance test... Warm up..." << std::endl;
+
+        baselines::compute_using_fujita(
+            fujita_grid_in.data(), fujita_grid_out.data(),
+            adjusted_height, adjusted_width,
+            config::PERFORMANCE_ITERATIONS
+        );
+
+        std::cout << "Fujita performance test... Running hot..." << std::endl;
+
+        auto start = std::chrono::high_resolution_clock::now();
+        baselines::compute_using_fujita(
+            fujita_grid_in.data(), fujita_grid_out.data(),
+            adjusted_height, adjusted_width,
+            config::PERFORMANCE_ITERATIONS
+        );
+        auto end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double, std::milli> elapsed = end - start;
+        std::cout << "Fujita performance test completed in " 
+                  << std::fixed << std::setprecision(3) 
+                  << elapsed.count() << " ms" << std::endl;
     }
     
     std::cout << "Simulation completed." << std::endl;

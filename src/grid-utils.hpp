@@ -185,7 +185,16 @@ void measure_performance(Iterator1& iter1, Iterator2& iter2,
                          const std::string& name1, const std::string& name2, 
                          int iterations) {
     std::cout << "Running performance measurement for " << iterations << " iterations..." << std::endl;
-    
+
+    std::cout << "Warming up..." << std::endl;
+
+    // Warm up the first iterator
+    for (int i = 0; i < iterations; i++) {
+        iter1.template run<false>(1);
+    }
+
+    std::cout << "Running hot..." << std::endl;
+
     // Start timers and run first iterator
     auto start1 = std::chrono::high_resolution_clock::now();
     
@@ -197,7 +206,17 @@ void measure_performance(Iterator1& iter1, Iterator2& iter2,
     std::chrono::duration<double, std::milli> elapsed1 = end1 - start1;
     
     // Reset iterator1 state by re-initializing (if needed)
+
+    // warm up
+
+    std::cout << "Warming up..." << std::endl;
+
+    for (int i = 0; i < iterations; i++) {
+        iter2.template run<false>(1);
+    }
     
+    std::cout << "Running hot..." << std::endl;
+
     // Run second iterator
     auto start2 = std::chrono::high_resolution_clock::now();
     
