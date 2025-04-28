@@ -127,7 +127,7 @@ class bit_grid {
                         auto set_bit = (index & (1 << bit_idx)) != 0;
 
                         if (set_bit) {
-                            word |= (1 << i);
+                            word |= (static_cast<store_word_type>(1) << i);
                         }
                     }
 
@@ -355,7 +355,7 @@ class vector_int {
         }
         
         for_each_bit([&]<std::size_t bit_idx>() {            
-            auto ith_bit = (value >> bit_idx) & 1;
+            auto ith_bit = static_cast<vector_store_type>((value >> bit_idx) & 1);
 
             auto old_value = std::get<bit_idx>(numbers);
             auto new_value = (old_value & ~(1 << index)) | (ith_bit << index);
@@ -402,11 +402,12 @@ class vector_int {
         vector_int<vector_store_type, res_bits> result;
 
         std::get<0>(result.numbers) = std::get<0>(numbers) ^ std::get<0>(other.numbers); 
+        
         vector_store_type carry = std::get<0>(numbers) & std::get<0>(other.numbers);
 
         for_each_in<min_bits - 1>([&]<std::size_t i>() {
             constexpr auto next_bit_idx = i + 1;
-
+            
             // Get bits from both vectors at the current position
             auto a = std::get<next_bit_idx>(numbers);
             auto b = std::get<next_bit_idx>(other.numbers);
@@ -418,7 +419,7 @@ class vector_int {
             // Calculate new carry: (a & b) | (carry & (a ^ b))
             carry = (a & b) | (carry & bit_xor);
         });
-
+        
         if constexpr (other_bits > bits) {
             // Fix: Properly propagate carry through all bits of the larger vector
             for_each_in<other_bits - bits>([&]<std::size_t i>() {
@@ -598,7 +599,7 @@ class vector_int {
 
     template <int other_bits>
     vector_store_type not_equal_to(
-        vector_int<vector_store_type, bits> other) const {
+        vector_int<vector_store_type, other_bits> other) const {
         
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = 0;

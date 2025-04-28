@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <cstdint>
+#include <bitset>
 
 #include "constructs.hpp"
 #include "bit-mode.hpp"
@@ -10,9 +12,9 @@ using namespace expr_tree;
 using namespace bitwise;
 using namespace bitwise_no_cache;
 
-using cell_row_t = uint8_t; // use only 8 bits
+using cell_row_t = std::uint64_t;
 
-enum class cell_state { dead, alive };  // Note: Updated order to match state_dictionary convention (typically starts with 0)
+enum class cell_state { dead, alive };
 
 // Define the state dictionary for mapping between cell states and bits
 using cell_state_dictionary = state_dictionary<cell_state, cell_state::dead, cell_state::alive>;
@@ -73,16 +75,17 @@ bit_grid<cell_row_t, cell_state_dictionary> standard_to_bitgrid(
     }
 
     std::size_t adjusted_width = width + 2 * word_bits;
-    
-    std::vector<cell_state> padded_grid(height * adjusted_width, cell_state::dead);
+    std::size_t adjusted_height = height + 2;
+
+    std::vector<cell_state> padded_grid(adjusted_height * adjusted_width, cell_state::dead);
 
     for (std::size_t y = 0; y < height; y++) {
-        std::copy(grid + y * width, 
-                 grid + (y + 1) * width, 
-                 padded_grid.data() + y * adjusted_width + word_bits);
+        for (std::size_t x = 0; x < width; x++) {
+            padded_grid[(y + 1) * adjusted_width + (x + word_bits)] = grid[y * width + x];
+        }
     }
 
-    return bit_grid<cell_row_t, cell_state_dictionary>(height, adjusted_width, padded_grid.data());
+    return bit_grid<cell_row_t, cell_state_dictionary>(adjusted_height, adjusted_width, padded_grid.data());
 }
 
 std::vector<cell_state> bitgrid_to_standard(
@@ -90,9 +93,9 @@ std::vector<cell_state> bitgrid_to_standard(
         
     std::size_t bits_per_word = sizeof(cell_row_t) * 8;
 
-    std::size_t height = bit_grid.y_size_original();
     std::size_t adjusted_width = bit_grid.x_size_original();
     std::size_t width = adjusted_width - 2 * bits_per_word;
+    std::size_t height = bit_grid.y_size_original() - 2; // Subtract padding
     
     std::vector<cell_state> standard_grid(height * width, cell_state::dead);
     
@@ -101,7 +104,7 @@ std::vector<cell_state> bitgrid_to_standard(
     // Copy from the padded grid back to the standard grid, skipping the padding
     for (std::size_t y = 0; y < height; ++y) {
         for (std::size_t x = 0; x < width; ++x) {
-            standard_grid[y * width + x] = adjusted_grid[y * adjusted_width + x + bits_per_word];
+            standard_grid[y * width + x] = adjusted_grid[(y + 1) * adjusted_width + (x + bits_per_word)];
         }
     }
 
@@ -115,12 +118,15 @@ void run_algorithm_bitwise(std::size_t height, std::size_t width,
     
     // Convert input to bit-grid representation
     auto bit_input = standard_to_bitgrid(input, height, width);
-    auto bit_output = standard_to_bitgrid(output, height, width);
-
-    // Get the adjusted width (may be padded)
-    std::size_t adjusted_width = bit_input.x_size_original();
-    std::size_t bits_per_word = sizeof(cell_row_t) * 8;
-    std::size_t bit_grid_phys_width = bit_input.x_size_physical();
+    
+    // Create a properly initialized output bit grid instead of using uninitialized memory
+    std::size_t word_bits = sizeof(cell_row_t) * 8;
+    std::size_t adjusted_width = width + 2 * word_bits;
+    std::size_t adjusted_height = height + 2;
+    
+    // Initialize output grid with all dead cells
+    std::vector<cell_state> output_init(adjusted_height * adjusted_width, cell_state::dead);
+    bit_grid<cell_row_t, cell_state_dictionary> bit_output(adjusted_height, adjusted_width, output_init.data());
 
     // Create grid config for bitwise evaluation
     using grid_conf_t = grid_config<cell_row_t, cell_state_dictionary>;
@@ -130,27 +136,23 @@ void run_algorithm_bitwise(std::size_t height, std::size_t width,
 
     // For each position - note that the physical x coordinate needs to be offset
     // to account for the padding we added
-    for (std::size_t y = 1; y < height - 1; ++y) {
+    for (std::size_t y = 1; y < bit_input.y_size_physical() - 1; ++y) {
         // Loop through the original width plus an additional word on each side
-        for (std::size_t x = 1; x < bit_grid_phys_width - 1; ++x) {
+        for (std::size_t x = 1; x < bit_input.x_size_physical() - 1; ++x) {
             // Create the state for this position
             grid_conf_t state;
             state.x = x;
             state.y = y;
-            state.width_b = bit_grid_phys_width;
-            state.height_b = height;
+            state.width_b = bit_input.x_size_physical();
+            state.height_b = bit_input.y_size_physical(); // Use physical height with padding
             state.bit_grid = grid_data;
             
             // Evaluate algorithm and set result
-            // auto initial_state = evaluator<cell_row_t, cell_state_dictionary, current_state>::evaluate(state);
             auto result = evaluator<cell_row_t, cell_state_dictionary, Algorithm>::evaluate(state);
 
             // Debug output
-            // std::cout << "Raw data:      " << static_cast<int>(std::get<0>(grid_data)[y * bit_grid_phys_width + x]) << std::endl;
-            // std::cout << "Initial state: " << initial_state.to_str() << std::endl;
-            // std::cout << "Result:        " << result.to_str() << std::endl << std::endl;
 
-            auto offset = y * bit_grid_phys_width + x;
+            auto offset = y * bit_input.x_size_physical() + x;
             result.save_to(grid_data_out, offset);
         }
     }
@@ -191,17 +193,20 @@ void run_GoL_reference_algorithm(
 void place_glider(cell_state* grid, std::size_t height, std::size_t width) {
     if (height < 5 || width < 5) return;
 
-    grid[1 * width + 2] = cell_state::alive;
-    grid[2 * width + 3] = cell_state::alive;
-    grid[3 * width + 1] = cell_state::alive;
-    grid[3 * width + 2] = cell_state::alive;
-    grid[3 * width + 3] = cell_state::alive;
+    auto x_start = 25;
+    auto y_start = 0;
+
+    grid[(y_start + 1) * width + (x_start + 2)] = cell_state::alive;
+    grid[(y_start + 2) * width + (x_start + 3)] = cell_state::alive;
+    grid[(y_start + 3) * width + (x_start + 1)] = cell_state::alive;
+    grid[(y_start + 3) * width + (x_start + 2)] = cell_state::alive;
+    grid[(y_start + 3) * width + (x_start + 3)] = cell_state::alive;
 }
 
 int main(int argc, char* argv[]) {
     std::size_t height = 10;
-    std::size_t width = 32;
-    std::size_t temporal_steps = 10;
+    std::size_t width = 64;
+    std::size_t temporal_steps = 15;
 
     std::vector<cell_state> grid(height * width, cell_state::dead);
     
@@ -226,7 +231,12 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
 
         // wait for 500ms
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        // wait for enter
+        std::cout << "Press Enter to continue...";
+        std::cin.get();
+        std::cout << std::endl;
 
         std::swap(input_grid, output_grid);
     }

@@ -25,7 +25,7 @@ namespace config {
     constexpr unsigned int RANDOM_SEED = 12345;
     
     // Run comparisons between simple and bitwise evaluators
-    constexpr bool RUN_COMPARISONS = true;
+    constexpr bool RUN_COMPARISONS = false;
     
     // Run performance tests
     constexpr bool RUN_PERFORMANCE = true;
@@ -37,8 +37,8 @@ namespace config {
     constexpr int SIMULATION_STEPS = 10;
     
     // Grid dimensions
-    constexpr std::size_t GRID_HEIGHT = 8 * 40;
-    constexpr std::size_t GRID_WIDTH = 32 * 20;  // Will be adjusted to word size
+    constexpr std::size_t GRID_HEIGHT = 8 * 40 * 5;
+    constexpr std::size_t GRID_WIDTH = 32 * 20 * 5;  // Will be adjusted to word size
     
     // Probability of alive cells in random grid
     constexpr double ALIVE_PROBABILITY = 0.3;
@@ -107,7 +107,8 @@ using game_of_life_algorithm =
 struct gol_config {
     using algorithm_t = game_of_life_algorithm;
     using state_dictionary_t = cell_state_dictionary;
-    using cell_row_t = uint32_t;
+    // using cell_row_t = uint32_t;
+    using cell_row_t = uint64_t;
     using print_config_t = gol_print_config;
 };
 
