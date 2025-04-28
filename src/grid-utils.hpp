@@ -8,6 +8,8 @@
 #include <random>
 #include <algorithm>
 #include <numeric>
+#include <chrono>
+#include <iomanip>
 #include <type_traits> // For std::is_enum
 
 namespace grid_utils {
@@ -176,6 +178,167 @@ std::size_t adjust_width_for_word_size(std::size_t width, bool adjust_if_needed 
     
     return width; // Already a valid width
 }
+
+// Performance measurement function that runs iterators for multiple iterations
+template <typename Iterator1, typename Iterator2>
+void measure_performance(Iterator1& iter1, Iterator2& iter2, 
+                         const std::string& name1, const std::string& name2, 
+                         int iterations) {
+    std::cout << "Running performance measurement for " << iterations << " iterations..." << std::endl;
+    
+    // Start timers and run first iterator
+    auto start1 = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i < iterations; i++) {
+        iter1.template run<false>(1);
+    }
+    
+    auto end1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed1 = end1 - start1;
+    
+    // Reset iterator1 state by re-initializing (if needed)
+    
+    // Run second iterator
+    auto start2 = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i < iterations; i++) {
+        iter2.template run<false>(1);
+    }
+    
+    auto end2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed2 = end2 - start2;
+    
+    // Print performance results
+    std::cout << "=== Performance Results ===" << std::endl;
+    std::cout << std::fixed << std::setprecision(3);
+    std::cout << name1 << ": " << elapsed1.count() << " ms" << std::endl;
+    std::cout << name2 << ": " << elapsed2.count() << " ms" << std::endl;
+    std::cout << "Performance ratio (" << name1 << "/" << name2 << "): " 
+              << std::setprecision(2) << (elapsed1.count() / elapsed2.count()) << "x" << std::endl;
+    std::cout << "==========================" << std::endl;
+}
+
+// Function to print two grids side-by-side with optional formatter
+template <typename CellState, typename Formatter>
+void print_grids_side_by_side(
+    const std::vector<CellState>& grid1, const std::vector<CellState>& grid2,
+    std::size_t height, std::size_t width,
+    const std::string& label1, const std::string& label2,
+    Formatter formatter) {
+    
+    // Print headers
+    std::cout << std::setw(width * 2) << std::left << label1
+              << " | " << std::setw(width * 2) << std::left << label2 
+              << std::endl;
+    
+    std::cout << std::string(width * 2 + 3 + width * 2, '-') << std::endl;
+    
+    // Print grids side by side
+    for (std::size_t y = 0; y < height; ++y) {
+        // Print first grid row
+        for (std::size_t x = 0; x < width; ++x) {
+            std::cout << formatter(grid1[y * width + x]);
+        }
+        
+        std::cout << " | "; // Separator
+        
+        // Print second grid row
+        for (std::size_t x = 0; x < width; ++x) {
+            std::cout << formatter(grid2[y * width + x]);
+        }
+        
+        std::cout << std::endl;
+    }
+}
+
+// Overload for default formatter
+template <typename CellState>
+void print_grids_side_by_side(
+    const std::vector<CellState>& grid1, const std::vector<CellState>& grid2,
+    std::size_t height, std::size_t width,
+    const std::string& label1 = "Grid 1", const std::string& label2 = "Grid 2") {
+    
+    print_grids_side_by_side(grid1, grid2, height, width, label1, label2,
+        [](const CellState& state) -> std::string {
+            auto symbol = std::to_string(static_cast<typename std::underlying_type<CellState>::type>(state));
+            if (symbol == "0") {
+                return "\033[1;90m" + symbol + "\033[0m "; // Dead cell
+            } else {
+                return "\033[1;33m" + symbol + "\033[0m "; // Alive cell
+            }
+        });
+}
+
+// Run both iterators in parallel for comparison - modified to deduce cell state type
+template <typename Iterator1, typename Iterator2>
+void compare_iterators_step_by_step(
+    Iterator1& iter1, Iterator2& iter2,
+    const std::string& name1, const std::string& name2,
+    std::size_t height, std::size_t width,
+    int steps,
+    bool print_grids_on_match = false,
+    bool print_grids_on_mismatch = true,
+    bool print_diff_details = true) {
+    
+    // Run first iteration to get cell state type
+    iter1.template run<false>(1);
+    iter2.template run<false>(1);
+    
+    // Get results to deduce cell state type
+    auto result1 = iter1.get_result();
+    auto result2 = iter2.get_result();
+    
+    // Use the actual results for the first comparison
+    bool equal = compare_grids(result1, result2, height, width, print_diff_details, 10);
+    
+    // Print step info
+    std::cout << "===== Step 1 of " << steps << " =====" << std::endl;
+    std::cout << name1 << " vs " << name2 << ": " 
+              << (equal ? "\033[1;32mMATCH\033[0m" : "\033[1;31mMISMATCH\033[0m") 
+              << std::endl;
+    
+    // Print grids if requested
+    if ((equal && print_grids_on_match) || (!equal && print_grids_on_mismatch)) {
+        print_grids_side_by_side(result1, result2, height, width, name1, name2);
+    }
+    
+    std::cout << std::endl;
+    
+    // Continue with the remaining steps
+    for (int step = 1; step < steps; ++step) {
+        // Run both iterators for one step
+        iter1.template run<false>(1);
+        iter2.template run<false>(1);
+        
+        // Get results
+        result1 = iter1.get_result();
+        result2 = iter2.get_result();
+        
+        // Compare results
+        equal = compare_grids(result1, result2, height, width, print_diff_details && !equal, 10);
+        
+        // Print step info
+        std::cout << "===== Step " << step + 1 << " of " << steps << " =====" << std::endl;
+        std::cout << name1 << " vs " << name2 << ": " 
+                  << (equal ? "\033[1;32mMATCH\033[0m" : "\033[1;31mMISMATCH\033[0m") 
+                  << std::endl;
+        
+        // Print grids if requested
+        if ((equal && print_grids_on_match) || (!equal && print_grids_on_mismatch)) {
+            print_grids_side_by_side(result1, result2, height, width, name1, name2);
+        }
+        
+        std::cout << std::endl;
+    }
+}
+
+// Enum for print verbosity levels
+enum class PrintMode {
+    Silent,      // No printing
+    Minimal,     // Print only step numbers and match/mismatch status
+    Differences, // Print differences when found
+    Verbose      // Print all grids at each step
+};
 
 } // namespace grid_utils
 

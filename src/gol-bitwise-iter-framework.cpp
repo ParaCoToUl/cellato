@@ -4,6 +4,7 @@
 #include <string>
 #include <chrono>
 #include <iomanip>
+#include <functional> // For std::function
 
 #include "constructs.hpp"
 #include "bit-mode.hpp"
@@ -13,8 +14,9 @@
 
 // Control flags for execution modes
 namespace config {
-    // Print grids during execution
-    constexpr bool PRINT_GRIDS = true;
+    // Print mode (silence, minimal, differences, verbose)
+    constexpr grid_utils::PrintMode PRINT_MODE = grid_utils::PrintMode::Minimal;
+    // constexpr grid_utils::PrintMode PRINT_MODE = grid_utils::PrintMode::Verbose;
     
     // Use a random grid instead of glider pattern
     constexpr bool USE_RANDOM_GRID = true;
@@ -22,11 +24,24 @@ namespace config {
     // Random seed value for reproducible tests
     constexpr unsigned int RANDOM_SEED = 12345;
     
-    // Compare results between simple and bitwise evaluators
-    constexpr bool COMPARE_RESULTS = true;
-
-    // Measure performance
-    constexpr bool MEASURE_PERFORMANCE = true;
+    // Run comparisons between simple and bitwise evaluators
+    constexpr bool RUN_COMPARISONS = true;
+    
+    // Run performance tests
+    constexpr bool RUN_PERFORMANCE = true;
+    
+    // Number of iterations for performance testing
+    constexpr int PERFORMANCE_ITERATIONS = 100;
+    
+    // Number of steps for regular simulation run
+    constexpr int SIMULATION_STEPS = 10;
+    
+    // Grid dimensions
+    constexpr std::size_t GRID_HEIGHT = 8 * 40;
+    constexpr std::size_t GRID_WIDTH = 32 * 20;  // Will be adjusted to word size
+    
+    // Probability of alive cells in random grid
+    constexpr double ALIVE_PROBABILITY = 0.3;
 }
 
 using namespace expr_tree;
@@ -92,7 +107,7 @@ using game_of_life_algorithm =
 struct gol_config {
     using algorithm_t = game_of_life_algorithm;
     using state_dictionary_t = cell_state_dictionary;
-    using cell_row_t = uint8_t;
+    using cell_row_t = uint32_t;
     using print_config_t = gol_print_config;
 };
 
@@ -113,13 +128,26 @@ void place_glider(std::vector<cell_state>& grid, std::size_t height, std::size_t
     grid[3 * width + 3] = cell_state::alive;
 }
 
-int main(int argc, char* argv[]) {
-    std::size_t height = 10;
-    std::size_t width = 32;  // Multiple of 8 for bitwise compatibility
-    std::size_t temporal_steps = 10;
+// Custom formatter for side-by-side grid comparison
+std::string format_cell(const cell_state& state) {
+    if (state == cell_state::alive) {
+        return GREEN_COLOR + std::string(ALIVE_SYMBOL) + "\033[0m ";
+    } else {
+        return RED_COLOR + std::string(DEAD_SYMBOL) + "\033[0m ";
+    }
+}
 
+int main(int argc, char* argv[]) {
+    // Set up grid dimensions
+    std::size_t height = config::GRID_HEIGHT;
+    std::size_t width = config::GRID_WIDTH;
+    
     // Make sure width is a multiple of the word size in bits
     width = adjust_width_for_word_size<uint8_t>(width);
+    
+    std::cout << "=== Game of Life Simulation ===" << std::endl;
+    std::cout << "Grid size: " << height << "x" << width << std::endl;
+    std::cout << "============================" << std::endl << std::endl;
 
     // Create initial grid
     std::vector<cell_state> initial_grid(height * width, cell_state::dead);
@@ -128,8 +156,8 @@ int main(int argc, char* argv[]) {
     if (config::USE_RANDOM_GRID) {
         // Define probabilities for cell states
         std::vector<std::tuple<cell_state, double>> probabilities = {
-            {cell_state::dead, 0.7},   // 70% probability of dead cells
-            {cell_state::alive, 0.3}   // 30% probability of alive cells
+            {cell_state::dead, 1.0 - config::ALIVE_PROBABILITY},
+            {cell_state::alive, config::ALIVE_PROBABILITY}
         };
         
         generate_random_grid(initial_grid, height, width, probabilities, config::RANDOM_SEED);
@@ -139,71 +167,64 @@ int main(int argc, char* argv[]) {
         std::cout << "Placed glider pattern on grid" << std::endl;
     }
     
-    // Create both iterators
-    simple_grid_iterator<gol_simple_config> simple_iterator;
-    bit_grid_simple_iterator<gol_config> bitwise_iterator;
-    
-    // Initialize both iterators with the same initial grid
-    simple_iterator.init(initial_grid, height, width);
-    bitwise_iterator.init(initial_grid, height, width);
-    
-    // Print initial grid
-    if (config::PRINT_GRIDS) {
-        std::cout << "Initial grid:\n";
-        simple_iterator.print_current_grid();
-        std::cout << std::endl;
+    // Run comparisons if enabled
+    if (config::RUN_COMPARISONS) {
+        std::cout << "\n=== Comparing Simple and Bitwise Implementations ===" << std::endl;
+        
+        // Create copies of the initial grid for comparison runs
+        std::vector<cell_state> grid_for_simple(initial_grid);
+        std::vector<cell_state> grid_for_bitwise(initial_grid);
+        
+        // Create both iterators
+        simple_grid_iterator<gol_simple_config> simple_iterator;
+        bit_grid_simple_iterator<gol_config> bitwise_iterator;
+        
+        // Initialize both iterators with the same initial grid
+        simple_iterator.init(grid_for_simple, height, width);
+        bitwise_iterator.init(grid_for_bitwise, height, width);
+        
+        // Set up print options based on config
+        bool print_grids_on_match = config::PRINT_MODE == grid_utils::PrintMode::Verbose;
+        bool print_grids_on_mismatch = config::PRINT_MODE == grid_utils::PrintMode::Verbose || 
+                                       config::PRINT_MODE == grid_utils::PrintMode::Differences;
+        bool print_diff_details = config::PRINT_MODE != grid_utils::PrintMode::Silent;
+        
+        // Run the comparison
+        compare_iterators_step_by_step(
+            simple_iterator, bitwise_iterator,
+            "Simple", "Bitwise",
+            height, width,
+            config::SIMULATION_STEPS,
+            print_grids_on_match,
+            print_grids_on_mismatch,
+            print_diff_details
+        );
     }
     
-    // Run the simulation for each step
-    for (std::size_t t = 0; t < temporal_steps; ++t) {
-        // Run a single step on both iterators with timing
-        auto simple_start = std::chrono::high_resolution_clock::now();
+    // Run performance tests if enabled
+    if (config::RUN_PERFORMANCE) {
+        std::cout << "\n=== Performance Testing ===" << std::endl;
         
-        simple_iterator.template run<config::PRINT_GRIDS>(1);
+        // Create copies of the initial grid for performance runs
+        std::vector<cell_state> grid_for_simple_perf(initial_grid);
+        std::vector<cell_state> grid_for_bitwise_perf(initial_grid);
         
-        auto simple_end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> simple_elapsed = simple_end - simple_start;
+        // Create fresh iterators for performance testing
+        simple_grid_iterator<gol_simple_config> simple_perf_iterator;
+        bit_grid_simple_iterator<gol_config> bitwise_perf_iterator;
         
-        auto bitwise_start = std::chrono::high_resolution_clock::now();
+        // Initialize both iterators with the same initial grid
+        simple_perf_iterator.init(grid_for_simple_perf, height, width);
+        bitwise_perf_iterator.init(grid_for_bitwise_perf, height, width);
         
-        bitwise_iterator.template run<config::PRINT_GRIDS>(1);
-        
-        auto bitwise_end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> bitwise_elapsed = bitwise_end - bitwise_start;
-        
-        // Get results from both iterators
-        auto simple_result = simple_iterator.get_result();
-        auto bitwise_result = bitwise_iterator.get_result();
-        
-        // Print step header
-        std::cout << "===== Step " << t + 1 << " =====\n";
-        
-        // Compare results if enabled
-        if (config::COMPARE_RESULTS) {
-            bool equal = compare_grids(simple_result, bitwise_result, height, width, true);
-            
-            std::cout << "Simple vs Bitwise: " 
-                      << (equal ? "\033[1;32mMATCH\033[0m" : "\033[1;31mMISMATCH\033[0m") 
-                      << std::endl;
-        }
-        
-        // Print performance results if enabled
-        if (config::MEASURE_PERFORMANCE) {
-            std::cout << "Performance: " 
-                      << "Simple: " << std::fixed << std::setprecision(3) << simple_elapsed.count() << " ms, "
-                      << "Bitwise: " << std::fixed << std::setprecision(3) << bitwise_elapsed.count() << " ms, "
-                      << "Ratio: " << std::fixed << std::setprecision(2) 
-                      << (simple_elapsed.count() / bitwise_elapsed.count())
-                      << "x" << std::endl;
-        }
-        
-        std::cout << std::endl;
-        
-        // Wait for 500ms between steps (optional)
-        if (config::PRINT_GRIDS) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
+        // Run the performance measurement
+        measure_performance(
+            simple_perf_iterator, bitwise_perf_iterator,
+            "Simple", "Bitwise",
+            config::PERFORMANCE_ITERATIONS
+        );
     }
-
+    
+    std::cout << "Simulation completed." << std::endl;
     return 0;
 }
