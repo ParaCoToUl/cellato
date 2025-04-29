@@ -19,7 +19,7 @@ struct grid_config {
     static constexpr int bits = state_dictionary_t::needed_bits;
 
     repeated_tuple_t<cell_row_t*, bits> bit_grid;
-    
+
     std::size_t height_b;
     std::size_t width_b;
 
@@ -28,17 +28,17 @@ struct grid_config {
 
 template <typename cell_row_type, typename state_dictionary_type>
 using state_t = grid_config<cell_row_type, state_dictionary_type>;
- 
+
 template <typename cell_row_type, typename state_dictionary_type, typename const_type, const_type Value>
 struct evaluator<cell_row_type, state_dictionary_type, constant<const_type, Value>> {
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
         return vector_int_factory::from_constant<cell_row_type, Value>();
     }
 };
 
 template <typename cell_row_type, typename state_dictionary_type, typename state_type, state_type Value>
 struct evaluator<cell_row_type, state_dictionary_type, state_constant<state_type, Value>> {
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
         constexpr auto index = state_dictionary_type::state_to_index(Value);
         return vector_int_factory::from_constant<cell_row_type, index>();
     }
@@ -78,7 +78,7 @@ struct evaluator<cell_row_type, state_dictionary_type, and_<Left, Right>> {
 
 template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
 struct evaluator<cell_row_type, state_dictionary_type, or_<Left, Right>> {
-    
+
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
@@ -92,7 +92,7 @@ struct evaluator<cell_row_type, state_dictionary_type, or_<Left, Right>> {
 
 template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
 struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
-    
+
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
@@ -113,7 +113,7 @@ struct evaluator<cell_row_type, state_dictionary_type, greater_than<Left, Right>
 
 template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
 struct evaluator<cell_row_type, state_dictionary_type, not_equals<Left, Right>> {
-    
+
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
@@ -144,9 +144,9 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
 
         if constexpr (x_offset == 0) {
             return center;
-        } 
+        }
 
-        auto neighbor = get_neighbor_vector_int(state);      
+        auto neighbor = get_neighbor_vector_int(state);
 
         auto shifted_center = shift_center(center);
         auto shifted_neighbor = shift_neighbor(neighbor);
@@ -166,7 +166,7 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
             throw std::logic_error("Invalid x_offset value");
         }
     }
-    
+
     static vint shift_neighbor(vint neighbor) {
         if constexpr (x_offset > 0) {
             return neighbor.template get_left_shifted_vector<vector_width_bits - x_offset>();

@@ -8,14 +8,19 @@
 #include <iostream>
 #include <cstdint>
 
-#include "constructs.hpp" 
+#include "constructs.hpp"
 
 namespace bitwise {
- 
+
 using namespace expr_tree;
 
 template <typename states_enum, states_enum... states>
 class state_dictionary {
+private:
+    constexpr static int log_2(int n) {
+        return (n < 2) ? 0 : 1 + log_2(n / 2);
+    }
+
 public:
     using index_t = int;
     using state_t = states_enum;
@@ -26,20 +31,16 @@ public:
     static constexpr index_t state_to_index(state_t state) {
         return state_to_index_impl(state, states...);
     }
-    
+
     static constexpr state_t index_to_state(index_t index) {
         constexpr state_t state_array[] = {states...};
-        if (index >= 0 && index < sizeof...(states)) {
+        if (index >= 0 && index < (index_t)sizeof...(states)) {
             return state_array[index];
         }
         throw std::out_of_range("Index out of range");
     }
 
 private:
-    constexpr static int log_2(int n) {
-        return (n < 2) ? 0 : 1 + log_2(n / 2);
-    }
-
     template <typename... Rest>
     static constexpr index_t state_to_index_impl(states_enum target, states_enum head) {
         return (target == head) ? 0 : throw std::out_of_range("State not found in dictionary");
@@ -86,7 +87,7 @@ class bit_grid {
     bit_grid(std::size_t height, std::size_t width)
         : _x_size(width / word_store_bits), _y_size(height) {
         grid = storage_tuple_t{};
-        
+
         for_each_bit([&]<std::size_t bit_idx>() {
             std::get<bit_idx>(grid).resize(y_size_physical() * x_size_physical());
         });
@@ -104,7 +105,7 @@ class bit_grid {
         }
 
         grid = storage_tuple_t{};
-        
+
         for_each_bit([&]<std::size_t bit_idx>() {
             std::get<bit_idx>(grid).resize(y_size_physical() * x_size_physical());
         });
@@ -116,14 +117,14 @@ class bit_grid {
         for (std::size_t y = 0; y < y_size_physical(); ++y) {
             for (std::size_t x = 0; x < x_size_physical(); ++x) {
                 auto word_idx = x + y * x_size_physical();
-                
+
                 for_each_bit([&]<std::size_t bit_idx>() {
                     store_word_type word = 0;
 
                     for (std::size_t i = 0; i < word_store_bits; ++i) {
                         auto state = grid_input[y * x_size_original() + x * word_store_bits + i];
                         auto index = states_dict_t::state_to_index(state);
-                        
+
                         auto set_bit = (index & (1 << bit_idx)) != 0;
 
                         if (set_bit) {
@@ -141,7 +142,7 @@ class bit_grid {
         if (x >= x_size_original() || y >= y_size_original()) {
             throw std::out_of_range("Cell coordinates out of range");
         }
-        
+
         auto bit_grid_idx = y * x_size_physical() + (x / word_store_bits);
         int state_idx = 0;
 
@@ -156,7 +157,7 @@ class bit_grid {
 
     std::vector<original_state_t> to_original_representation() const {
         std::vector<original_state_t> result(x_size_original() * y_size_original());
-        
+
         for (std::size_t y = 0; y < y_size_original(); ++y) {
             for (std::size_t x = 0; x < x_size_original(); ++x) {
                 result[y * x_size_original() + x] = get_cell(x, y);
@@ -181,18 +182,18 @@ class bit_grid {
     std::size_t y_size_physical() const {
         return _y_size;
     }
-    
+
     storage_tuple_of_pointers data() const {
         return grid_pointers;
     }
 
   private:
-  
+
     storage_tuple_t grid;
     storage_tuple_of_pointers grid_pointers;
 
     std::size_t _x_size, _y_size;
-    
+
     template <typename Callback, std::size_t... Is>
     void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) const {
         (cb.template operator()<Is>(), ...);
@@ -216,7 +217,7 @@ struct constats_ops {
         }
 
         int highest_bit = 0;
-        for (int i = 0; i < sizeof(const_t) * 8; ++i) {
+        for (int i = 0; i < (int)sizeof(const_t) * 8; ++i) {
             if ((value >> i) & 1) {
                 highest_bit = i;
             }
@@ -312,7 +313,7 @@ struct op_xor {
     template <typename const_t, const_t value>
     static constexpr bit_action action_for_bit(int bit_idx) {
         auto bit_value = (value >> bit_idx) & 1;
-        
+
         if (bit_value == 1) {
             return bit_action::FLIP;
         } else {
@@ -336,14 +337,14 @@ class vector_int {
     template <typename T, int N>
     friend class vector_int;
 
-    friend class vector_int_factory;
-    
+    friend struct vector_int_factory;
+
     using store_t = repeated_tuple_t<vector_store_type, bits>;
     static constexpr int width_in_bits = sizeof(vector_store_type) * 8;
 
     template <int other_bits>
     using vector_int_higher_precision_t = vector_int<vector_store_type, (bits > other_bits ? bits : other_bits)>;
-    
+
     static std::string type_info() {
         return "vector_int<" + std::to_string(bits) + ">";
     }
@@ -353,13 +354,13 @@ class vector_int {
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
-        
-        for_each_bit([&]<std::size_t bit_idx>() {            
+
+        for_each_bit([&]<std::size_t bit_idx>() {
             auto ith_bit = static_cast<vector_store_type>((value >> bit_idx) & 1);
 
             auto old_value = std::get<bit_idx>(numbers);
             auto new_value = (old_value & ~(1 << index)) | (ith_bit << index);
-            
+
             std::get<bit_idx>(numbers) = new_value;
         });
     }
@@ -371,11 +372,11 @@ class vector_int {
         }
 
         val_t value = 0;
-        
+
         for_each_bit([&]<std::size_t bit_idx>() {
             auto word = std::get<bit_idx>(numbers);
             auto bit = (word >> index) & 1;
-            
+
             value |= (bit << bit_idx);
         });
 
@@ -388,7 +389,7 @@ class vector_int {
         for (std::size_t i = 0; i < width_in_bits; ++i) {
             str += std::to_string(get_at(i)) + " ";
         }
-        
+
         return str;
     }
 
@@ -401,36 +402,36 @@ class vector_int {
 
         vector_int<vector_store_type, res_bits> result;
 
-        std::get<0>(result.numbers) = std::get<0>(numbers) ^ std::get<0>(other.numbers); 
-        
+        std::get<0>(result.numbers) = std::get<0>(numbers) ^ std::get<0>(other.numbers);
+
         vector_store_type carry = std::get<0>(numbers) & std::get<0>(other.numbers);
 
         for_each_in<min_bits - 1>([&]<std::size_t i>() {
             constexpr auto next_bit_idx = i + 1;
-            
+
             // Get bits from both vectors at the current position
             auto a = std::get<next_bit_idx>(numbers);
             auto b = std::get<next_bit_idx>(other.numbers);
-            
+
             // XOR the bits and XOR with carry for the result
             auto bit_xor = a ^ b;
             std::get<next_bit_idx>(result.numbers) = bit_xor ^ carry;
-            
+
             // Calculate new carry: (a & b) | (carry & (a ^ b))
             carry = (a & b) | (carry & bit_xor);
         });
-        
+
         if constexpr (other_bits > bits) {
             // Fix: Properly propagate carry through all bits of the larger vector
             for_each_in<other_bits - bits>([&]<std::size_t i>() {
                 constexpr auto bit_idx = min_bits + i;
-                
+
                 // Get bit from the larger vector
                 auto a = std::get<bit_idx>(other.numbers);
-                
+
                 // XOR with carry for the result
                 std::get<bit_idx>(result.numbers) = a ^ carry;
-                
+
                 // Update carry - if both the bit and current carry are 1, we need a new carry
                 carry = carry & a;
             });
@@ -438,13 +439,13 @@ class vector_int {
             // Fix: Same correction for when the first vector is larger
             for_each_in<bits - other_bits>([&]<std::size_t i>() {
                 constexpr auto bit_idx = min_bits + i;
-                
+
                 // Get bit from the larger vector
                 auto a = std::get<bit_idx>(numbers);
-                
+
                 // XOR with carry for the result
                 std::get<bit_idx>(result.numbers) = a ^ carry;
-                
+
                 // Update carry
                 carry = carry & a;
             });
@@ -452,36 +453,36 @@ class vector_int {
 
         return result;
     }
-    
+
     template <int other_bits>
     vector_int_higher_precision_t<other_bits> get_ored(
         vector_int<vector_store_type, other_bits> other) const {
-        
+
         return get_oped<other_bits, op_or>(other);
     }
 
     template <int other_bits>
     vector_int_higher_precision_t<other_bits> get_xored(
         vector_int<vector_store_type, other_bits> other) const {
-        
+
         return get_oped<other_bits, op_xor>(other);
     }
 
     template <int other_bits>
     vector_int_higher_precision_t<other_bits> get_anded(
         vector_int<vector_store_type, other_bits> other) const {
-        
+
         return get_oped<other_bits, op_and>(other);
     }
 
     vector_int<vector_store_type, bits> mask_out_columns(
         vector_store_type mask) const {
         vector_int<vector_store_type, bits> result;
-    
+
         for_each_in<bits>([&]<std::size_t i>() {
             auto word = std::get<i>(numbers);
             auto masked_word = word & mask;
-            
+
             std::get<i>(result.numbers) = masked_word;
         });
 
@@ -546,7 +547,7 @@ class vector_int {
 
         constexpr auto storage_size = std::tuple_size_v<tuple_of_pointers_storage_t>;
         constexpr auto loaded_bits = std::min<int>(storage_size, bits);
-        
+
         for_each_in<loaded_bits>([&]<std::size_t bit_idx>() {
             auto ptr_to_ith_storage = std::get<bit_idx>(storage);
             std::get<bit_idx>(result.numbers) = ptr_to_ith_storage[offset];
@@ -557,10 +558,10 @@ class vector_int {
 
     template <typename tuple_of_pointers_storage_t>
     void save_to(tuple_of_pointers_storage_t storage, std::size_t offset) const {
-        
+
         constexpr auto storage_size = std::tuple_size_v<tuple_of_pointers_storage_t>;
         constexpr auto saved_bits = std::min<int>(storage_size, bits);
-        
+
         for_each_in<saved_bits>([&]<std::size_t bit_idx>() {
             auto ptr_to_ith_storage = std::get<bit_idx>(storage);
             ptr_to_ith_storage[offset] = std::get<bit_idx>(numbers);
@@ -570,14 +571,14 @@ class vector_int {
     template <int other_bits>
     vector_store_type equals_to(
         vector_int<vector_store_type, other_bits> other) const {
-        
+
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = constats_ops<vector_store_type>::ones;
 
         for_each_in<min_bits>([&]<std::size_t i>() {
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
-            
+
             result &= ~(a ^ b);
         });
 
@@ -586,7 +587,7 @@ class vector_int {
                 auto a = std::get<min_bits + i>(numbers);
                 result &= ~a;
             });
-        }   
+        }
         else if constexpr (other_bits > bits) {
             for_each_in<other_bits - bits>([&]<std::size_t i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
@@ -600,14 +601,14 @@ class vector_int {
     template <int other_bits>
     vector_store_type not_equal_to(
         vector_int<vector_store_type, other_bits> other) const {
-        
+
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = 0;
 
         for_each_in<min_bits>([&]<std::size_t i>() {
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
-            
+
             result |= a ^ b;
         });
 
@@ -616,7 +617,7 @@ class vector_int {
                 auto a = std::get<min_bits + i>(numbers);
                 result |= a;
             });
-        }   
+        }
         else if constexpr (other_bits > bits) {
             for_each_in<other_bits - bits>([&]<std::size_t i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
@@ -629,17 +630,17 @@ class vector_int {
 
     template <int constant>
     vector_store_type equals_to() const {
-        constexpr auto constat_bits 
-            = constats_ops<int>::get_highest_set_bit<constant>();
-        
+        // constexpr auto constant_bits
+        //     = constats_ops<int>::get_highest_set_bit<constant>();
+
         vector_store_type result = constats_ops<vector_store_type>::ones;
 
         for_each_in<bits>([&]<std::size_t i>() {
             auto a = std::get<i>(numbers);
 
-            constexpr auto constant_is_set = 
+            constexpr auto constant_is_set =
                 constats_ops<vector_store_type>::template is_set_at<constant>(i);
-            
+
             if constexpr (constant_is_set) {
                 result &= a;
             } else {
@@ -652,7 +653,7 @@ class vector_int {
 
   private:
     store_t numbers;
-    
+
     template <typename Callback, std::size_t... Is>
     static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
         (cb.template operator()<Is>(), ...);
@@ -674,7 +675,7 @@ class vector_int {
 
         for_each_in<bits>([&]<std::size_t i>() {
             auto word = std::get<i>(numbers);
-            auto shifted_word = shift_op_t::apply(word, shift); 
+            auto shifted_word = shift_op_t::apply(word, shift);
 
             std::get<i>(result.numbers) = shifted_word;
         });
@@ -688,7 +689,7 @@ class vector_int {
 
         for_each_in<bits>([&]<std::size_t i>() {
             auto word = std::get<i>(numbers);
-            auto shifted_word = shift_op_t::template apply<shift>(word); 
+            auto shifted_word = shift_op_t::template apply<shift>(word);
 
             std::get<i>(result.numbers) = shifted_word;
         });
@@ -723,21 +724,21 @@ class vector_int {
         for_each_in<min_bits>([&]<std::size_t i>() {
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
-            
+
             std::get<i>(result.numbers) = op_t::apply(a, b);
         });
 
         if constexpr (other_bits < bits) {
             for_each_in<bits - min_bits>([&]<std::size_t i>() {
                 constexpr auto action = op_t::template action_for_bit<int, 0>(0);
-                
+
                 auto a = std::get<min_bits + i>(numbers);
                 std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
             });
         } else if constexpr (other_bits > bits) {
             for_each_in<other_bits - min_bits>([&]<std::size_t i>() {
                 constexpr auto action = op_t::template action_for_bit<int, 0>(0);
-                
+
                 auto a = std::get<min_bits + i>(other.numbers);
                 std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
             });
@@ -752,12 +753,12 @@ class vector_int {
 
         for_each_in<bits>([&]<std::size_t i>() {
             auto word = std::get<i>(numbers);
-            auto oped_word = op_t::apply(word); 
+            auto oped_word = op_t::apply(word);
 
             std::get<i>(result.numbers) = oped_word;
         });
 
-        return result;   
+        return result;
     }
 
     template <typename op_t, int constant>
@@ -778,9 +779,9 @@ class vector_int {
 struct vector_int_factory {
     template <typename vector_store_type, int constant>
     static auto from_constant() {
-        constexpr auto bits 
+        constexpr auto bits
             = constats_ops<int>::get_highest_set_bit<constant>() + 1;
-    
+
         if constexpr (bits == 0) {
             return vector_int<vector_store_type, 1>{};
         }
@@ -788,11 +789,11 @@ struct vector_int_factory {
         vector_int<vector_store_type, bits + 1> result;
 
         for_each_in<bits + 1>([&]<std::size_t bit_idx>() {
-            constexpr auto is_set 
+            constexpr auto is_set
                 = constats_ops<vector_store_type>::template is_set_at<constant>(bit_idx);
 
             if constexpr (is_set) {
-                std::get<bit_idx>(result.numbers) 
+                std::get<bit_idx>(result.numbers)
                     = constats_ops<vector_store_type>::ones;
             } else {
                 std::get<bit_idx>(result.numbers) = 0;

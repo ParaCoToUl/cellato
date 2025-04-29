@@ -101,7 +101,7 @@ struct if_ {
         using else_ = typename __unpacked_if<Condition, ChainOfThenElse..., Then, Else>::nested_if_then_else;
 
         template <typename ElseCondition>
-        using elif_ = if_<Condition, ChainOfThenElse..., Then, ElseCondition>; 
+        using elif_ = if_<Condition, ChainOfThenElse..., Then, ElseCondition>;
     };
 };
 
@@ -134,7 +134,7 @@ struct grid_config {
     using cell_t = cell_type;
 
     cell_t* grid;
-    
+
     std::size_t height;
     std::size_t width;
 
@@ -143,17 +143,17 @@ struct grid_config {
 
 template <typename cell_type>
 using state_t = grid_config<cell_type>;
- 
+
 template <typename cell_type, typename const_type, const_type Value>
 struct evaluator<cell_type, constant<const_type, Value>> {
-    static const_type evaluate(state_t<cell_type> state) {
+    static const_type evaluate(state_t<cell_type> /* state */) {
         return Value;
     }
 };
 
 template <typename cell_type, typename state_type, state_type Value>
 struct evaluator<cell_type, state_constant<state_type, Value>> {
-    static state_type evaluate(state_t<cell_type> state) {
+    static state_type evaluate(state_t<cell_type> /* state */) {
         return Value;
     }
 };
@@ -221,7 +221,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>> 
 
                 int nx = state.x + dx;
                 int ny = state.y + dy;
-                
+
                 auto state_at_nxy = state.grid[nx + ny * state.width];
 
                 if (state_at_nxy == evaluator<cell_type, CellStateValue>::evaluate(state)) {
@@ -240,13 +240,13 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_4_neighbors>> 
 
         const int dx[] = {0, 0, 1, -1};
         const int dy[] = {1, -1, 0, 0};
-        
+
         for (int i = 0; i < 4; ++i) {
             int nx = state.x + dx[i];
             int ny = state.y + dy[i];
-            
+
             auto state_at_nxy = state.grid[nx + ny * state.width];
-            
+
             if (state_at_nxy == evaluator<cell_type, CellStateValue>::evaluate(state)) {
                 sum += 1;
             }
@@ -271,22 +271,22 @@ public:
     void init(const std::vector<cell_state_t>& grid, std::size_t height, std::size_t width) {
         _height = height;
         _width = width;
-        
+
         // Create padded grid with a border of 1 cell
         _padded_height = height + 2;
         _padded_width = width + 2;
-        
+
         input_grid = create_padded_grid(grid, height, width);
         intermediate_grid.resize(_padded_height * _padded_width);
         std::copy(input_grid.begin(), input_grid.end(), intermediate_grid.begin());
-        
+
         final_grid = &input_grid;
     }
 
     template <bool print = false>
     void run(int steps) {
         steps_ = steps;
-        
+
         for (int step = 0; step < steps_; ++step) {
             // Process cells (skip border)
             for (std::size_t y = 1; y < _padded_height - 1; ++y) {
@@ -298,34 +298,34 @@ public:
                     state.width = _padded_width;
                     state.x = x;
                     state.y = y;
-                    
+
                     // Evaluate using simple evaluator
-                    intermediate_grid[y * _padded_width + x] = 
+                    intermediate_grid[y * _padded_width + x] =
                         simple_evaluator::evaluator<cell_state_t, algorithm_t>::evaluate(state);
                 }
             }
-            
+
             if constexpr (print) {
                 std::cout << "Step " << step + 1 << ":\n";
                 print_grid(intermediate_grid);
             }
-            
+
             std::swap(input_grid, intermediate_grid);
         }
-        
+
         final_grid = &input_grid;
     }
 
     std::vector<cell_state_t> get_result() const {
         // Extract the non-padded part of the grid
         std::vector<cell_state_t> result(_height * _width);
-        
+
         for (std::size_t y = 0; y < _height; ++y) {
             for (std::size_t x = 0; x < _width; ++x) {
                 result[y * _width + x] = (*final_grid)[(y + 1) * _padded_width + (x + 1)];
             }
         }
-        
+
         return result;
     }
 
@@ -337,7 +337,7 @@ private:
     std::vector<cell_state_t> input_grid;
     std::vector<cell_state_t> intermediate_grid;
     std::vector<cell_state_t>* final_grid;
-    
+
     std::size_t _height;
     std::size_t _width;
     std::size_t _padded_height;
@@ -346,19 +346,19 @@ private:
 
     std::vector<cell_state_t> create_padded_grid(
         const std::vector<cell_state_t>& grid, std::size_t height, std::size_t width) {
-        
+
         std::vector<cell_state_t> padded_grid((_padded_height) * (_padded_width));
-        
+
         // Fill padded grid with default values (assuming first enum value is the default)
         std::fill(padded_grid.begin(), padded_grid.end(), static_cast<cell_state_t>(0));
-        
+
         // Copy the inner grid
         for (std::size_t y = 0; y < height; ++y) {
             for (std::size_t x = 0; x < width; ++x) {
                 padded_grid[(y + 1) * _padded_width + (x + 1)] = grid[y * width + x];
             }
         }
-        
+
         return padded_grid;
     }
 
