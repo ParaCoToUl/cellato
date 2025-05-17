@@ -1,3 +1,6 @@
+#ifndef GRID_UTILS_HPP
+#define GRID_UTILS_HPP
+
 namespace cellib::memory::grids::utils {
 
 // Generate a random grid with specified distribution of cell states
@@ -65,3 +68,5 @@ void generate_random_grid(
 }
 
 }
+
+#endif // GRID_UTILS_HPP

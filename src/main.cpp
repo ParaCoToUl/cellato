@@ -11,16 +11,19 @@
 #include "game_of_life/pretty_print.hpp"
 #include "game_of_life/config.hpp"
 
+#include "fire/config.hpp"
+
 template <
     typename cellular_automaton,
-    template <typename, typename> typename test_suite>
+    template <typename, typename> typename test_suite
+>
 void run(cellib::run::run_params& params) {
 
     auto initial_state = cellular_automaton::input::random::init(params);
 
     using algorithm = typename cellular_automaton::algorithm;
     using cell_state = typename cellular_automaton::cell_state;
-    
+
     using test_suite_for_alg = test_suite<cell_state, algorithm>;
 
     cellib::run::experiment_manager<test_suite_for_alg> manager;
@@ -40,8 +43,16 @@ int main() {
         .print = true
     };
     
-    // Run the experiment
-    run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
+    // Choose which simulation to run (true for Game of Life, false for Forest Fire)
+    bool run_game_of_life = false;
+    
+    if (run_game_of_life) {
+        // Run Game of Life simulation
+        run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
+    } else {
+        // Run Forest Fire simulation
+        run<fire::config, cellib::run::test_suites::cpu_standard>(params);
+    }
     
     return 0;
 }

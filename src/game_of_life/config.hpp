@@ -9,12 +9,12 @@ namespace game_of_life {
 
 struct config {
 
-    using cell_state = typename game_of_life::cell_state;
-    using algorithm = typename game_of_life::algorithm;
-    using pretty_print = typename game_of_life::pretty_print;
-    
+    using cell_state = gol_cell_state;
+    using algorithm = gol_algorithm;
+    using pretty_print = gol_pretty_print;
+
     struct input {
-        using random = game_of_life::random_init;
+        using random = gol_random_init;
     };
 };
 

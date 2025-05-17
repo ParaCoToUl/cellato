@@ -6,13 +6,13 @@
 
 namespace game_of_life {
 
-using print_config = cellib::memory::grids::standard::print_config<cell_state>;
+using print_config = cellib::memory::grids::standard::print_config<gol_cell_state>;
 
-struct pretty_print {
+struct gol_pretty_print {
     static print_config get_config() {
         return print_config()
-            .with(cell_state::dead, "\033[1;31m.\033[0m")
-            .with(cell_state::alive, "\033[1;32m#\033[0m");
+            .with(gol_cell_state::dead, "\033[1;31m.\033[0m")
+            .with(gol_cell_state::alive, "\033[1;32m#\033[0m");
     }
 };
 

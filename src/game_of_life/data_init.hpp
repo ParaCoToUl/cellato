@@ -6,21 +6,22 @@
 
 namespace game_of_life {
 
-    struct random_init {
-        static std::vector<game_of_life::cell_state> init(cellib::run::run_params& params) {
+struct gol_random_init {
+    static std::vector<gol_cell_state> init(cellib::run::run_params& params) {
 
-            std::vector<game_of_life::cell_state> initial_state(params.x_size * params.y_size);
+        std::vector<gol_cell_state> initial_state(params.x_size * params.y_size);
 
-            cellib::memory::grids::utils::generate_random_grid(
-                initial_state,
-                params.y_size, params.x_size,
-                game_of_life::cell_state::alive, 0.2,
-                game_of_life::cell_state::dead, 0.8
-            );
+        cellib::memory::grids::utils::generate_random_grid(
+            initial_state,
+            params.y_size, params.x_size,
+            gol_cell_state::alive, 0.2,
+            gol_cell_state::dead, 0.8
+        );
 
-            return initial_state;
-        }
-    };
+        return initial_state;
+    }
+};
+
 }
 
 #endif // GAME_OF_LIFE_INIT_HPP

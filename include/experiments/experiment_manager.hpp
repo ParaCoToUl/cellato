@@ -1,3 +1,8 @@
+#ifndef EXPERIMENT_MANAGER_HPP
+#define EXPERIMENT_MANAGER_HPP
+
+#include <vector>
+
 namespace cellib::run {
 
 using namespace cellib::memory::grids;
@@ -69,3 +74,5 @@ public:
 };
 
 }
+
+#endif // EXPERIMENT_MANAGER_HPP

@@ -1,3 +1,6 @@
+#ifndef RUN_PARAMS_HPP
+#define RUN_PARAMS_HPP
+
 namespace cellib::run {
 
 struct run_params {
@@ -9,3 +12,5 @@ struct run_params {
 };
 
 }
+
+#endif // RUN_PARAMS_HPP

@@ -1,17 +1,19 @@
 #ifndef GAME_OF_LIFE_ALGORITHM_HPP
 #define GAME_OF_LIFE_ALGORITHM_HPP
-// Define the Game of Life algorithm using the AST
+
+#include "core/ast.hpp"
+
 namespace game_of_life {
 using namespace cellib::ast;
 
-enum class cell_state {
+enum class gol_cell_state {
     dead,
     alive
 };
 
 // Define constants for cell states
-using alive = state_constant<cell_state, cell_state::alive>;
-using dead = state_constant<cell_state, cell_state::dead>;
+using alive = state_constant<gol_cell_state, gol_cell_state::alive>;
+using dead = state_constant<gol_cell_state, gol_cell_state::dead>;
 
 // Define integer constants
 using c_2 = constant<int, 2>;
@@ -30,7 +32,7 @@ using has_three_alive_neighbors = p<alive_count, equals, c_3>;
 using has_two_or_three_alive_neighbors = p<has_two_alive_neighbors, or_, has_three_alive_neighbors>;
 
 // Define the Game of Life algorithm
-using algorithm = 
+using gol_algorithm = 
     if_<cell_is_alive>::
     then_<
         if_<has_two_or_three_alive_neighbors>::
