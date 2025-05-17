@@ -5,13 +5,13 @@ namespace game_of_life {
 using namespace cellib::ast;
 
 enum class cell_state {
-    Dead,
-    Alive
+    dead,
+    alive
 };
 
 // Define constants for cell states
-using alive = state_constant<cell_state, cell_state::Alive>;
-using dead = state_constant<cell_state, cell_state::Dead>;
+using alive = state_constant<cell_state, cell_state::alive>;
+using dead = state_constant<cell_state, cell_state::dead>;
 
 // Define integer constants
 using c_2 = constant<int, 2>;

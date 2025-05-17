@@ -2,6 +2,9 @@ namespace cellib::run {
 
 using namespace cellib::memory::grids;
 
+template <typename cell_t>
+using print_config = cellib::memory::grids::standard::print_config<cell_t>;
+
 template <typename test_suite>
 class experiment_manager {
 
@@ -17,21 +20,52 @@ public:
 
     void run_experiment(const run_params& params, const std::vector<cell_t>& initial_state) {
 
-        standard_grid_t initial_grid(params.x_size, params.y_size);
-        std::copy(initial_state.begin(), initial_state.end(), initial_grid.data());
+        grid_t grid = get_padded_grid(params, initial_state);
+        traverser_t traverser = get_initialized_traverser(grid);
 
-        grid_t grid{initial_grid};
-        traverser_t traverser;
-
-        traverser.init(grid);
-
-        traverser.template run<true>(params.steps);
+        run_traverser(traverser, params);
 
         grid_t result = traverser.fetch_result();
         auto result_as_standard = result.to_standard();
 
-        result_as_standard.print(std::cout);
     }
+
+    void set_print_config(print_config<cell_t> config) {
+        _print_config = config;
+    }
+
+    private:
+
+    print_config<cell_t> _print_config;
+
+
+    grid_t get_padded_grid(const run_params& params, const std::vector<cell_t>& initial_state) {
+        standard_grid_t initial_grid(params.x_size, params.y_size);
+        std::copy(initial_state.begin(), initial_state.end(), initial_grid.data());
+
+        auto grid_padded = initial_grid.template with_empty_margins<test_suite::x_margin, test_suite::y_margin>();
+
+        grid_t grid{grid_padded};
+
+        return grid;
+    }
+
+    void run_traverser(traverser_t& traverser, const run_params& params) {
+        if (params.print) {
+            traverser.template run<true>(params.steps);
+        }
+        else {
+            traverser.template run<false>(params.steps);
+        }
+    }
+
+    traverser_t get_initialized_traverser(grid_t& grid) {
+        traverser_t traverser;
+        traverser.init(grid);
+        traverser.set_print_config(_print_config);
+        return traverser;
+    }
+
 };
 
 }

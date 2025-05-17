@@ -8,33 +8,40 @@
 #include "memory/grid_utils.hpp"
 
 #include "game_of_life/algorithm.hpp"
+#include "game_of_life/pretty_print.hpp"
+#include "game_of_life/config.hpp"
+
+template <
+    typename cellular_automaton,
+    template <typename, typename> typename test_suite>
+void run(cellib::run::run_params& params) {
+
+    auto initial_state = cellular_automaton::input::random::init(params);
+
+    using algorithm = typename cellular_automaton::algorithm;
+    using cell_state = typename cellular_automaton::cell_state;
+    
+    using test_suite_for_alg = test_suite<cell_state, algorithm>;
+
+    cellib::run::experiment_manager<test_suite_for_alg> manager;
+    manager.set_print_config(cellular_automaton::pretty_print::get_config());
+
+    manager.run_experiment(
+        params, initial_state
+    );
+}
 
 int main() {
     // Define experiment parameters
     cellib::run::run_params params{
         .x_size = 40,
         .y_size = 20,
-        .steps = 100
+        .steps = 100,
+        .print = true
     };
     
-    // Create the initial state with random data
-    std::vector<game_of_life::cell_state> initial_state(params.x_size * params.y_size);
-    
-    // Generate random grid with 20% alive cells, 80% dead cells
-    cellib::memory::grids::utils::generate_random_grid(
-        initial_state,
-        params.y_size, params.x_size,
-        game_of_life::cell_state::Alive, 0.2,
-        game_of_life::cell_state::Dead
-    );
-    
-    // Create and run the experiment
-    using baseline = cellib::run::test_suites::cpu_standard<game_of_life::cell_state, game_of_life::algorithm>;
-    cellib::run::experiment_manager<baseline> manager;
-
-    manager.run_experiment(
-        params, initial_state
-    );
+    // Run the experiment
+    run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
     
     return 0;
 }

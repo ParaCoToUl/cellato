@@ -18,8 +18,8 @@ struct cpu_standard {
 
     using traverser_t = cellib::traversers::cpu::simple::traverser<evaluator_t, grid_t>;
 
-    constexpr static int vertical_margin = 1;
-    constexpr static int horizontal_margin = 1;
+    constexpr static int x_margin = 1;
+    constexpr static int y_margin = 1;
 };
 
 }
