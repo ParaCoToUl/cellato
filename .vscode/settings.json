@@ -3,6 +3,7 @@
         "anded",
         "cellib",
         "ored",
+        "traversers",
         "xored"
     ]
 }

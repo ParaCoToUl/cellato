@@ -2,7 +2,7 @@
 #define CELLIB_STANDARD_EVALUATORS_HPP
 
 #include "../core/ast.hpp"
-#include "../core/memory/interface.hpp"
+#include "../memory/interface.hpp"
 
 namespace cellib::evaluators::standard {
 
@@ -13,7 +13,7 @@ template <typename cell_type, typename Expression>
 struct evaluator {};
 
 template <typename cell_type>
-using state_t = grids::point_at_grid<cell_type>;
+using state_t = grids::point_in_grid<cell_type>;
 
 template <typename cell_type, typename const_type, const_type Value>
 struct evaluator<cell_type, constant<const_type, Value>> {

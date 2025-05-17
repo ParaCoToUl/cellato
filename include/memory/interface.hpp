@@ -18,13 +18,17 @@ struct point {
 };
 
 template <typename cell_type>
-struct point_at_grid {
+struct point_in_grid {
     using cell_t = cell_type;
 
     cell_t* grid;
     grids::properties properties;
 
     grids::point position;
+
+    std::size_t idx() const {
+        return properties.idx(position.x, position.y);
+    }
 };
 
 }

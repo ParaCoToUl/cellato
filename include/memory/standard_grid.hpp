@@ -17,8 +17,13 @@ class print_config;
 template <typename cell_type>
 class grid {
 public:
+    using cell_t = cell_type;
+    constexpr static bool HAS_OWN_PRINT = true;
+
     grid(std::size_t x_size, std::size_t y_size)
         : _properties{x_size, y_size}, _data(x_size * y_size) {}
+
+    grid() = default;
 
     cell_type* data() const {
         return const_cast<cell_type*>(_data.data());
@@ -62,6 +67,10 @@ public:
         return grid<cell_type>(new_properties, std::move(new_data));
     }
 
+    grid<cell_type> to_standard() const {
+        return *this;
+    }
+
     void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const {
         for (std::size_t y = 0; y < _properties.y_size; ++y) {
             for (std::size_t x = 0; x < _properties.x_size; ++x) {
@@ -93,10 +102,9 @@ public:
         if (it != _state_to_symbol.end()) {
             return it->second;
         }
-
-        std::stringstream ss;
-        ss << state;
-        return ss.str();
+        
+        auto state_as_int = static_cast<int>(state);
+        return std::to_string(state_as_int);
     }
 
     static print_config<cell_type> empty() {
