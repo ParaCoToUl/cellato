@@ -24,7 +24,7 @@ public:
         : _properties{x_size, y_size}, _data(x_size * y_size) {}
 
     grid() = default;
-
+    
     cell_type* data() const {
         return const_cast<cell_type*>(_data.data());
     }

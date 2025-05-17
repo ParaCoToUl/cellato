@@ -1,19 +1,21 @@
+#ifndef CELLIB_TRAVERSERS_CPU_SIMPLE_HPP
+#define CELLIB_TRAVERSERS_CPU_SIMPLE_HPP
+
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <utility>
+
+#include "../../memory/interface.hpp"
+
 namespace cellib::traversers::cpu::simple {
 
 template <
-    typename evaluator_t,
-    typename grid_t >
-struct traverser_config {
-    using evaluator = evaluator_t;
-    using grid = grid_t;
-
-    using cell_t = typename grid::cell_t;
-};
-
-template <typename config_t>
+    typename evaluator_type,
+    typename grid_type >
 class traverser {
-    using evaluator_t = typename config_t::evaluator;
-    using grid_t = typename config_t::grid;
+    using evaluator_t = evaluator_type;
+    using grid_t = grid_type;
 
     using cell_t = typename grid_t::cell_t;
     using state_t = cellib::memory::grids::point_in_grid<cell_t>;
@@ -95,3 +97,5 @@ class traverser {
 };
 
 }
+
+#endif // CELLIB_TRAVERSERS_CPU_SIMPLE_HPP

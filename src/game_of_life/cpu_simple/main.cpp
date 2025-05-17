@@ -10,55 +10,7 @@
 #include "evaluators/standard.hpp"
 #include "traversers/cpu/simple.hpp"
 
-// Define the Game of Life algorithm using the AST
-namespace game_of_life {
-    using namespace cellib::ast;
-    
-    enum class cell_state {
-        Dead,
-        Alive
-    };
-    
-    // Define constants for cell states
-    using alive = state_constant<cell_state, cell_state::Alive>;
-    using dead = state_constant<cell_state, cell_state::Dead>;
-
-    // Define integer constants
-    using c_2 = constant<int, 2>;
-    using c_3 = constant<int, 3>;
-    
-    // Define predicates for cell state checks
-    using cell_is_alive = p<current_state, equals, alive>;
-    using cell_is_dead = p<current_state, equals, dead>;
-    
-    // Count neighbors in Moore neighborhood
-    using alive_count = count_neighbors<alive, moore_8_neighbors>;
-    
-    // Define predicates for neighbor count checks
-    using has_two_alive_neighbors = p<alive_count, equals, c_2>;
-    using has_three_alive_neighbors = p<alive_count, equals, c_3>;
-    using has_two_or_three_alive_neighbors = p<has_two_alive_neighbors, or_, has_three_alive_neighbors>;
-    
-    // Define the Game of Life algorithm
-    using algorithm = 
-        if_<cell_is_alive>::
-        then_<
-            if_<has_two_or_three_alive_neighbors>::
-                then_<alive>::
-                else_<dead>
-        >::
-        else_< // cell_is_dead
-            if_<has_three_alive_neighbors>::
-                then_<alive>::
-                else_<dead>
-        >;
-}
-
-// Custom stream operator for cell_state (for debugging)
-std::ostream& operator<<(std::ostream& os, const game_of_life::cell_state& state) {
-    os << (state == game_of_life::cell_state::Alive ? "Alive" : "Dead");
-    return os;
-}
+#include "../algorithm.hpp"
 
 int main() {
     std::cout << "=== Game of Life Simulation ===\n" << std::endl;
@@ -90,13 +42,10 @@ int main() {
 
     using eval_t = cellib::evaluators::standard::evaluator<game_of_life::cell_state, game_of_life::algorithm>;
     using grid_t = cellib::memory::grids::standard::grid<game_of_life::cell_state>;
-    using traverser_config_t = cellib::traversers::cpu::simple::traverser_config<
-        eval_t,
-        grid_t
-    >;
+    
     
     // Create the traverser
-    cellib::traversers::cpu::simple::traverser<traverser_config_t> traverser;
+    cellib::traversers::cpu::simple::traverser<eval_t, grid_t> traverser;
     traverser.set_print_config(print_config);
     traverser.init(padded_grid);
     
