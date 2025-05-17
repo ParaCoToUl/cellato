@@ -10,8 +10,8 @@
 #include "game_of_life/algorithm.hpp"
 #include "game_of_life/pretty_print.hpp"
 #include "game_of_life/config.hpp"
-
 #include "fire/config.hpp"
+#include "greenberg/config.hpp"
 
 template <
     typename cellular_automaton,
@@ -37,21 +37,24 @@ void run(cellib::run::run_params& params) {
 int main() {
     // Define experiment parameters
     cellib::run::run_params params{
-        .x_size = 40,
-        .y_size = 20,
+        .x_size = 150,  // Larger grid for better patterns
+        .y_size = 200,
         .steps = 100,
         .print = true
     };
     
-    // Choose which simulation to run (true for Game of Life, false for Forest Fire)
-    bool run_game_of_life = false;
+    // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings
+    int simulation_type = 2;
     
-    if (run_game_of_life) {
+    if (simulation_type == 0) {
         // Run Game of Life simulation
         run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
-    } else {
+    } else if (simulation_type == 1) {
         // Run Forest Fire simulation
         run<fire::config, cellib::run::test_suites::cpu_standard>(params);
+    } else {
+        // Run Greenberg-Hastings Model simulation
+        run<greenberg::config, cellib::run::test_suites::cpu_standard>(params);
     }
     
     return 0;
