@@ -18,7 +18,7 @@ CUDA_SRCS = $(wildcard $(CUDA_DIR)/*.cu)
 CUDA_OBJS = $(patsubst $(CUDA_DIR)/%.cu,$(OBJ_DIR)/%.o,$(CUDA_SRCS))
 
 # Main target
-TARGET = $(BIN_DIR)/gol
+TARGET = $(BIN_DIR)/cellib_experiments
 
 # Rules
 all: directories $(TARGET)

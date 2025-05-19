@@ -128,13 +128,6 @@ struct evaluator<cell_row_type, state_dictionary_type, not_equals<Left, Right>> 
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type>
-struct evaluator<cell_row_type, state_dictionary_type, current_state> {
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
-        auto offset = state.properties.idx(state.position.x, state.position.y);
-        return vector_int_factory::load_from<cell_row_type>(state.grid, offset);
-    }
-};
 
 template <typename cell_row_type, typename state_dictionary_type, int x_offset, int y_offset>
 struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_offset>> {
@@ -183,7 +176,8 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
     static vint get_center_vector_int(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto idx = state.properties.idx(x + x_offset, y + y_offset);
+        auto idx = state.properties.idx(x, y + y_offset);
+
         return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
     }
 
@@ -191,6 +185,7 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
         auto x = state.position.x;
         auto y = state.position.y;
         auto idx = state.properties.idx(x + x_offset, y + y_offset);
+
         return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
     }
 };

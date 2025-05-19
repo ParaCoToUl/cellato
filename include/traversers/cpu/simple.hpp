@@ -36,17 +36,22 @@ class traverser {
     template <typename callback = no_callback>
     void run(int steps, callback&& callback_func = no_callback{}) {
 
-        auto current = _input_grid.data();
-        auto next = _intermediate_grid.data();
+        auto current = &_input_grid;
+        auto next = &_intermediate_grid;
 
-        auto state = cellib::memory::grids::point_in_grid(current);
+        auto state = cellib::memory::grids::point_in_grid(current->data());
 
         state.properties.x_size = _input_grid.x_size_physical();
         state.properties.y_size = _input_grid.y_size_physical();
 
+        if constexpr (!std::is_same_v<callback, no_callback>) {
+            callback_func(0, _input_grid);
+        }
+
         for (int step = 0; step < steps; ++step) {
 
-            state.grid = current;
+            state.grid = current->data();
+            auto next_data = next->data();
 
             // Process cells (skip border)
             for (std::size_t y = 1; y < state.properties.y_size - 1; ++y) {
@@ -58,17 +63,19 @@ class traverser {
                     auto result = evaluator_t::evaluate(state);
                     
                     if constexpr (has_save_to_method<decltype(result)>::value) {
-                        result.save_to(next, state.idx());
+                        result.save_to(next_data, state.idx());
                     } 
                     else { 
-                        next[state.idx()] = result;
+                        next_data[state.idx()] = result;
                     }
                 }
+
+                std::cout << "\n";
             }
 
             // Call the callback function if provided
             if constexpr (!std::is_same_v<callback, no_callback>) {
-                callback_func(step, step % 2 == 0 ? _input_grid : _intermediate_grid);
+                callback_func(step + 1, *next);
             }
 
             std::swap(current, next);

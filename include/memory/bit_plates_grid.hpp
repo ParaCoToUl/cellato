@@ -44,10 +44,6 @@ class grid {
         for_each_bit([&]<std::size_t bit_idx>() {
             std::get<bit_idx>(_grid).resize(y_size_physical() * x_size_physical());
         });
-
-        for_each_bit([&]<std::size_t bit_idx>() {
-            std::get<bit_idx>(grid_pointers) = std::get<bit_idx>(_grid).data();
-        });
     }
 
     grid(std::size_t y_size, std::size_t x_size, const original_state_t* grid_input) {
@@ -112,14 +108,16 @@ class grid {
         return _y_size;
     }
 
-    storage_tuple_of_pointers data() const {
-        return grid_pointers;
+    storage_tuple_of_pointers data() {
+        storage_tuple_of_pointers result;
+        for_each_bit([&]<std::size_t bit_idx>() {
+            std::get<bit_idx>(result) = std::get<bit_idx>(_grid).data();
+        });
+        return result;
     }
 
   private:
-
     storage_tuple_t _grid;
-    storage_tuple_of_pointers grid_pointers;
 
     std::size_t _x_size, _y_size;
 
@@ -145,10 +143,6 @@ class grid {
 
         for_each_bit([&]<std::size_t bit_idx>() {
             std::get<bit_idx>(_grid).resize(y_size_physical() * x_size_physical());
-        });
-
-        for_each_bit([&]<std::size_t bit_idx>() {
-            std::get<bit_idx>(grid_pointers) = std::get<bit_idx>(_grid).data();
         });
 
         for (std::size_t y = 0; y < y_size_physical(); ++y) {
