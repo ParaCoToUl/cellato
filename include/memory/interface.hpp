@@ -1,13 +1,21 @@
 #ifndef CELLIB_MEMORY_INTERFACE_HPP
 #define CELLIB_MEMORY_INTERFACE_HPP
 
+#ifndef CUDA_CALLABLE
+#ifdef __CUDACC__
+#define CUDA_CALLABLE __host__ __device__
+#else
+#define CUDA_CALLABLE
+#endif
+#endif
+
 namespace cellib::memory::grids {
 
 struct properties {
     std::size_t x_size;
     std::size_t y_size;
 
-    std::size_t idx(std::size_t x, std::size_t y) const {
+    CUDA_CALLABLE std::size_t idx(std::size_t x, std::size_t y) const {
         return y * x_size + x;
     }
 };
@@ -26,7 +34,7 @@ struct point_in_grid {
 
     grids::point position;
 
-    std::size_t idx() const {
+    CUDA_CALLABLE std::size_t idx() const {
         return properties.idx(position.x, position.y);
     }
 };
