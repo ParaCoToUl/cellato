@@ -67,6 +67,26 @@ void generate_random_grid(
     generate_random_grid(grid, height, width, probabilities, seed);
 }
 
+
+template <typename T, std::size_t I>
+using always_vector_t = std::vector<T>;
+
+template <typename T, std::size_t... Is>
+auto repeat_vector_type(std::index_sequence<Is...>) -> std::tuple<always_vector_t<T, Is>...>;
+
+template <typename T, std::size_t N>
+using repeated_vector_tuple = decltype(repeat_vector_type<T>(std::make_index_sequence<N>{}));
+
+template <typename T, std::size_t I>
+using always_type_t = T;
+
+template <typename T, std::size_t... Is>
+auto repeat_tuple_type(std::index_sequence<Is...>) -> std::tuple<always_type_t<T, Is>...>;
+
+template <typename T, std::size_t N>
+using repeated_tuple_t = decltype(repeat_tuple_type<T>(std::make_index_sequence<N>{}));
+
+
 }
 
 #endif // GRID_UTILS_HPP

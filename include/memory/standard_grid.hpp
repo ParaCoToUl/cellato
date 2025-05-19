@@ -17,13 +17,20 @@ class print_config;
 template <typename cell_type>
 class grid {
 public:
-    using cell_t = cell_type;
+    using store_type = cell_type;
     constexpr static bool HAS_OWN_PRINT = true;
 
     grid(std::size_t x_size, std::size_t y_size)
         : _properties{x_size, y_size}, _data(x_size * y_size) {}
 
     grid() = default;
+
+    grid(std::vector<cell_type>&& data, std::size_t x_size, std::size_t y_size)
+        : _properties{x_size, y_size}, _data(std::move(data)) {
+        if (_data.size() != x_size * y_size) {
+            throw std::invalid_argument("Data size does not match grid dimensions");
+        }
+    }
     
     cell_type* data() const {
         return const_cast<cell_type*>(_data.data());
@@ -61,6 +68,24 @@ public:
         for (std::size_t y = 0; y < _properties.y_size; ++y) {
             for (std::size_t x = 0; x < _properties.x_size; ++x) {
                 new_data[new_properties.idx(x + x_margin, y + y_margin)] = _data[_properties.idx(x, y)];
+            }
+        }
+
+        return grid<cell_type>(new_properties, std::move(new_data));
+    }
+
+    template <int x_margin, int y_margin>
+    grid<cell_type> with_removed_margins() const {
+        grids::properties new_properties {
+            _properties.x_size - 2 * x_margin,
+            _properties.y_size - 2 * y_margin
+        };
+
+        std::vector<cell_type> new_data(new_properties.x_size * new_properties.y_size);
+
+        for (std::size_t y = 0; y < new_properties.y_size; ++y) {
+            for (std::size_t x = 0; x < new_properties.x_size; ++x) {
+                new_data[new_properties.idx(x, y)] = _data[_properties.idx(x + x_margin, y + y_margin)];
             }
         }
 

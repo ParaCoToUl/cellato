@@ -1,7 +1,7 @@
 CXX = g++
 NVCC = nvcc
 CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O3 -I../include
-NVCCFLAGS = -std=c++17 -O2 -I../include
+NVCCFLAGS = -std=c++17 -O3 -I../include
 
 # Directories
 SRC_DIR = .

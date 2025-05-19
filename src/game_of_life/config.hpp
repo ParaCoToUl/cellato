@@ -4,13 +4,19 @@
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "memory/state_dictionary.hpp"
 
 namespace game_of_life {
 
 struct config {
 
-    using cell_state = gol_cell_state;
     using algorithm = gol_algorithm;
+    
+    using cell_state = gol_cell_state;
+    using state_dictionary = cellib::memory::grids::state_dictionary<
+        cell_state,
+        cell_state::dead, cell_state::alive>;
+
     using pretty_print = gol_pretty_print;
 
     struct input {

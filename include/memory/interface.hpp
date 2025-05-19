@@ -25,11 +25,15 @@ struct point {
     std::size_t y;
 };
 
-template <typename cell_type>
+template <typename grid_data_type>
 struct point_in_grid {
-    using cell_t = cell_type;
 
-    cell_t* grid;
+    point_in_grid() = default;
+    point_in_grid(grid_data_type grid_data)
+        : grid(grid_data) {} 
+
+    grid_data_type grid;
+
     grids::properties properties;
 
     grids::point position;

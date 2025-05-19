@@ -15,16 +15,13 @@
 
 template <
     typename cellular_automaton,
-    template <typename, typename> typename test_suite
+    template <typename> typename test_suite
 >
 void run(cellib::run::run_params& params) {
 
     auto initial_state = cellular_automaton::input::random::init(params);
 
-    using algorithm = typename cellular_automaton::algorithm;
-    using cell_state = typename cellular_automaton::cell_state;
-
-    using test_suite_for_alg = test_suite<cell_state, algorithm>;
+    using test_suite_for_alg = test_suite<cellular_automaton>;
 
     cellib::run::experiment_manager<test_suite_for_alg> manager;
     manager.set_print_config(cellular_automaton::pretty_print::get_config());
@@ -37,23 +34,25 @@ void run(cellib::run::run_params& params) {
 int main() {
     // Define experiment parameters
     cellib::run::run_params params{
-        .x_size = 150,  // Larger grid for better patterns
-        .y_size = 200,
+        .x_size = 64,  // Larger grid for better patterns
+        .y_size = 32,
         .steps = 100,
         .print = true
     };
     
     // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings
-    int simulation_type = 2;
+    int simulation_type = 0;
     
     if (simulation_type == 0) {
-        // Run Game of Life simulation
-        run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
+        // Run Game of Life simulation with bit_plates_cpu
+        run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
+
+        // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
     } else if (simulation_type == 1) {
-        // Run Forest Fire simulation
+        // Run Forest Fire simulation with standard CPU
         run<fire::config, cellib::run::test_suites::cpu_standard>(params);
     } else {
-        // Run Greenberg-Hastings Model simulation
+        // Run Greenberg-Hastings Model simulation with standard CPU
         run<greenberg::config, cellib::run::test_suites::cpu_standard>(params);
     }
     

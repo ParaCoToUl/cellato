@@ -5,10 +5,14 @@
 #include <thread>
 #include <chrono>
 #include <utility>
+#include <functional>
 
 #include "../../memory/interface.hpp"
+#include "../traverser_utils.hpp"
 
 namespace cellib::traversers::cpu::simple {
+
+using namespace cellib::traversers::utils;
 
 template <
     typename evaluator_type,
@@ -17,8 +21,7 @@ class traverser {
     using evaluator_t = evaluator_type;
     using grid_t = grid_type;
 
-    using cell_t = typename grid_t::cell_t;
-    using state_t = cellib::memory::grids::point_in_grid<cell_t>;
+    using cell_t = typename grid_t::store_type;
 
   public:
 
@@ -28,13 +31,16 @@ class traverser {
         _final_grid = &_intermediate_grid;
     }
 
-    template <bool print = false>
-    void run(int steps) {
+    struct no_callback {};
+
+    template <typename callback = no_callback>
+    void run(int steps, callback&& callback_func = no_callback{}) {
 
         auto current = _input_grid.data();
         auto next = _intermediate_grid.data();
 
-        state_t state;
+        auto state = cellib::memory::grids::point_in_grid(current);
+
         state.properties.x_size = _input_grid.x_size_physical();
         state.properties.y_size = _input_grid.y_size_physical();
 
@@ -49,15 +55,20 @@ class traverser {
                     state.position.x = x;
                     state.position.y = y;
 
-                    next[state.idx()] =
-                        evaluator_t::evaluate(state);
+                    auto result = evaluator_t::evaluate(state);
+                    
+                    if constexpr (has_save_to_method<decltype(result)>::value) {
+                        result.save_to(next, state.idx());
+                    } 
+                    else { 
+                        next[state.idx()] = result;
+                    }
                 }
             }
 
-            if constexpr (print) {
-                std::cout << "Step " << step + 1 << ":\n";
-                print_to_stdout(step % 2 == 0 ? _input_grid : _intermediate_grid);
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            // Call the callback function if provided
+            if constexpr (!std::is_same_v<callback, no_callback>) {
+                callback_func(step, step % 2 == 0 ? _input_grid : _intermediate_grid);
             }
 
             std::swap(current, next);
@@ -74,26 +85,10 @@ class traverser {
         return std::move(*_final_grid);
     }
 
-    void set_print_config(cellib::memory::grids::standard::print_config<cell_t> config) {
-        _print_config = std::move(config);
-    }
-
     private:
 
     grid_t _input_grid, _intermediate_grid;
     grid_t* _final_grid;
-
-    cellib::memory::grids::standard::print_config<cell_t> _print_config;
-
-    void print_to_stdout(const grid_t& grid) const {
-        if constexpr (grid_t::HAS_OWN_PRINT) {
-            grid.print(std::cout, _print_config);
-        }
-        else {
-            auto standard_grid = grid.to_standard();
-            standard_grid.print(std::cout, _print_config);
-        }
-    }
 };
 
 }
