@@ -4,6 +4,7 @@
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "memory/state_dictionary.hpp"
 
 namespace fire {
 

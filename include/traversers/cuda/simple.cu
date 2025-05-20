@@ -7,7 +7,6 @@
 #include "../../memory/interface.hpp"
 #include "../../evaluators/standard.hpp"
 #include "../../core/ast.hpp"
-#include "../../../src/game_of_life/config.hpp"
 #include "../traverser_utils.hpp"
 #include "../cuda_utils.cuh"
 
@@ -88,15 +87,8 @@ traverser<evaluator_type, grid_type>::fetch_result() const {
 
 } // namespace cellib::traversers::cuda::simple
 
-#define GOL_TRAVERSER_TYPE \
-    cellib::traversers::cuda::simple::traverser< \
-        cellib::evaluators::standard::evaluator<game_of_life::gol_cell_state, game_of_life::config::algorithm>, \
-        cellib::memory::grids::standard::grid<game_of_life::gol_cell_state, cellib::memory::grids::device::CPU> \
-    >
 
-template class GOL_TRAVERSER_TYPE;
-template void GOL_TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_mode::QUIET>(int);
-template void GOL_TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_mode::VERBOSE>(int);
-
-// Undefine the macro to avoid polluting the global namespace
-#undef GOL_TRAVERSER_TYPE
+#include "../../../src/game_of_life/cuda_instantiations.cuh"
+#include "../../../src/fire/cuda_instantiations.cuh"
+#include "../../../src/wire/cuda_instantiations.cuh"
+#include "../../../src/greenberg/cuda_instantiations.cuh"
