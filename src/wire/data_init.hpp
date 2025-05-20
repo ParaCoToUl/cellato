@@ -35,8 +35,8 @@ struct wire_random_init {
             int half_height = size / 2; // Make rectangles with 2:1 ratio
             
             // Ensure we don't go out of bounds
-            if (center_x + half_width >= params.x_size || center_x - half_width < 0 ||
-                center_y + half_height >= params.y_size || center_y - half_height < 0) {
+            if (center_x + half_width >= (int)(params.x_size) || center_x - half_width < 0 ||
+                center_y + half_height >= (int)(params.y_size) || center_y - half_height < 0) {
                 break;
             }
             
