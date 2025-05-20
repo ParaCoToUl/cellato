@@ -20,7 +20,6 @@ struct config {
 
     struct input {
         using random = wire_random_init;
-        using clock = wire_clock_init;
     };
 };
 
