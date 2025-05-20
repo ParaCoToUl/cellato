@@ -61,13 +61,7 @@ class traverser {
                     state.position.y = y;
 
                     auto result = evaluator_t::evaluate(state);
-                    
-                    if constexpr (has_save_to_method<decltype(result)>::value) {
-                        result.save_to(next_data, state.idx());
-                    } 
-                    else { 
-                        next_data[state.idx()] = result;
-                    }
+                    save_to(next_data, state.idx(), result);
                 }
             }
 

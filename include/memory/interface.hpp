@@ -11,6 +11,11 @@
 
 namespace cellib::memory::grids {
 
+enum class device {
+    CPU,
+    CUDA
+};
+
 struct properties {
     std::size_t x_size;
     std::size_t y_size;
@@ -29,7 +34,7 @@ template <typename grid_data_type>
 struct point_in_grid {
 
     point_in_grid() = default;
-    point_in_grid(grid_data_type grid_data)
+    CUDA_CALLABLE point_in_grid(grid_data_type grid_data)
         : grid(grid_data) {} 
 
     grid_data_type grid;

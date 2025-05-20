@@ -6,6 +6,7 @@
 #include "../memory/standard_grid.hpp"
 #include "../traversers/cpu/simple.hpp"
 #include "../memory/bit_plates_grid.hpp"
+#include "../traversers/cuda/simple.hpp"
 
 namespace cellib::run::test_suites {
 
@@ -25,6 +26,24 @@ struct cpu_standard {
     constexpr static int x_margin = 1;
     constexpr static int y_margin = 1;
 };
+
+template <typename cellular_automaton>
+struct cuda_standard {
+    
+    using original_cell_t = typename cellular_automaton::cell_state;
+    using grid_store_word_t = original_cell_t;
+
+    using algorithm_t = typename cellular_automaton::algorithm;
+    
+    using grid_t = cellib::memory::grids::standard::grid<original_cell_t>;
+    using evaluator_t = cellib::evaluators::standard::evaluator<original_cell_t, algorithm_t>;
+
+    using traverser_t = cellib::traversers::cuda::simple::traverser<evaluator_t, grid_t>;
+
+    constexpr static int x_margin = 1;
+    constexpr static int y_margin = 1;
+};
+
 
 template <typename store_word_type>
 struct using_ {

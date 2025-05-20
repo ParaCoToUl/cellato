@@ -7,6 +7,9 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <stdexcept>
+#include <cuda_runtime.h>
+#include <cassert>
 
 #include "./interface.hpp"
 
@@ -15,6 +18,13 @@ template <typename cell_type>
 class print_config;
 
 template <typename cell_type>
+struct cuda_params {
+    cell_type* cuda_data;
+    std::size_t x_size;
+    std::size_t y_size;
+};
+
+template <typename cell_type, device device_type = device::CPU>
 class grid {
 public:
     using store_type = cell_type;
@@ -31,13 +41,32 @@ public:
             throw std::invalid_argument("Data size does not match grid dimensions");
         }
     }
+
+    grid(cuda_params<cell_type> params)
+        : _properties{params.x_size, params.y_size}, _data() {
+
+        static_assert(device_type == device::CUDA, "This constructor is only for CUDA device");
+
+        _cuda_data = params.cuda_data;
+    }
+
+    grid(const grids::properties& properties, std::vector<cell_type> data)
+        : _properties(properties), _data(std::move(data)) {}
     
     cell_type* data() const {
-        return const_cast<cell_type*>(_data.data());
+        if constexpr (device_type == device::CUDA) {
+            return _cuda_data;
+        } else {
+            return const_cast<cell_type*>(_data.data());
+        }
     }
 
     cell_type* data() {
-        return _data.data();
+        if constexpr (device_type == device::CUDA) {
+            return _cuda_data;
+        } else {
+            return _data.data();
+        }
     }
 
     std::size_t x_size_physical() const {
@@ -58,6 +87,8 @@ public:
 
     template <int x_margin, int y_margin>
     grid<cell_type> with_empty_margins() const {
+        static_assert(device_type == device::CPU, "This function is only for CPU device");
+
         grids::properties new_properties {
             _properties.x_size + 2 * x_margin,
             _properties.y_size + 2 * y_margin
@@ -76,6 +107,8 @@ public:
 
     template <int x_margin, int y_margin>
     grid<cell_type> with_removed_margins() const {
+        static_assert(device_type == device::CPU, "This function is only for CPU device");
+
         grids::properties new_properties {
             _properties.x_size - 2 * x_margin,
             _properties.y_size - 2 * y_margin
@@ -97,6 +130,8 @@ public:
     }
 
     void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const {
+        static_assert(device_type == device::CPU, "This function is only for CPU device");
+
         for (std::size_t y = 0; y < _properties.y_size; ++y) {
             for (std::size_t x = 0; x < _properties.x_size; ++x) {
                 os << config.get_str(_data[_properties.idx(x, y)]) << " ";
@@ -105,12 +140,38 @@ public:
         }
     }
 
+    grid<cell_type, device::CPU> to_cpu() const {
+        static_assert(device_type == device::CUDA, "This function is only for CUDA device");
+
+        std::vector<cell_type> host_data(_properties.x_size * _properties.y_size);
+        cudaMemcpy(host_data.data(), _cuda_data, host_data.size() * sizeof(cell_type), cudaMemcpyDeviceToHost);
+
+        return grid<cell_type, device::CPU>{_properties, std::move(host_data)};
+
+    }
+
+    grid<cell_type, device::CUDA> to_cuda() const {
+        static_assert(device_type == device::CPU, "This function is only for CPU device");
+
+        cell_type* device_data;
+        cudaMalloc((void**)&device_data, _data.size() * sizeof(cell_type));
+        cudaMemcpy(device_data, _data.data(), _data.size() * sizeof(cell_type), cudaMemcpyHostToDevice);
+
+        cuda_params<cell_type> params{
+            device_data,
+            _properties.x_size,
+            _properties.y_size
+        };
+
+        return grid<cell_type, device::CUDA>(params);
+    }
+
     private:
+
     grids::properties _properties;
     std::vector<cell_type> _data;
 
-    grid(const grids::properties& properties, std::vector<cell_type> data)
-        : _properties(properties), _data(std::move(data)) {}
+    cell_type* _cuda_data;
 };
 
 template <typename cell_type>

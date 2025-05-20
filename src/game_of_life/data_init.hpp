@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <tuple>
+#include "memory/grid_utils.hpp"
+#include "experiments/run_params.hpp"
+#include "./algorithm.hpp"
 
 namespace game_of_life {
 
@@ -15,7 +18,7 @@ struct gol_random_init {
             initial_state,
             params.y_size, params.x_size,
             gol_cell_state::alive, 0.2,
-            gol_cell_state::dead, 0.8
+            gol_cell_state::dead
         );
 
         return initial_state;
