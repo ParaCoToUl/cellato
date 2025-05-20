@@ -69,8 +69,6 @@ class traverser {
                         next_data[state.idx()] = result;
                     }
                 }
-
-                std::cout << "\n";
             }
 
             // Call the callback function if provided

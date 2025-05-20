@@ -1,6 +1,12 @@
 #ifndef GRID_UTILS_HPP
 #define GRID_UTILS_HPP
 
+#include <vector>
+#include <tuple>
+#include <random>  // For mt19937 and uniform_real_distribution
+#include <iostream>
+#include <cmath>   // For abs function
+
 namespace cellib::memory::grids::utils {
 
 // Generate a random grid with specified distribution of cell states

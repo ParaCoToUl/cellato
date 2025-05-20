@@ -8,8 +8,17 @@
 namespace greenberg {
 
 struct config {
-    using cell_state = ghm_cell_state;
+    
     using algorithm = ghm_algorithm;
+
+    using cell_state = ghm_cell_state;
+    using state_dictionary = cellib::memory::grids::state_dictionary<
+        cell_state,
+        ghm_cell_state::quiescent, ghm_cell_state::excited,
+        ghm_cell_state::refractory_1, ghm_cell_state::refractory_2,
+        ghm_cell_state::refractory_3, ghm_cell_state::refractory_4,
+        ghm_cell_state::refractory_5, ghm_cell_state::refractory_6>;
+    
     using pretty_print = ghm_pretty_print;
     
     struct input {

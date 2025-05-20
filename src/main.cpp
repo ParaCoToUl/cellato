@@ -34,26 +34,30 @@ void run(cellib::run::run_params& params) {
 int main() {
     // Define experiment parameters
     cellib::run::run_params params{
-        .x_size = 64,  // Larger grid for better patterns
-        .y_size = 32,
+        .x_size = 128,  // Larger grid for better patterns
+        .y_size = 64,
         .steps = 100,
         .print = true
     };
     
     // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings
-    int simulation_type = 0;
+    int simulation_type = 2;
     
     if (simulation_type == 0) {
         // Run Game of Life simulation with bit_plates_cpu
-        run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-
-        // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
+        // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
+        
+        run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
     } else if (simulation_type == 1) {
         // Run Forest Fire simulation with standard CPU
         run<fire::config, cellib::run::test_suites::cpu_standard>(params);
+
+        // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
     } else {
         // Run Greenberg-Hastings Model simulation with standard CPU
-        run<greenberg::config, cellib::run::test_suites::cpu_standard>(params);
+        // run<greenberg::config, cellib::run::test_suites::cpu_standard>(params);
+
+        run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
     }
     
     return 0;

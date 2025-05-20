@@ -5,7 +5,7 @@
 
 namespace cellib::traversers::utils {
 
-    template <typename T, typename = void>
+template <typename T, typename = void>
 struct has_save_to_method : std::false_type {};
 
 template <typename T>

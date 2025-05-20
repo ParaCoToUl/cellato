@@ -8,37 +8,52 @@ SRC_DIR = .
 OBJ_DIR = ../bin
 BIN_DIR = ../bin
 CUDA_DIR = ../include/evaluators
+TEST_DIR = $(SRC_DIR)
 
 # Source and object files
-SRCS = $(wildcard $(SRC_DIR)/*.cpp)
-OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
+MAIN_SRC = $(SRC_DIR)/main.cpp
+MAIN_OBJ = $(OBJ_DIR)/main.o
+TEST_SRC = $(SRC_DIR)/test_runner.cpp
+TEST_OBJ = $(OBJ_DIR)/test_runner.o
 
 # CUDA source and object files
 CUDA_SRCS = $(wildcard $(CUDA_DIR)/*.cu)
 CUDA_OBJS = $(patsubst $(CUDA_DIR)/%.cu,$(OBJ_DIR)/%.o,$(CUDA_SRCS))
 
-# Main target
+# Main targets
 TARGET = $(BIN_DIR)/cellib_experiments
+TEST_TARGET = $(BIN_DIR)/cellib_tests
 
 # Rules
-all: directories $(TARGET)
+all: directories $(TARGET) $(TEST_TARGET)
 
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+# Add directories dependency to object file creation rules
+$(MAIN_OBJ): $(MAIN_SRC) | directories
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/%.o: $(CUDA_DIR)/%.cu
+$(TEST_OBJ): $(TEST_SRC) | directories
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.o: $(CUDA_DIR)/%.cu | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-$(TARGET): $(OBJS) $(CUDA_OBJS)
+# Create separate executables for main app and tests
+$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS)
 	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
-run: all
+$(TEST_TARGET): $(TEST_OBJ)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+run: $(TARGET)
 	$(TARGET)
+
+test: $(TEST_TARGET)
+	$(TEST_TARGET)
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-.PHONY: all run clean directories
+.PHONY: all run test clean directories

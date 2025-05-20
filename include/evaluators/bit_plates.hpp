@@ -110,7 +110,10 @@ struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
 template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
 struct evaluator<cell_row_type, state_dictionary_type, greater_than<Left, Right>> {
     static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
-        return 0; // todo
+        auto left = evaluator<cell_row_type, state_dictionary_type, Left>::evaluate(state);
+        auto right = evaluator<cell_row_type, state_dictionary_type, Right>::evaluate(state);
+
+        return left.greater_than(right);
     }
 };
 
@@ -232,23 +235,40 @@ struct evaluator<
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename CellStateValue>
-struct evaluator<cell_row_type, state_dictionary_type, count_neighbors<CellStateValue, moore_4_neighbors>> {
+template <typename cell_row_type, typename state_dictionary_type, typename cell_state_type, cell_state_type CellStateValue>
+struct evaluator<
+    cell_row_type, state_dictionary_type,
+    count_neighbors<
+        state_constant<cell_state_type, CellStateValue>,
+        moore_4_neighbors>> {
+
+    template <typename E>
+    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+
     static vector_int<cell_row_type, 3> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
-        // todo
-        return vector_int_factory::from_constant<cell_row_type, 8>();
-        // auto top = evaluator<cell_row_type, state_dictionary_type, neighbor_at<0, -1>>::evaluate(state);
-        // auto left = evaluator<cell_row_type, state_dictionary_type, neighbor_at<-1, 0>>::evaluate(state);
-        // auto right = evaluator<cell_row_type, state_dictionary_type, neighbor_at<1, 0>>::evaluate(state);
-        // auto bottom = evaluator<cell_row_type, state_dictionary_type, neighbor_at<0, 1>>::evaluate(state);
+        constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
-        // auto first_row = top.to_vector_with_bits<3>()
-        //     .get_added(left).get_added(right).get_added(bottom);
+        // Get the four neighbors (top, right, bottom, left)
+        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).template equals_to<cell_state>();
+        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).template equals_to<cell_state>();
+        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).template equals_to<cell_state>();
+        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).template equals_to<cell_state>();
 
-        // return first_row;
+        // Convert condition results to vector_int
+        auto top            = vector_int_factory::from_condition_result<cell_row_type>(top_c);
+        auto right          = vector_int_factory::from_condition_result<cell_row_type>(right_c);
+        auto bottom         = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
+        auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
+
+        // Add the counts using 3 bits (since max count is 4)
+        // First convert the first value to a 3-bit vector
+        return top.template to_vector_with_bits<3>()
+            // Then add the rest of the neighbors
+            .get_added(right)
+            .get_added(bottom)
+            .get_added(left);
     }
 };
-
 
 } // namespace cellib::evaluators::bit_plates
 

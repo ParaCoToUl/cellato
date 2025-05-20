@@ -469,6 +469,49 @@ class vector_int {
         return result;
     }
 
+    template <int other_bits>
+    vector_store_type greater_than(
+        vector_int<vector_store_type, other_bits> other) const {
+
+        vector_store_type result = 0;
+        vector_store_type decided = 0;
+
+        constexpr int min_bits = (bits < other_bits ? bits : other_bits);
+        
+        if constexpr (bits > other_bits) {
+            for_each_in<bits - other_bits>([&]<std::size_t i_lower>() {
+                constexpr std::size_t i = bits - i_lower - 1;
+                auto a = std::get<i>(numbers);
+
+                result = result | a;
+            });
+        }
+
+        decided = result;
+        
+        if constexpr (other_bits > bits) {
+            for_each_in<other_bits - bits>([&]<std::size_t i_lower>() {
+                constexpr std::size_t i = other_bits - i_lower - 1;
+
+                auto b = std::get<i>(other.numbers);
+                decided = decided | b;
+            });
+        }
+
+        for_each_in<min_bits>([&]<std::size_t i_lower>() {
+            constexpr std::size_t i = min_bits - i_lower - 1;
+
+            auto a = std::get<i>(numbers);
+            auto b = std::get<i>(other.numbers);
+            
+            result = result | (~decided & ((a ^ b) & a));
+
+            decided = decided | (a ^ b);
+        });
+
+        return result;
+    }
+
   private:
     store_t numbers;
 
