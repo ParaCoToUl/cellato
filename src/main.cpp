@@ -12,6 +12,7 @@
 #include "game_of_life/config.hpp"
 #include "fire/config.hpp"
 #include "greenberg/config.hpp"
+#include "wire/config.hpp" // Add new wire automaton
 
 template <
     typename cellular_automaton,
@@ -40,24 +41,27 @@ int main() {
         .print = true
     };
     
-    // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings
-    int simulation_type = 2;
+    // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings, 3 = Wireworld
+    int simulation_type = 3; // Default to Wireworld
     
     if (simulation_type == 0) {
-        // Run Game of Life simulation with bit_plates_cpu
+        // Run Game of Life simulation
         // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-        
         run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
     } else if (simulation_type == 1) {
-        // Run Forest Fire simulation with standard CPU
+        // Run Forest Fire simulation
         run<fire::config, cellib::run::test_suites::cpu_standard>(params);
 
         // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-    } else {
-        // Run Greenberg-Hastings Model simulation with standard CPU
-        // run<greenberg::config, cellib::run::test_suites::cpu_standard>(params);
-
+    } else if (simulation_type == 2) {
+        // Run Greenberg-Hastings Model simulation
         run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
+    } else {
+        // Run Wireworld simulation
+        run<wire::config, cellib::run::test_suites::cpu_standard>(params);
+        
+        // Uncomment to use bit plates implementation
+        // run<wire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
     }
     
     return 0;
