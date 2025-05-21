@@ -65,6 +65,23 @@ struct using_ {
         constexpr static int y_margin = 1;
     };
 
+    template <typename cellular_automaton>
+    struct bit_plates_cuda {
+        using original_cell_t = typename cellular_automaton::cell_state;
+        using grid_store_word_t = store_word_type;
+
+        using algorithm_t = typename cellular_automaton::algorithm;
+        using state_dictionary_t = typename cellular_automaton::state_dictionary;
+
+        using grid_t = cellib::memory::grids::bit_plates::grid<grid_store_word_t, state_dictionary_t>;
+        using evaluator_t = cellib::evaluators::bit_plates::evaluator<grid_store_word_t, state_dictionary_t, algorithm_t>; 
+
+        using traverser_t = cellib::traversers::cuda::simple::traverser<evaluator_t, grid_t>;
+
+        constexpr static int x_margin = sizeof(grid_store_word_t) * 8;
+        constexpr static int y_margin = 1;
+    };
+
 };
 
 } // namespace cellib::run

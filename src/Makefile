@@ -1,7 +1,7 @@
 CXX = g++
 NVCC = nvcc
 CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O3 -I../include
-NVCCFLAGS = -std=c++20 -O3 -I../include -Wno-deprecated-gpu-targets
+NVCCFLAGS = -std=c++20 -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr
 
 # Directories
 SRC_DIR = .

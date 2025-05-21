@@ -54,31 +54,29 @@ public:
     }
 
     void run_traverser(traverser_t& traverser, const run_params& params) {
-        traverser.run(params.steps, 
-            [&](int iter, const auto& grid) {
-                auto standard_grid = grid
+        if (params.print) {
+            traverser.run(params.steps, 
+                [&](int iter, const auto& grid) {
+                    auto standard_grid = grid
                     .to_standard()
                     .template with_removed_margins<test_suite::x_margin, test_suite::y_margin>();
-
-                std::cout << "\nIteration: " << iter << "\n";
-                standard_grid.print(std::cout, _print_config);
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(400));
-                std::cout << "\n";
-            }
-        );
-        // if (params.print) {
-        //     traverser.template run<true>(params.steps);
-        // }
-        // else {
-        //     traverser.template run<false>(params.steps);
-        // }
+                    
+                    std::cout << "\nIteration: " << iter << "\n";
+                    standard_grid.print(std::cout, _print_config);
+                    
+                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+                    std::cout << "\n";
+                }
+            );
+        }
+        else {
+            traverser.run(params.steps);
+        }
     }
 
     traverser_t get_initialized_traverser(grid_t& grid) {
         traverser_t traverser;
         traverser.init(grid);
-        // traverser.set_print_config(_print_config);
         return traverser;
     }
 };

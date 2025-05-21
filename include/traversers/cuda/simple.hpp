@@ -54,7 +54,7 @@ class traverser {
         }
     }
     
-    grid_t fetch_result() const;
+    grid_t fetch_result();
     
 private:
     template <_run_mode mode>

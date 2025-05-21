@@ -1,7 +1,6 @@
 #ifndef CELLIB_CORE_VECTOR_INT_HPP
 #define CELLIB_CORE_VECTOR_INT_HPP
 
-
 #include <tuple>
 #include <string>
 #include <stdexcept>
@@ -17,6 +16,13 @@
 
 #include "../memory/grid_utils.hpp"
 
+// Add CUDA_CALLABLE macro definition
+#ifdef __CUDACC__
+#define CUDA_CALLABLE __host__ __device__
+#else
+#define CUDA_CALLABLE
+#endif
+
 namespace cellib::core::bitwise {
 
 using namespace cellib::memory::grids::utils;
@@ -27,7 +33,7 @@ struct constats_ops {
     static constexpr const_t ones = ~static_cast<const_t>(0);
 
     template <const_t value>
-    static constexpr int get_highest_set_bit() {
+    CUDA_CALLABLE static constexpr int get_highest_set_bit() {
         if (value == 0) {
             return -1; // No bits are set
         }
@@ -43,12 +49,12 @@ struct constats_ops {
     }
 
     template <const_t value>
-    static constexpr const_t get_bit_row_at(int bit_idx) {
+    CUDA_CALLABLE static constexpr const_t get_bit_row_at(int bit_idx) {
         return ((value >> bit_idx) & 1) * ones;
     }
 
     template <const_t value>
-    static constexpr const_t is_set_at(int bit_idx) {
+    CUDA_CALLABLE static constexpr const_t is_set_at(int bit_idx) {
         return ((value >> bit_idx) & 1) * ones;
     }
 };
@@ -62,36 +68,36 @@ enum class bit_action {
 
 struct op_shift_right {
     template <typename T, typename U>
-    static auto apply(T a, U b) {
+    CUDA_CALLABLE static auto apply(T a, U b) {
         return a >> b;
     }
 
     template <int b, typename T>
-    static auto apply(T a) {
+    CUDA_CALLABLE static auto apply(T a) {
         return a >> b;
     }
 };
 
 struct op_shift_left {
     template <typename T, typename U>
-    static auto apply(T a, U b) {
+    CUDA_CALLABLE static auto apply(T a, U b) {
         return a << b;
     }
 
     template <int b, typename T>
-    static auto apply(T a) {
+    CUDA_CALLABLE static auto apply(T a) {
         return a << b;
     }
 };
 
 struct op_and {
     template <typename T, typename U>
-    static auto apply(T a, U b) {
+    CUDA_CALLABLE static auto apply(T a, U b) {
         return a & b;
     }
 
     template <typename const_t, const_t value>
-    static constexpr bit_action action_for_bit(int bit_idx) {
+    CUDA_CALLABLE static constexpr bit_action action_for_bit(int bit_idx) {
         auto bit_value = (value >> bit_idx) & 1;
 
         if (bit_value == 0) {
@@ -104,12 +110,12 @@ struct op_and {
 
 struct op_or {
     template <typename T, typename U>
-    static auto apply(T a, U b) {
+    CUDA_CALLABLE static auto apply(T a, U b) {
         return a | b;
     }
 
     template <typename const_t, const_t value>
-    static constexpr bit_action action_for_bit(int bit_idx) {
+    CUDA_CALLABLE static constexpr bit_action action_for_bit(int bit_idx) {
         auto bit_value = (value >> bit_idx) & 1;
 
         if (bit_value == 1) {
@@ -122,12 +128,12 @@ struct op_or {
 
 struct op_xor {
     template <typename T, typename U>
-    static auto apply(T a, U b) {
+    CUDA_CALLABLE static auto apply(T a, U b) {
         return a ^ b;
     }
 
     template <typename const_t, const_t value>
-    static constexpr bit_action action_for_bit(int bit_idx) {
+    CUDA_CALLABLE static constexpr bit_action action_for_bit(int bit_idx) {
         auto bit_value = (value >> bit_idx) & 1;
 
         if (bit_value == 1) {
@@ -140,7 +146,7 @@ struct op_xor {
 
 struct op_not {
     template <typename T>
-    static auto apply(T a) {
+    CUDA_CALLABLE static auto apply(T a) {
         return ~a;
     }
 };
@@ -166,7 +172,7 @@ class vector_int {
     }
 
     template <typename val_t>
-    void set_at(int index, val_t value) {
+    CUDA_CALLABLE void set_at(int index, val_t value) {
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
@@ -182,7 +188,7 @@ class vector_int {
     }
 
     template <typename val_t = int>
-    val_t get_at(int index) const {
+    CUDA_CALLABLE val_t get_at(int index) const {
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
@@ -210,7 +216,7 @@ class vector_int {
     }
 
     template <int other_bits>
-    vector_int_higher_precision_t<other_bits> get_added(
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_added(
         vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int res_bits = (bits > other_bits ? bits : other_bits);
@@ -271,27 +277,27 @@ class vector_int {
     }
 
     template <int other_bits>
-    vector_int_higher_precision_t<other_bits> get_ored(
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_ored(
         vector_int<vector_store_type, other_bits> other) const {
 
         return get_oped<other_bits, op_or>(other);
     }
 
     template <int other_bits>
-    vector_int_higher_precision_t<other_bits> get_xored(
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_xored(
         vector_int<vector_store_type, other_bits> other) const {
 
         return get_oped<other_bits, op_xor>(other);
     }
 
     template <int other_bits>
-    vector_int_higher_precision_t<other_bits> get_anded(
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_anded(
         vector_int<vector_store_type, other_bits> other) const {
 
         return get_oped<other_bits, op_and>(other);
     }
 
-    vector_int<vector_store_type, bits> mask_out_columns(
+    CUDA_CALLABLE vector_int<vector_store_type, bits> mask_out_columns(
         vector_store_type mask) const {
         vector_int<vector_store_type, bits> result;
 
@@ -306,7 +312,7 @@ class vector_int {
     }
 
     template <int target_bits>
-    vector_int<vector_store_type, target_bits> to_vector_with_bits() const {
+    CUDA_CALLABLE vector_int<vector_store_type, target_bits> to_vector_with_bits() const {
         vector_int<vector_store_type, target_bits> result;
         constexpr auto min_bits = (target_bits < bits ? target_bits : bits);
 
@@ -318,45 +324,45 @@ class vector_int {
         return result;
     }
 
-    vector_int<vector_store_type, bits> get_right_shifted_vector(int shift) const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_right_shifted_vector(int shift) const {
         return get_shifted_vector<op_shift_right>(shift);
     }
 
-    vector_int<vector_store_type, bits> get_left_shifted_vector(int shift) const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_left_shifted_vector(int shift) const {
         return get_shifted_vector<op_shift_left>(shift);
     }
 
-    vector_int<vector_store_type, bits> get_noted() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_noted() const {
         return get_oped<op_not>();
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_anded() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_anded() const {
         return get_oped<op_and, constant>();
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_ored() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_ored() const {
         return get_oped<op_or, constant>();
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_xored() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_xored() const {
         return get_oped<op_xor, constant>();
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_left_shifted_vector() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_left_shifted_vector() const {
         return get_shifted_vector<op_shift_left, constant>();
     }
 
     template <int constant>
-    vector_int<vector_store_type, bits> get_right_shifted_vector() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_right_shifted_vector() const {
         return get_shifted_vector<op_shift_right, constant>();
     }
 
     template <typename tuple_of_pointers_storage_t>
-    static vector_int<vector_store_type, bits> load_from(
+    CUDA_CALLABLE static vector_int<vector_store_type, bits> load_from(
         tuple_of_pointers_storage_t storage, std::size_t offset) {
 
         vector_int<vector_store_type, bits> result;
@@ -375,7 +381,7 @@ class vector_int {
     static constexpr bool has_save_to_method = true;
 
     template <typename tuple_of_pointers_storage_t>
-    void save_to(tuple_of_pointers_storage_t storage, std::size_t offset) const {
+    CUDA_CALLABLE void save_to(tuple_of_pointers_storage_t storage, std::size_t offset) const {
 
         constexpr auto storage_size = std::tuple_size_v<tuple_of_pointers_storage_t>;
         constexpr auto saved_bits = std::min<int>(storage_size, bits);
@@ -387,7 +393,7 @@ class vector_int {
     }
 
     template <int other_bits>
-    vector_store_type equals_to(
+    CUDA_CALLABLE vector_store_type equals_to(
         vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
@@ -417,7 +423,7 @@ class vector_int {
     }
 
     template <int other_bits>
-    vector_store_type not_equal_to(
+    CUDA_CALLABLE vector_store_type not_equal_to(
         vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
@@ -447,7 +453,7 @@ class vector_int {
     }
 
     template <int constant>
-    vector_store_type equals_to() const {
+    CUDA_CALLABLE vector_store_type equals_to() const {
         // constexpr auto constant_bits
         //     = constats_ops<int>::get_highest_set_bit<constant>();
 
@@ -470,7 +476,7 @@ class vector_int {
     }
 
     template <int other_bits>
-    vector_store_type greater_than(
+    CUDA_CALLABLE vector_store_type greater_than(
         vector_int<vector_store_type, other_bits> other) const {
 
         vector_store_type result = 0;
@@ -516,22 +522,22 @@ class vector_int {
     store_t numbers;
 
     template <typename Callback, std::size_t... Is>
-    static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
+    CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
         (cb.template operator()<Is>(), ...);
     }
 
     template <typename Callback>
-    static void for_each_bit(Callback&& cb) {
+    CUDA_CALLABLE static void for_each_bit(Callback&& cb) {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<bits>{});
     }
 
     template <int count, typename Callback>
-    static void for_each_in(Callback&& cb) {
+    CUDA_CALLABLE static void for_each_in(Callback&& cb) {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});
     }
 
     template <typename shift_op_t>
-    vector_int<vector_store_type, bits> get_shifted_vector(int shift) const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_shifted_vector(int shift) const {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
@@ -545,7 +551,7 @@ class vector_int {
     }
 
     template <typename shift_op_t, int shift>
-    vector_int<vector_store_type, bits> get_shifted_vector() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_shifted_vector() const {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
@@ -559,7 +565,7 @@ class vector_int {
     }
 
     template <bit_action action>
-    vector_store_type apply_action(vector_store_type word) const {
+    CUDA_CALLABLE vector_store_type apply_action(vector_store_type word) const {
         if constexpr (action == bit_action::SET_ZERO) {
             return 0;
         } else if constexpr (action == bit_action::SET_ONE) {
@@ -574,7 +580,7 @@ class vector_int {
     }
 
     template <int other_bits, typename op_t>
-    vector_int_higher_precision_t<other_bits> get_oped(
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_oped(
         vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
@@ -609,7 +615,7 @@ class vector_int {
     }
 
     template <typename op_t>
-    vector_int<vector_store_type, bits> get_oped() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_oped() const {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
@@ -623,7 +629,7 @@ class vector_int {
     }
 
     template <typename op_t, int constant>
-    vector_int<vector_store_type, bits> get_oped() const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_oped() const {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
@@ -639,7 +645,7 @@ class vector_int {
 
 struct vector_int_factory {
     template <typename vector_store_type, int constant>
-    static auto from_constant() {
+    CUDA_CALLABLE static auto from_constant() {
         constexpr auto bits
             = constats_ops<int>::get_highest_set_bit<constant>() + 1;
 
@@ -665,14 +671,14 @@ struct vector_int_factory {
     }
 
     template <typename vector_store_type>
-    static auto from_condition_result(vector_store_type condition_result) {
+    CUDA_CALLABLE static auto from_condition_result(vector_store_type condition_result) {
         vector_int<vector_store_type, 1> result;
         std::get<0>(result.numbers) = condition_result;
         return result;
     }
 
     template <typename vector_store_type, typename pointer_storage_t>
-    static auto load_from(pointer_storage_t storage, std::size_t offset) {
+    CUDA_CALLABLE static auto load_from(pointer_storage_t storage, std::size_t offset) {
         constexpr auto bits = std::tuple_size_v<pointer_storage_t>;
         static_assert(bits > 0, "Storage must have at least one element");
 
@@ -681,12 +687,12 @@ struct vector_int_factory {
 
   private:
     template <typename Callback, std::size_t... Is>
-    static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
+    CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
         (cb.template operator()<Is>(), ...);
     }
 
     template <int count, typename Callback>
-    static void for_each_in(Callback&& cb) {
+    CUDA_CALLABLE static void for_each_in(Callback&& cb) {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});
     }
 };

@@ -166,7 +166,16 @@ public:
         return grid<cell_type, device::CUDA>(params);
     }
 
-    private:
+    void free_cuda_memory() {
+        if constexpr (device_type == device::CUDA) {
+            if (_cuda_data) {
+                cudaFree(_cuda_data);
+                _cuda_data = nullptr;
+            }
+        }
+    }
+
+private:
 
     grids::properties _properties;
     std::vector<cell_type> _data;

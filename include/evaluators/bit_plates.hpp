@@ -16,6 +16,13 @@
 #include "../memory/grid_utils.hpp"
 #include "../memory/interface.hpp"
 
+// Use the same CUDA_CALLABLE definition as in standard evaluator
+#ifdef __CUDACC__
+#define CUDA_CALLABLE __host__ __device__
+#else
+#define CUDA_CALLABLE
+#endif
+
 namespace cellib::evaluators::bit_plates {
 
 using namespace cellib::ast;
@@ -34,14 +41,14 @@ using state_t = cellib::memory::grids::point_in_grid<
 
 template <typename cell_row_type, typename state_dictionary_type, typename const_type, const_type Value>
 struct evaluator<cell_row_type, state_dictionary_type, constant<const_type, Value>> {
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
+    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
         return vector_int_factory::from_constant<cell_row_type, Value>();
     }
 };
 
 template <typename cell_row_type, typename state_dictionary_type, typename state_type, state_type Value>
 struct evaluator<cell_row_type, state_dictionary_type, state_constant<state_type, Value>> {
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
+    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
         constexpr auto index = state_dictionary_type::state_to_index(Value);
         return vector_int_factory::from_constant<cell_row_type, index>();
     }
@@ -53,7 +60,7 @@ struct evaluator<cell_row_type, state_dictionary_type, if_then_else<Condition, T
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         auto condition = evaluator_t<Condition>::evaluate(state);
         auto then_part = evaluator_t<Then>::evaluate(state);
         auto else_part = evaluator_t<Else>::evaluate(state);
@@ -71,7 +78,7 @@ struct evaluator<cell_row_type, state_dictionary_type, and_<Left, Right>> {
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         cell_row_type left = evaluator_t<Left>::evaluate(state);
         cell_row_type right = evaluator_t<Right>::evaluate(state);
 
@@ -85,7 +92,7 @@ struct evaluator<cell_row_type, state_dictionary_type, or_<Left, Right>> {
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         cell_row_type left = evaluator_t<Left>::evaluate(state);
         cell_row_type right = evaluator_t<Right>::evaluate(state);
 
@@ -99,7 +106,7 @@ struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
@@ -109,7 +116,7 @@ struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
 
 template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
 struct evaluator<cell_row_type, state_dictionary_type, greater_than<Left, Right>> {
-    static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         auto left = evaluator<cell_row_type, state_dictionary_type, Left>::evaluate(state);
         auto right = evaluator<cell_row_type, state_dictionary_type, Right>::evaluate(state);
 
@@ -123,7 +130,7 @@ struct evaluator<cell_row_type, state_dictionary_type, not_equals<Left, Right>> 
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static bool evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static bool evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
@@ -131,14 +138,16 @@ struct evaluator<cell_row_type, state_dictionary_type, not_equals<Left, Right>> 
     }
 };
 
-
 template <typename cell_row_type, typename state_dictionary_type, int x_offset, int y_offset>
 struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_offset>> {
     static constexpr int vector_width_bits = sizeof(cell_row_type) * 8;
 
     using eval_state_t = state_t<cell_row_type, state_dictionary_type>;
 
-    static auto evaluate(eval_state_t state) {
+    constexpr static std::size_t x_offset_unsigned = static_cast<std::size_t>(x_offset);
+    constexpr static std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
+
+    CUDA_CALLABLE static auto evaluate(eval_state_t state) {
         auto center = get_center_vector_int(state);
 
         if constexpr (x_offset == 0) {
@@ -156,38 +165,49 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
   private:
     using vint = vector_int<cell_row_type, state_dictionary_type::needed_bits>;
 
-    static vint shift_center(vint center) {
+    CUDA_CALLABLE static vint shift_center(vint center) {
         if constexpr (x_offset > 0) {
             return center.template get_right_shifted_vector<x_offset>();
         } else if constexpr (x_offset < 0) {
             return center.template get_left_shifted_vector<-x_offset>();
         } else {
+            #ifndef __CUDA_ARCH__
             throw std::logic_error("Invalid x_offset value");
+            #else
+            // In CUDA device code, we can't throw exceptions
+            // Just return the unshifted center as a fallback
+            return center;
+            #endif
         }
     }
 
-    static vint shift_neighbor(vint neighbor) {
+    CUDA_CALLABLE static vint shift_neighbor(vint neighbor) {
         if constexpr (x_offset > 0) {
             return neighbor.template get_left_shifted_vector<vector_width_bits - x_offset>();
         } else if constexpr (x_offset < 0) {
             return neighbor.template get_right_shifted_vector<vector_width_bits + x_offset>();
         } else {
+            #ifndef __CUDA_ARCH__
             throw std::logic_error("Invalid x_offset value");
+            #else
+            // In CUDA device code, we can't throw exceptions
+            return neighbor;
+            #endif
         }
     }
 
-    static vint get_center_vector_int(eval_state_t state) {
+    CUDA_CALLABLE static vint get_center_vector_int(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto idx = state.properties.idx(x, y + y_offset);
+        auto idx = state.properties.idx(x, y + y_offset_unsigned);
 
         return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
     }
 
-    static vint get_neighbor_vector_int(eval_state_t state) {
+    CUDA_CALLABLE static vint get_neighbor_vector_int(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto idx = state.properties.idx(x + x_offset, y + y_offset);
+        auto idx = state.properties.idx(x + x_offset_unsigned, y + y_offset_unsigned);
 
         return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
     }
@@ -203,7 +223,7 @@ struct evaluator<
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static vector_int<cell_row_type, 4> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static vector_int<cell_row_type, 4> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
         auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
@@ -245,7 +265,7 @@ struct evaluator<
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
 
-    static vector_int<cell_row_type, 3> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static vector_int<cell_row_type, 3> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
         constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
         // Get the four neighbors (top, right, bottom, left)
@@ -261,9 +281,7 @@ struct evaluator<
         auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
 
         // Add the counts using 3 bits (since max count is 4)
-        // First convert the first value to a 3-bit vector
         return top.template to_vector_with_bits<3>()
-            // Then add the rest of the neighbors
             .get_added(right)
             .get_added(bottom)
             .get_added(left);

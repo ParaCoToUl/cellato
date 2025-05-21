@@ -31,7 +31,7 @@ __global__ void process_grid_kernel(
     state.properties.y_size = height;
     state.position.x = x;
     state.position.y = y;
-    
+
     auto result = evaluator_t::evaluate(state);
     save_to(output_data, state.idx(), result);
 }
@@ -81,8 +81,13 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
 
 template <typename evaluator_type, typename grid_type>
 typename traverser<evaluator_type, grid_type>::grid_t 
-traverser<evaluator_type, grid_type>::fetch_result() const {
-    return _final_grid->to_cpu();
+traverser<evaluator_type, grid_type>::fetch_result() {
+    auto cpu_grid = _final_grid->to_cpu();
+
+    _input_grid_cuda.free_cuda_memory();
+    _intermediate_grid_cuda.free_cuda_memory();
+
+    return std::move(cpu_grid);
 }
 
 } // namespace cellib::traversers::cuda::simple
