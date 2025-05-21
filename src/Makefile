@@ -57,7 +57,7 @@ run: $(TARGET)
 	$(TARGET)
 
 test: $(TEST_TARGET)
-	$(TEST_TARGET)
+	$(TEST_TARGET) $(ARGS)
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)

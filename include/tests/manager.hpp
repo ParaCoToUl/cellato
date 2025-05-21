@@ -145,7 +145,7 @@ public:
     void assert_equal(T expected, U actual, const std::string& message) {
         result.total++;
         
-        if (expected == actual) {
+        if (expected == static_cast<T>(actual)) {
             if (verbose) {
                 std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;
             }

@@ -1,29 +1,34 @@
 #include <iostream>
-#include "tests/manager.hpp"
-#include "tests/vector-int.hpp"
-#include "tests/bit_plates_grid.hpp"
-#include "tests/bit_evaluator.hpp"
+
+// Include all test headers
+#include "../include/tests/manager.hpp"
+#include "../include/tests/bit_plates_grid.hpp"
+#include "../include/tests/bit_array_grid.hpp"
+#include "../include/tests/vector-int.hpp"
+#include "../include/tests/bit_evaluator.hpp"
+
+using namespace cellib::tests;
 
 int main(int argc, char* argv[]) {
     // Register all test suites
-    cellib::tests::register_vector_int_tests();
-    cellib::tests::register_bit_plates_grid_tests();
-    cellib::tests::register_bit_evaluator_tests();
+
+    register_bit_plates_grid_tests();
+    register_bit_array_grid_tests();
+    register_vector_int_tests();
+    register_bit_evaluator_tests();
     
-    // Get the test manager
-    auto& manager = cellib::tests::test_manager::instance();
-    
-    cellib::tests::test_result result;
-    
-    // Run specific test suite if provided as argument
+    // If an argument is provided, run that specific test suite
     if (argc > 1) {
         std::string suite_name = argv[1];
-        result = manager.run_suite(suite_name);
-    } else {
-        // Otherwise run all test suites
-        result = manager.run_all();
+        std::cout << "Running test suite: " << suite_name << std::endl;
+        
+        test_result result = test_manager::instance().run_suite(suite_name);
+        return result.all_passed() ? 0 : 1;
+    } 
+    else {
+        std::cout << "Running all test suites" << std::endl;
+        
+        test_result result = test_manager::instance().run_all();
+        return result.all_passed() ? 0 : 1;
     }
-    
-    // Return non-zero exit code if any tests failed
-    return result.all_passed() ? 0 : 1;
 }

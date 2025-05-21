@@ -9,6 +9,8 @@
 #include <ctime>
 
 namespace cellib::tests {
+// Create a nested namespace for bit_plates tests to avoid conflicts
+namespace bit_plates {
 
 // Define an enum for testing
 enum class TestCellState {
@@ -34,6 +36,8 @@ using TestStateDictionary = cellib::memory::grids::state_dictionary<
     TestCellState::ALIVE, 
     TestCellState::DYING
 >;
+
+} // namespace bit_plates
 
 class bit_plates_grid_test_suite : public test_suite {
 public:
@@ -63,25 +67,25 @@ private:
     void test_state_dictionary_basics(test_case& tc) {
         std::cout << BLUE << "\n--- Testing state_dictionary basics ---" << RESET << std::endl;
         
-        tc.assert_equal(3, TestStateDictionary::number_of_values, "Dictionary should have 3 values");
-        tc.assert_equal(2, TestStateDictionary::needed_bits, "Should need 2 bits to represent 3 states");
+        tc.assert_equal(3, bit_plates::TestStateDictionary::number_of_values, "Dictionary should have 3 values");
+        tc.assert_equal(2, bit_plates::TestStateDictionary::needed_bits, "Should need 2 bits to represent 3 states");
     }
 
     // Test state_dictionary conversion functions
     void test_state_dictionary_conversion(test_case& tc) {
         std::cout << BLUE << "\n--- Testing state_dictionary conversion ---" << RESET << std::endl;
         
-        tc.assert_equal(0, TestStateDictionary::state_to_index(TestCellState::DEAD), "DEAD should map to index 0");
-        tc.assert_equal(1, TestStateDictionary::state_to_index(TestCellState::ALIVE), "ALIVE should map to index 1");
-        tc.assert_equal(2, TestStateDictionary::state_to_index(TestCellState::DYING), "DYING should map to index 2");
+        tc.assert_equal(0, bit_plates::TestStateDictionary::state_to_index(bit_plates::TestCellState::DEAD), "DEAD should map to index 0");
+        tc.assert_equal(1, bit_plates::TestStateDictionary::state_to_index(bit_plates::TestCellState::ALIVE), "ALIVE should map to index 1");
+        tc.assert_equal(2, bit_plates::TestStateDictionary::state_to_index(bit_plates::TestCellState::DYING), "DYING should map to index 2");
         
-        tc.assert_true(TestCellState::DEAD == TestStateDictionary::index_to_state(0), "Index 0 should map to DEAD");
-        tc.assert_true(TestCellState::ALIVE == TestStateDictionary::index_to_state(1), "Index 1 should map to ALIVE");
-        tc.assert_true(TestCellState::DYING == TestStateDictionary::index_to_state(2), "Index 2 should map to DYING");
+        tc.assert_true(bit_plates::TestCellState::DEAD == bit_plates::TestStateDictionary::index_to_state(0), "Index 0 should map to DEAD");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == bit_plates::TestStateDictionary::index_to_state(1), "Index 1 should map to ALIVE");
+        tc.assert_true(bit_plates::TestCellState::DYING == bit_plates::TestStateDictionary::index_to_state(2), "Index 2 should map to DYING");
         
         bool exception_thrown = false;
         try {
-            TestStateDictionary::state_to_index(static_cast<TestCellState>(99));
+            bit_plates::TestStateDictionary::state_to_index(static_cast<bit_plates::TestCellState>(99));
         } catch (const std::out_of_range&) {
             exception_thrown = true;
         }
@@ -89,7 +93,7 @@ private:
         
         exception_thrown = false;
         try {
-            TestStateDictionary::index_to_state(99);
+            bit_plates::TestStateDictionary::index_to_state(99);
         } catch (const std::out_of_range&) {
             exception_thrown = true;
         }
@@ -107,9 +111,9 @@ private:
         const size_t width = width_words * word_bits;
         
         // Initialize grid with DEAD cells
-        std::vector<TestCellState> input_grid(height * width, TestCellState::DEAD);
+        std::vector<bit_plates::TestCellState> input_grid(height * width, bit_plates::TestCellState::DEAD);
         
-        cellib::memory::grids::bit_plates::grid<uint8_t, TestStateDictionary> grid(height, width, input_grid.data());
+        cellib::memory::grids::bit_plates::grid<uint8_t, bit_plates::TestStateDictionary> grid(height, width, input_grid.data());
 
         tc.assert_equal(width, grid.x_size_original(), "Grid width should match original width");
         tc.assert_equal(height, grid.y_size_original(), "Grid height should match original height");
@@ -123,12 +127,12 @@ private:
         
         // Create a 1x1 grid (1 row, 1 word)
         // For uint8_t, this stores 8 cells in a row
-        std::vector<TestCellState> input_grid = {
-            TestCellState::DEAD, TestCellState::ALIVE, TestCellState::DYING, TestCellState::DEAD,
-            TestCellState::ALIVE, TestCellState::DEAD, TestCellState::ALIVE, TestCellState::DYING
+        std::vector<bit_plates::TestCellState> input_grid = {
+            bit_plates::TestCellState::DEAD, bit_plates::TestCellState::ALIVE, bit_plates::TestCellState::DYING, bit_plates::TestCellState::DEAD,
+            bit_plates::TestCellState::ALIVE, bit_plates::TestCellState::DEAD, bit_plates::TestCellState::ALIVE, bit_plates::TestCellState::DYING
         };
 
-        cellib::memory::grids::bit_plates::grid<uint8_t, TestStateDictionary> grid(1, 8, input_grid.data());
+        cellib::memory::grids::bit_plates::grid<uint8_t, bit_plates::TestStateDictionary> grid(1, 8, input_grid.data());
         
         // Reconstruct and verify
         auto result = grid.to_original_representation();
@@ -150,29 +154,29 @@ private:
         const size_t width_words = 2;
         const size_t word_bits = sizeof(uint8_t) * 8;
         const size_t width = width_words * word_bits;
-        std::vector<TestCellState> input_grid(height * width, TestCellState::DEAD);
+        std::vector<bit_plates::TestCellState> input_grid(height * width, bit_plates::TestCellState::DEAD);
         
         // Set specific cells to create a pattern
         // Row 0, positions 0, 3, 7 are ALIVE
         // Row 1, positions 1, 4, 9 are DYING
-        input_grid[0] = TestCellState::ALIVE;
-        input_grid[3] = TestCellState::ALIVE;
-        input_grid[7] = TestCellState::ALIVE;
-        input_grid[width + 1] = TestCellState::DYING;
-        input_grid[width + 4] = TestCellState::DYING;
-        input_grid[width + 9] = TestCellState::DYING;
+        input_grid[0] = bit_plates::TestCellState::ALIVE;
+        input_grid[3] = bit_plates::TestCellState::ALIVE;
+        input_grid[7] = bit_plates::TestCellState::ALIVE;
+        input_grid[width + 1] = bit_plates::TestCellState::DYING;
+        input_grid[width + 4] = bit_plates::TestCellState::DYING;
+        input_grid[width + 9] = bit_plates::TestCellState::DYING;
         
-        cellib::memory::grids::bit_plates::grid<uint8_t, TestStateDictionary> grid(height, width, input_grid.data());
+        cellib::memory::grids::bit_plates::grid<uint8_t, bit_plates::TestStateDictionary> grid(height, width, input_grid.data());
         
         // Verify the reconstruction
         auto result = grid.to_original_representation();
         
-        tc.assert_true(TestCellState::ALIVE == result[0], "Cell (0,0) should be ALIVE");
-        tc.assert_true(TestCellState::ALIVE == result[3], "Cell (0,3) should be ALIVE");
-        tc.assert_true(TestCellState::ALIVE == result[7], "Cell (0,7) should be ALIVE");
-        tc.assert_true(TestCellState::DYING == result[width + 1], "Cell (1,1) should be DYING");
-        tc.assert_true(TestCellState::DYING == result[width + 4], "Cell (1,4) should be DYING");
-        tc.assert_true(TestCellState::DYING == result[width + 9], "Cell (1,9) should be DYING");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == result[0], "Cell (0,0) should be ALIVE");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == result[3], "Cell (0,3) should be ALIVE");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == result[7], "Cell (0,7) should be ALIVE");
+        tc.assert_true(bit_plates::TestCellState::DYING == result[width + 1], "Cell (1,1) should be DYING");
+        tc.assert_true(bit_plates::TestCellState::DYING == result[width + 4], "Cell (1,4) should be DYING");
+        tc.assert_true(bit_plates::TestCellState::DYING == result[width + 9], "Cell (1,9) should be DYING");
     }
 
     // Test get_cell function
@@ -184,27 +188,27 @@ private:
         const size_t width_words = 2;
         const size_t word_bits = sizeof(uint8_t) * 8;
         const size_t width = width_words * word_bits;
-        std::vector<TestCellState> input_grid(height * width, TestCellState::DEAD);
+        std::vector<bit_plates::TestCellState> input_grid(height * width, bit_plates::TestCellState::DEAD);
         
         // Set specific cells based on their (x, y) coordinates
         // Row 0
-        input_grid[0] = TestCellState::ALIVE;                 // (0,0)
-        input_grid[3] = TestCellState::DYING;                 // (3,0)
+        input_grid[0] = bit_plates::TestCellState::ALIVE;                 // (0,0)
+        input_grid[3] = bit_plates::TestCellState::DYING;                 // (3,0)
         
         // Row 1 - offset by width
-        input_grid[width + 1] = TestCellState::ALIVE;         // (1,1)
-        input_grid[width + 7] = TestCellState::DYING;         // (7,1)
-        input_grid[width + 9] = TestCellState::ALIVE;         // (9,1)
+        input_grid[width + 1] = bit_plates::TestCellState::ALIVE;         // (1,1)
+        input_grid[width + 7] = bit_plates::TestCellState::DYING;         // (7,1)
+        input_grid[width + 9] = bit_plates::TestCellState::ALIVE;         // (9,1)
         
-        cellib::memory::grids::bit_plates::grid<uint8_t, TestStateDictionary> grid(height, width, input_grid.data());
+        cellib::memory::grids::bit_plates::grid<uint8_t, bit_plates::TestStateDictionary> grid(height, width, input_grid.data());
         
         // Test specific cell retrievals
-        tc.assert_true(TestCellState::ALIVE == grid.get_cell(0, 0), "Cell (0,0) should be ALIVE");
-        tc.assert_true(TestCellState::DEAD == grid.get_cell(1, 0), "Cell (1,0) should be DEAD");
-        tc.assert_true(TestCellState::DYING == grid.get_cell(3, 0), "Cell (3,0) should be DYING");
-        tc.assert_true(TestCellState::ALIVE == grid.get_cell(1, 1), "Cell (1,1) should be ALIVE");
-        tc.assert_true(TestCellState::DYING == grid.get_cell(7, 1), "Cell (7,1) should be DYING");
-        tc.assert_true(TestCellState::ALIVE == grid.get_cell(9, 1), "Cell (9,1) should be ALIVE");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == grid.get_cell(0, 0), "Cell (0,0) should be ALIVE");
+        tc.assert_true(bit_plates::TestCellState::DEAD == grid.get_cell(1, 0), "Cell (1,0) should be DEAD");
+        tc.assert_true(bit_plates::TestCellState::DYING == grid.get_cell(3, 0), "Cell (3,0) should be DYING");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == grid.get_cell(1, 1), "Cell (1,1) should be ALIVE");
+        tc.assert_true(bit_plates::TestCellState::DYING == grid.get_cell(7, 1), "Cell (7,1) should be DYING");
+        tc.assert_true(bit_plates::TestCellState::ALIVE == grid.get_cell(9, 1), "Cell (9,1) should be ALIVE");
         
         // Test bounds checking
         bool exception_thrown = false;
@@ -236,16 +240,16 @@ private:
         const size_t total_cells = height * width;
         
         // Generate patterned cell states
-        std::vector<TestCellState> input_grid(total_cells);
+        std::vector<bit_plates::TestCellState> input_grid(total_cells);
         for (size_t i = 0; i < input_grid.size(); ++i) {
             switch (i % 3) {
-                case 0: input_grid[i] = TestCellState::DEAD; break;
-                case 1: input_grid[i] = TestCellState::ALIVE; break;
-                case 2: input_grid[i] = TestCellState::DYING; break;
+                case 0: input_grid[i] = bit_plates::TestCellState::DEAD; break;
+                case 1: input_grid[i] = bit_plates::TestCellState::ALIVE; break;
+                case 2: input_grid[i] = bit_plates::TestCellState::DYING; break;
             }
         }
         
-        cellib::memory::grids::bit_plates::grid<uint8_t, TestStateDictionary> grid(height, width, input_grid.data());
+        cellib::memory::grids::bit_plates::grid<uint8_t, bit_plates::TestStateDictionary> grid(height, width, input_grid.data());
         
         // Compare direct get_cell with to_original_representation results
         auto result = grid.to_original_representation();
@@ -253,8 +257,8 @@ private:
         for (size_t y = 0; y < height; ++y) {
             for (size_t x = 0; x < width; ++x) {
                 size_t idx = y * width + x;
-                TestCellState from_get_cell = grid.get_cell(x, y);
-                TestCellState from_representation = result[idx];
+                bit_plates::TestCellState from_get_cell = grid.get_cell(x, y);
+                bit_plates::TestCellState from_representation = result[idx];
                 
                 tc.assert_true(from_get_cell == from_representation, 
                     "get_cell and to_original_representation should return the same value at (" + 
@@ -275,7 +279,7 @@ private:
         const size_t total_cells = height * width;
         
         std::cout << "  Generating random grid with " << total_cells << " cells..." << std::endl;
-        std::vector<TestCellState> input_grid(total_cells);
+        std::vector<bit_plates::TestCellState> input_grid(total_cells);
         
         // Initialize with random values
         std::mt19937 rng(42); // Fixed seed for reproducibility
@@ -284,14 +288,14 @@ private:
         for (size_t i = 0; i < input_grid.size(); ++i) {
             int random_value = dist(rng);
             switch (random_value) {
-                case 0: input_grid[i] = TestCellState::DEAD; break;
-                case 1: input_grid[i] = TestCellState::ALIVE; break;
-                case 2: input_grid[i] = TestCellState::DYING; break;
+                case 0: input_grid[i] = bit_plates::TestCellState::DEAD; break;
+                case 1: input_grid[i] = bit_plates::TestCellState::ALIVE; break;
+                case 2: input_grid[i] = bit_plates::TestCellState::DYING; break;
             }
         }
         
         std::cout << "  Creating bit plates grid..." << std::endl;
-        cellib::memory::grids::bit_plates::grid<uint8_t, TestStateDictionary> grid(height, width, input_grid.data());
+        cellib::memory::grids::bit_plates::grid<uint8_t, bit_plates::TestStateDictionary> grid(height, width, input_grid.data());
         
         std::cout << "  Converting back to original representation..." << std::endl;
         auto result = grid.to_original_representation();

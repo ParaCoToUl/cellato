@@ -42,33 +42,41 @@ int main() {
     };
     
     // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings, 3 = Wireworld
-    int simulation_type = 0; // Default to Wireworld
+    int simulation_type = 2; // Default to Wireworld
 
     if (simulation_type == 0) {
         // Run Game of Life simulation
         
-        // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
+        run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
         
         // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
         
         // run<game_of_life::config, cellib::run::test_suites::cuda_standard>(params);
 
-        run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
+        // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
     } else if (simulation_type == 1) {
         // Run Forest Fire simulation
         
-        // run<fire::config, cellib::run::test_suites::cpu_standard>(params);
+        run<fire::config, cellib::run::test_suites::cpu_standard>(params);
         
         // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
+
+        // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
         
-        run<fire::config, cellib::run::test_suites::cuda_standard>(params);
+        // run<fire::config, cellib::run::test_suites::cuda_standard>(params);
+        
+        // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
     } else if (simulation_type == 2) {
         // Run Greenberg-Hastings Model simulation
         // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
         
         // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
 
-        run<greenberg::config, cellib::run::test_suites::cuda_standard>(params);
+        run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
+        
+        // run<greenberg::config, cellib::run::test_suites::cuda_standard>(params);
+
+        // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
     } else {
         // Run Wireworld simulation
         
@@ -76,7 +84,9 @@ int main() {
         
         // run<wire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
 
-        run<wire::config, cellib::run::test_suites::cuda_standard>(params);
+        // run<wire::config, cellib::run::test_suites::cuda_standard>(params);
+
+        run<wire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
     }
     
     return 0;
