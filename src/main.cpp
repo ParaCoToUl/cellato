@@ -72,7 +72,9 @@ int main() {
         
         // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
 
-        run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
+        // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
+
+        run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cuda>(params);
         
         // run<greenberg::config, cellib::run::test_suites::cuda_standard>(params);
 

@@ -122,6 +122,9 @@ public:
 
     using cell_ptr_t = BitArrayProxy<states_dict_t, store_word_type>;
 
+    friend class cellib::memory::grids::bit_array::grid<states_dict_t, store_word_type, device::CPU>;
+    friend class cellib::memory::grids::bit_array::grid<states_dict_t, store_word_type, device::CUDA>;
+
     // Default constructor
     grid() = default;
 

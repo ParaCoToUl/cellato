@@ -9,6 +9,7 @@ static_assert(false, "AUTOMATON_NAMESPACE must be defined");
 #include "evaluators/bit_plates.hpp"
 #include "memory/standard_grid.hpp"
 #include "memory/bit_plates_grid.hpp"
+#include "memory/bit_array_grid.hpp"
 #include "memory/interface.hpp"
 
 // Standard grid with standard evaluator
@@ -22,6 +23,27 @@ template class TRAVERSER_TYPE;
 template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_mode::QUIET>(int);
 template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_mode::VERBOSE>(int);
 
+#undef TRAVERSER_TYPE
+
+
+#define GRID_TYPE \
+    cellib::memory::grids::bit_array::grid< \
+        AUTOMATON_NAMESPACE::config::state_dictionary, \
+        std::uint32_t, \
+        cellib::memory::grids::device::CPU \
+    >
+#define TRAVERSER_TYPE \
+    cellib::traversers::cuda::simple::traverser< \
+        cellib::evaluators::standard::evaluator<AUTOMATON_NAMESPACE::config::cell_state, \
+            AUTOMATON_NAMESPACE::config::algorithm, GRID_TYPE::cell_ptr_t>, \
+        GRID_TYPE \
+    >
+
+template class TRAVERSER_TYPE;
+template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_mode::VERBOSE>(int);
+
+#undef GRID_TYPE
 #undef TRAVERSER_TYPE
 
 // Bit plates grid with bit plates evaluator (32-bit)
