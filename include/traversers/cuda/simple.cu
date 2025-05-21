@@ -92,8 +92,11 @@ traverser<evaluator_type, grid_type>::fetch_result() {
 
 } // namespace cellib::traversers::cuda::simple
 
+#define SIMPLE_CUDA_TRAVERSER_INSTANTIATIONS
 
 #include "../../../src/game_of_life/cuda_instantiations.cuh"
 #include "../../../src/fire/cuda_instantiations.cuh"
 #include "../../../src/wire/cuda_instantiations.cuh"
 #include "../../../src/greenberg/cuda_instantiations.cuh"
+
+#undef SIMPLE_CUDA_TRAVERSER_INSTANTIATIONS

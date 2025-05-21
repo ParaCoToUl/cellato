@@ -47,25 +47,31 @@ int main() {
     if (simulation_type == 0) {
         // Run Game of Life simulation
         
-        run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
+        // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
         
         // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
         
         // run<game_of_life::config, cellib::run::test_suites::cuda_standard>(params);
 
+        // run<game_of_life::config, cellib::run::test_suites::cuda_spacial_blocking>(params);
+
         // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
+
+        run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cuda>(params);
     } else if (simulation_type == 1) {
         // Run Forest Fire simulation
         
-        run<fire::config, cellib::run::test_suites::cpu_standard>(params);
+        // run<fire::config, cellib::run::test_suites::cpu_standard>(params);
         
         // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-
+        
         // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
         
         // run<fire::config, cellib::run::test_suites::cuda_standard>(params);
         
         // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
+
+        run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cuda>(params);
     } else if (simulation_type == 2) {
         // Run Greenberg-Hastings Model simulation
         // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);

@@ -35,11 +35,13 @@ class BitArrayProxy {
 private:
     store_word_type* _data;
     static constexpr int _bits_per_cell = states_dict_t::needed_bits;
-    static constexpr int _cells_per_word = sizeof(store_word_type) * 8 / _bits_per_cell;
     static constexpr store_word_type _cell_mask = (1 << _bits_per_cell) - 1;
-
+    
 public:
+
     // Reference proxy class to allow both read and write operations
+    static constexpr int cells_per_word = sizeof(store_word_type) * 8 / _bits_per_cell;
+    
     class CellReference {
     private:
         BitArrayProxy& _proxy;
@@ -52,8 +54,8 @@ public:
         // Implicit conversion operator for reading
         CUDA_CALLABLE operator typename states_dict_t::state_t() const {
             // Calculate which word and which bits within that word
-            std::size_t word_index = _index / _proxy._cells_per_word;
-            std::size_t bit_offset = (_index % _proxy._cells_per_word) * _proxy._bits_per_cell;
+            std::size_t word_index = _index / _proxy.cells_per_word;
+            std::size_t bit_offset = (_index % _proxy.cells_per_word) * _proxy._bits_per_cell;
             
             // Extract bits for this cell
             std::size_t state_index = (_proxy._data[word_index] >> bit_offset) & _proxy._cell_mask;
@@ -65,8 +67,8 @@ public:
         // Assignment operator for writing
         CUDA_CALLABLE CellReference& operator=(typename states_dict_t::state_t new_value) {
             // Calculate which word and which bits within that word
-            std::size_t word_index = _index / _proxy._cells_per_word;
-            std::size_t bit_offset = (_index % _proxy._cells_per_word) * _proxy._bits_per_cell;
+            std::size_t word_index = _index / _proxy.cells_per_word;
+            std::size_t bit_offset = (_index % _proxy.cells_per_word) * _proxy._bits_per_cell;
             
             // Clear existing bits at this position
             _proxy._data[word_index] &= ~(_proxy._cell_mask << bit_offset);
@@ -90,8 +92,8 @@ public:
     // Const version for read-only access
     CUDA_CALLABLE typename states_dict_t::state_t operator[](std::size_t index) const {
         // Calculate which word and which bits within that word
-        std::size_t word_index = index / _cells_per_word;
-        std::size_t bit_offset = (index % _cells_per_word) * _bits_per_cell;
+        std::size_t word_index = index / cells_per_word;
+        std::size_t bit_offset = (index % cells_per_word) * _bits_per_cell;
         
         // Extract bits for this cell
         std::size_t state_index = (_data[word_index] >> bit_offset) & _cell_mask;
