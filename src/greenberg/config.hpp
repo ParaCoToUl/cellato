@@ -10,6 +10,8 @@ namespace greenberg {
 
 struct config {
     
+    static constexpr auto name = "greenberg-hastings";
+
     using algorithm = ghm_algorithm;
 
     using cell_state = ghm_cell_state;

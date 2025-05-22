@@ -10,6 +10,8 @@ namespace game_of_life {
 
 struct config {
 
+    static constexpr auto name = "game-of-life";
+
     using algorithm = gol_algorithm;
     
     using cell_state = gol_cell_state;

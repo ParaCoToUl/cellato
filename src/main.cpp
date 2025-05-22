@@ -1,6 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <algorithm>
+#include <unordered_map>
+#include <functional>
+#include <string>
 
 #include "experiments/run_params.hpp"
 #include "experiments/test_suites.hpp"
@@ -14,88 +18,150 @@
 #include "greenberg/config.hpp"
 #include "wire/config.hpp"
 
-template <
-    typename cellular_automaton,
-    template <typename> typename test_suite
->
+#include "args-parser.hpp"
+
+template <typename... all_test_suites>
+struct switch_ {
+    static void run(cellib::run::run_params& params) {
+        bool any_executed = (call<all_test_suites>(params) || ...);
+        if (!any_executed) {
+            std::cerr << "No suitable test suite found for the given parameters." << std::endl;
+        }
+    }
+
+private:
+    template <typename test_suite>
+    static bool call(cellib::run::run_params& params) {
+        if (!test_suite::is_for(params)) {
+            return false;
+        }
+
+        using cellular_automaton = typename test_suite::automaton;
+
+        auto initial_state = cellular_automaton::input::random::init(params);
+
+        cellib::run::experiment_manager<test_suite> manager;
+        manager.set_print_config(cellular_automaton::pretty_print::get_config());
+
+        manager.run_experiment(
+            params, initial_state
+        );
+        
+        return true;
+    }
+};
+
+
+template <typename test_suite>
 void run(cellib::run::run_params& params) {
 
-    auto initial_state = cellular_automaton::input::random::init(params);
-
-    using test_suite_for_alg = test_suite<cellular_automaton>;
-
-    cellib::run::experiment_manager<test_suite_for_alg> manager;
-    manager.set_print_config(cellular_automaton::pretty_print::get_config());
-
-    manager.run_experiment(
-        params, initial_state
-    );
 }
 
-int main() {
-    // Define experiment parameters
-    cellib::run::run_params params{
-        .x_size = 128,  // Larger grid for better patterns
-        .y_size = 64,
-        .steps = 100,
-        .print = true
-    };
-    
-    // 0 = Game of Life, 1 = Forest Fire, 2 = Greenberg-Hastings, 3 = Wireworld
-    int simulation_type = 2; // Default to Wireworld
+cellib::run::run_params get_params(int argc, char* argv[]) {
+    input::parser parser {argc, argv};
 
-    if (simulation_type == 0) {
-        // Run Game of Life simulation
-        
-        // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
-        
-        // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-        
-        // run<game_of_life::config, cellib::run::test_suites::cuda_standard>(params);
-
-        // run<game_of_life::config, cellib::run::test_suites::cuda_spacial_blocking>(params);
-
-        // run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
-
-        run<game_of_life::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cuda>(params);
-    } else if (simulation_type == 1) {
-        // Run Forest Fire simulation
-        
-        // run<fire::config, cellib::run::test_suites::cpu_standard>(params);
-        
-        // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-        
-        // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
-        
-        // run<fire::config, cellib::run::test_suites::cuda_standard>(params);
-        
-        // run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
-
-        run<fire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cuda>(params);
-    } else if (simulation_type == 2) {
-        // Run Greenberg-Hastings Model simulation
-        // run<game_of_life::config, cellib::run::test_suites::cpu_standard>(params);
-        
-        // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-
-        // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cpu>(params);
-
-        run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_array_cuda>(params);
-        
-        // run<greenberg::config, cellib::run::test_suites::cuda_standard>(params);
-
-        // run<greenberg::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
-    } else {
-        // Run Wireworld simulation
-        
-        // run<wire::config, cellib::run::test_suites::cpu_standard>(params);
-        
-        // run<wire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cpu>(params);
-
-        // run<wire::config, cellib::run::test_suites::cuda_standard>(params);
-
-        run<wire::config, cellib::run::test_suites::using_<std::uint32_t>::bit_plates_cuda>(params);
+    if (parser.exists("help")) {
+        return cellib::run::run_params{.help = true};
     }
+
+    std::vector<std::string> required {
+        "automaton",
+        "device", "traverser", "evaluator", "layout",
+        "x_size", "y_size", "steps",
+    };
+
+    std::vector<std::string> optional {
+        "print", "precision", "x_tile_size", "y_tile_size",
+    };
+
+    for (const auto& opt : required) {
+        if (!parser.exists(opt)) {
+            std::cerr << "Missing required option: " << opt << std::endl;
+            exit(1);
+        }
+    }
+
+    cellib::run::run_params params {
+        .automaton = parser.get("automaton"),
+
+        .device = parser.get("device"),
+        .traverser = parser.get("traverser"),
+        .evaluator = parser.get("evaluator"),
+        .layout = parser.get("layout"),
+
+        .x_size = std::stoi(parser.get("x_size")),
+        .y_size = std::stoi(parser.get("y_size")),
+        .steps = std::stoi(parser.get("steps")),
+
+        .precision = parser.exists("precision") ? std::stoi(parser.get("precision")) : 0,
+
+        .x_tile_size = parser.exists("x_tile_size") ? std::stoi(parser.get("x_tile_size")) : 0,
+        .y_tile_size = parser.exists("y_tile_size") ? std::stoi(parser.get("y_tile_size")) : 0,
+
+        .print = parser.exists("print"),
+        .help = parser.exists("help"),
+    };
+
+    return params;
+}
+
+void print_usage() {
+    std::cout << "Usage: ./cellib [options]\n";
+    std::cout << "Options:\n";
+    std::cout << "  --automaton <name>       Name of the cellular automaton\n";
+    std::cout << "  --device <name>          Device to run on (CPU, CUDA)\n";
+    std::cout << "  --traverser <name>       Traverser type (simple, spacial_blocking)\n";
+    std::cout << "  --evaluator <name>       Evaluator type (standard, bit_plates)\n";
+    std::cout << "  --layout <name>          Layout type (standard, bit_array, bit_plates)\n";
+    std::cout << "  --x_size <number>        X size of the grid\n";
+    std::cout << "  --y_size <number>        Y size of the grid\n";
+    std::cout << "  --x_tile_size <number>   X tile size for CUDA\n";
+    std::cout << "  --y_tile_size <number>   Y tile size for CUDA\n";
+    std::cout << "  --steps <number>         Number of steps to run\n";
+    std::cout << "  --precision <number>     Precision for floating-point calculations (32, 64)\n";
+    std::cout << "  --print                  Print the grid after each step\n";
+}
+
+
+int main(int argc, char* argv[]) {
     
+    auto params = get_params(argc, argv);
+
+    if (params.help) {
+        print_usage();
+        return 0;
+    }
+
+    if (params.print) {
+        params.print_std();
+    }
+
+    namespace test = cellib::run::test_suites;
+
+    using _game_of_life_ = game_of_life::config;
+    using _fire_ = fire::config;
+    using _wire_ = wire::config;
+    using _greenberg_ = greenberg::config;
+
+    #define cases_for(automaton) \
+        test::on_cpu::standard<automaton>, \
+        test::on_cpu::using_<std::uint32_t>::bit_array<automaton>, \
+        test::on_cpu::using_<std::uint32_t>::bit_plates<automaton>, \
+        test::on_cuda::standard<automaton>, \
+        test::on_cuda::standard<automaton>::with_spacial_blocking<1, 1>, \
+        test::on_cuda::standard<automaton>::with_spacial_blocking<2, 1>, \
+        test::on_cuda::standard<automaton>::with_spacial_blocking<4, 1>, \
+        test::on_cuda::using_<std::uint32_t>::bit_array<automaton>, \
+        test::on_cuda::using_<std::uint64_t>::bit_array<automaton>, \
+        test::on_cuda::using_<std::uint32_t>::bit_plates<automaton>, \
+        test::on_cuda::using_<std::uint64_t>::bit_plates<automaton>
+
+    switch_<
+        cases_for(_game_of_life_),
+        cases_for(_fire_),
+        cases_for(_wire_),
+        cases_for(_greenberg_)
+    >::run(params);
+
     return 0;
 }

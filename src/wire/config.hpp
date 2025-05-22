@@ -9,6 +9,9 @@
 namespace wire {
 
 struct config {
+
+    static constexpr auto name = "wire";
+
     using algorithm = wire_algorithm;
     
     using cell_state = wire_cell_state;

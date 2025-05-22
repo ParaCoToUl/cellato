@@ -6,9 +6,12 @@
 #include "./data_init.hpp"
 #include "memory/state_dictionary.hpp"
 
+#include <string>
 namespace fire {
 
 struct config {
+
+    static constexpr auto name = "forest-fire";
 
     using algorithm = fire_algorithm;
     

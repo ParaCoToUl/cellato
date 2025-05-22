@@ -54,7 +54,7 @@ print-%:
 	@echo $* = $($*)
 
 run: $(TARGET)
-	$(TARGET)
+	$(TARGET) $(ARGS)
 
 test: $(TEST_TARGET)
 	$(TEST_TARGET) $(ARGS)

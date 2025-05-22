@@ -78,6 +78,27 @@ template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::spacial_block
 #undef GRID_TYPE
 #undef TRAVERSER_TYPE
 
+#define GRID_TYPE \
+    cellib::memory::grids::bit_array::grid< \
+        AUTOMATON_NAMESPACE::config::state_dictionary, \
+        std::uint64_t, \
+        cellib::memory::grids::device::CPU \
+    >
+#define TRAVERSER_TYPE \
+    cellib::traversers::cuda::spacial_blocking::traverser< \
+        cellib::evaluators::standard::evaluator<AUTOMATON_NAMESPACE::config::cell_state, \
+            AUTOMATON_NAMESPACE::config::algorithm, GRID_TYPE::cell_ptr_t>, \
+        GRID_TYPE, \
+        1, GRID_TYPE::cells_per_word \
+    >
+
+template class TRAVERSER_TYPE;
+template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::spacial_blocking::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::spacial_blocking::_run_mode::VERBOSE>(int);
+
+#undef GRID_TYPE
+#undef TRAVERSER_TYPE
+
 
 #define Y_TILE_SIZE 1
 
