@@ -10,6 +10,11 @@
 #include <stdexcept>
 #include <cuda_runtime.h>
 #include <cassert>
+#include <utility>
+#include <algorithm>
+#include <stdexcept>
+#include <cmath>
+#include <cstdint>
 
 #include "./interface.hpp"
 

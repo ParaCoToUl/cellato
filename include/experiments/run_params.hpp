@@ -32,6 +32,8 @@ struct run_params {
     bool print = false;
     bool help = false;
 
+    bool print_csv_header = false;
+
     void print_to(std::ostream& os) {
         os << "Run Parameters:\n";
         os << "  Automaton: " << automaton << "\n";
@@ -42,10 +44,39 @@ struct run_params {
         os << "  Grid Size: (" << x_size << ", " << y_size << ")\n";
         os << "  Steps: " << steps << "\n";
         os << "  Print: " << (print ? "true" : "false") << "\n";
+        os << "  Precision: " << precision << "\n";
+        os << "  Rounds: " << rounds << "\n";
+        os << "  Warmup Rounds: " << warmup_rounds << "\n";
+        os << "  Seed: " << seed << "\n";
+        os << "  X Tile Size: " << x_tile_size << "\n";
+        os << "  Y Tile Size: " << y_tile_size << "\n";
+        os << "  Print CSV Header: " << (print_csv_header ? "true" : "false") << "\n";
+        os << "  Help: " << (help ? "true" : "false") << "\n";
     }
 
     void print_std() {
         print_to(std::cout);
+    }
+
+    static std::string csv_header() {
+        return "automaton,device,traverser,evaluator,layout,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,seed,precision";
+    }
+
+    std::string csv_line() const {
+        return automaton + "," +
+               device + "," +
+               traverser + "," +
+               evaluator + "," +
+               layout + "," +
+               std::to_string(x_size) + "," +
+               std::to_string(y_size) + "," +
+               std::to_string(steps) + "," +
+               std::to_string(rounds) + "," +
+               std::to_string(warmup_rounds) + "," +
+               std::to_string(x_tile_size) + "," +
+               std::to_string(y_tile_size) + "," +
+               std::to_string(seed) + "," +
+               std::to_string(precision);
     }
 };
 

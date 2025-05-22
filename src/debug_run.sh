@@ -25,7 +25,12 @@ args="--automaton game-of-life \
 # Visualize output with print option
 #args="--automaton game_of_life --device CUDA --layout bit_array --steps 20 --x_size 32 --y_size 32 --print"
 
-# rm -r $script_dir/../bin
+should_remove=$1
+
+if [ "$should_remove" == "clean" ]; then
+    echo "Removing old build..."
+    rm -r $script_dir/../bin
+fi
 
 cd $script_dir
 srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make run ARGS="$args"

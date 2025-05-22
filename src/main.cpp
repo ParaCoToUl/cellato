@@ -20,6 +20,10 @@
 
 #include "args-parser.hpp"
 
+
+#define LOG std::cerr
+#define REPORT std::cout
+
 template <typename... all_test_suites>
 struct switch_ {
     static void run(cellib::run::run_params& params) {
@@ -47,14 +51,10 @@ private:
             params, initial_state
         );
 
-        if (params.print) {
-            std::cout << "\nFinal grid:\n";
-            report.pretty_print();
-        }
-        else {
-            std::cout << report.csv_line() << std::endl;
-        }
+        REPORT << report.csv_line() << std::endl;
         
+        report.pretty_print(LOG);
+
         return true;
     }
 };
@@ -72,6 +72,10 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
         return cellib::run::run_params{.help = true};
     }
 
+    if (parser.exists("print_csv_header")) {
+        return cellib::run::run_params{.print_csv_header = true};
+    }
+
     std::vector<std::string> required {
         "automaton",
         "device", "traverser", "evaluator", "layout",
@@ -80,7 +84,7 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
 
     std::vector<std::string> optional {
         "print", "precision", "x_tile_size", "y_tile_size",
-        "seed", "rounds", "warmup_rounds",
+        "seed", "rounds", "warmup_rounds", "print_csv_header",
     };
 
     for (const auto& opt : required) {
@@ -114,6 +118,7 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
 
         .print = parser.exists("print"),
         .help = parser.exists("help"),
+        .print_csv_header = parser.exists("print_csv_header"),
     };
 
     return params;
@@ -137,6 +142,8 @@ void print_usage() {
     std::cout << "  --precision <number>     Precision for floating-point calculations (32, 64)\n";
     std::cout << "  --seed <number>          Random seed for initialization\n";
     std::cout << "  --print                  Print the grid after each step\n";
+    std::cout << "  --print_csv_header       Print CSV header\n";
+    std::cout << "  --help                   Show this help message\n";
 }
 
 
@@ -146,6 +153,11 @@ int main(int argc, char* argv[]) {
 
     if (params.help) {
         print_usage();
+        return 0;
+    }
+
+    if (params.print_csv_header) {
+        std::cout << cellib::run::experiment_report::csv_header() << std::endl;
         return 0;
     }
 
