@@ -43,9 +43,17 @@ private:
         cellib::run::experiment_manager<test_suite> manager;
         manager.set_print_config(cellular_automaton::pretty_print::get_config());
 
-        manager.run_experiment(
+        auto report = manager.run_experiment(
             params, initial_state
         );
+
+        if (params.print) {
+            std::cout << "\nFinal grid:\n";
+            report.pretty_print();
+        }
+        else {
+            std::cout << report.csv_line() << std::endl;
+        }
         
         return true;
     }
@@ -72,6 +80,7 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
 
     std::vector<std::string> optional {
         "print", "precision", "x_tile_size", "y_tile_size",
+        "seed", "rounds", "warmup_rounds",
     };
 
     for (const auto& opt : required) {
@@ -94,9 +103,14 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
         .steps = std::stoi(parser.get("steps")),
 
         .precision = parser.exists("precision") ? std::stoi(parser.get("precision")) : 0,
-
+        
         .x_tile_size = parser.exists("x_tile_size") ? std::stoi(parser.get("x_tile_size")) : 0,
         .y_tile_size = parser.exists("y_tile_size") ? std::stoi(parser.get("y_tile_size")) : 0,
+        
+        .rounds = parser.exists("rounds") ? std::stoi(parser.get("rounds")) : 1,
+        .warmup_rounds = parser.exists("warmup_rounds") ? std::stoi(parser.get("warmup_rounds")) : 0,
+
+        .seed = parser.exists("seed") ? std::stoi(parser.get("seed")) : 42,
 
         .print = parser.exists("print"),
         .help = parser.exists("help"),
@@ -117,8 +131,11 @@ void print_usage() {
     std::cout << "  --y_size <number>        Y size of the grid\n";
     std::cout << "  --x_tile_size <number>   X tile size for CUDA\n";
     std::cout << "  --y_tile_size <number>   Y tile size for CUDA\n";
+    std::cout << "  --rounds <number>        Number of rounds to run\n";
+    std::cout << "  --warmup_rounds <number> Number of warmup rounds to run\n";
     std::cout << "  --steps <number>         Number of steps to run\n";
     std::cout << "  --precision <number>     Precision for floating-point calculations (32, 64)\n";
+    std::cout << "  --seed <number>          Random seed for initialization\n";
     std::cout << "  --print                  Print the grid after each step\n";
 }
 

@@ -17,10 +17,10 @@ struct wire_random_init {
         const int center_x = params.x_size / 2;
         const int center_y = params.y_size / 2;
         
-        // Create a random number generator for electron placement
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        
+        // Create a random number generator with the provided seed if available
+        std::mt19937 gen;
+        gen.seed(static_cast<unsigned int>(params.seed));
+
         // Configuration: distance between consecutive loops
         const int loop_spacing = 4;
         

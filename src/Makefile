@@ -56,7 +56,7 @@ print-%:
 run: $(TARGET)
 	$(TARGET) $(ARGS)
 
-test: $(TEST_TARGET)
+unit_test: $(TEST_TARGET)
 	$(TEST_TARGET) $(ARGS)
 
 clean:

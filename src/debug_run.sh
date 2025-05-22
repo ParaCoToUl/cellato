@@ -5,7 +5,10 @@ script_dir=$(dirname "$0")
 # Uncomment one of these test configurations:
 
 # Game of Life with standard grid on CUDA
-args="--automaton game-of-life --device cuda --layout standard --traverser simple --evaluator standard --steps 100 --x_size 1024 --y_size 1024"
+args="--automaton game-of-life \
+--device cuda --layout standard --traverser simple --evaluator standard \
+--warmup_rounds 3 --rounds 10 \
+--steps 100 --x_size 128 --y_size 128"
 
 # Fire automaton with bit_array grid on CUDA
 #args="--automaton fire --device CUDA --layout bit_array --steps 50 --x_size 2048 --y_size 2048"
@@ -22,7 +25,7 @@ args="--automaton game-of-life --device cuda --layout standard --traverser simpl
 # Visualize output with print option
 #args="--automaton game_of_life --device CUDA --layout bit_array --steps 20 --x_size 32 --y_size 32 --print"
 
-rm -r $script_dir/../bin
+# rm -r $script_dir/../bin
 
 cd $script_dir
 srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make run ARGS="$args"

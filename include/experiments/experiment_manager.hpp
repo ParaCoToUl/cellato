@@ -3,8 +3,14 @@
 
 #include <vector>
 #include <thread>
+#include <iostream>
+
+#include "./run_params.hpp"
+#include "./experiment_report.hpp"
 
 namespace cellib::run {
+
+#define LOG std::cerr
 
 using namespace cellib::memory::grids;
 
@@ -26,14 +32,20 @@ public:
 
     experiment_manager() = default;
 
-    void run_experiment(const run_params& params, const std::vector<original_cell_t>& initial_state) {
-        grid_t grid = get_padded_grid(params, initial_state);
-        traverser_t traverser = get_initialized_traverser(grid);
+    experiment_report run_experiment(const run_params& params, const std::vector<original_cell_t>& initial_state) {
+        experiment_report report;
+        report.params = params;
 
-        run_traverser(traverser, params);
+        for (int i = 0; i < params.warmup_rounds + params.rounds; ++i) {
+            auto [duration, checksum] = run_round(i, params, initial_state);
 
-        grid_t result = traverser.fetch_result();
-        auto result_as_standard = result.to_standard();
+            if (i >= params.warmup_rounds) {
+                report.execution_times_ms.push_back(duration);
+                report.checksums.push_back(checksum);
+            }
+        }
+
+        return report;
     }
 
     void set_print_config(print_config<original_cell_t> config) {
@@ -42,6 +54,27 @@ public:
 
     private:
     print_config<original_cell_t> _print_config;
+
+    std::tuple<double, std::string> run_round(int round, const run_params& params, 
+                                              const std::vector<original_cell_t>& initial_state) {
+
+        if (round < params.warmup_rounds) {
+            LOG << "\nWarmup round: " << round << "\n";
+        }
+        else {
+            LOG << "\nRound: " << round - params.warmup_rounds << "\n";
+        }
+        
+        grid_t grid = get_padded_grid(params, initial_state);
+        traverser_t traverser = get_initialized_traverser(grid);
+
+        auto execution_time = run_traverser(traverser, params);
+
+        grid_t result = traverser.fetch_result();
+        auto result_as_standard = result.to_standard();
+
+        return { execution_time, result_as_standard.get_checksum() };
+    }
 
     grid_t get_padded_grid(const run_params& params, const std::vector<original_cell_t>& initial_state) {
         standard_grid_t initial_grid(params.x_size, params.y_size);
@@ -53,25 +86,32 @@ public:
         return grid;
     }
 
-    void run_traverser(traverser_t& traverser, const run_params& params) {
+    double run_traverser(traverser_t& traverser, const run_params& params) {
+        auto start_time = std::chrono::high_resolution_clock::now();
+
         if (params.print) {
             traverser.run(params.steps, 
                 [&](int iter, const auto& grid) {
                     auto standard_grid = grid
                     .to_standard()
                     .template with_removed_margins<test_suite::x_margin, test_suite::y_margin>();
-                    
-                    std::cout << "\nIteration: " << iter << "\n";
-                    standard_grid.print(std::cout, _print_config);
-                    
+
+                    LOG << "\nIteration: " << iter << "\n";
+                    standard_grid.print(LOG, _print_config);
+
                     std::this_thread::sleep_for(std::chrono::milliseconds(400));
-                    std::cout << "\n";
+                    LOG << "\n";
                 }
             );
         }
         else {
             traverser.run(params.steps);
         }
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double, std::milli> execution_time = end_time - start_time;
+        return execution_time.count();
     }
 
     traverser_t get_initialized_traverser(grid_t& grid) {

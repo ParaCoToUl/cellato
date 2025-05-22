@@ -24,6 +24,11 @@ struct run_params {
     int x_tile_size = 0;
     int y_tile_size = 0;
 
+    int rounds = 1;
+    int warmup_rounds = 0;
+
+    int seed = 42;
+
     bool print = false;
     bool help = false;
 

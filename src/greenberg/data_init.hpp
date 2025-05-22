@@ -31,7 +31,8 @@ struct ghm_random_init {
         cellib::memory::grids::utils::generate_random_grid(
             initial_state,
             params.y_size, params.x_size,
-            probabilities
+            probabilities,
+            params.seed
         );
         
         return initial_state;

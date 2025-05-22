@@ -175,6 +175,44 @@ public:
         }
     }
 
+    std::string get_checksum() const {
+        static_assert(device_type == device::CPU, "This function is only for CPU device");
+
+        constexpr int dims = 4;
+        std::stringstream result;
+        
+        // Calculate tile dimensions
+        const std::size_t tile_width = (_properties.x_size + dims - 1) / dims;
+        const std::size_t tile_height = (_properties.y_size + dims - 1) / dims;
+        
+        // Process each tile
+        for (int tile_y = 0; tile_y < dims; ++tile_y) {
+            for (int tile_x = 0; tile_x < dims; ++tile_x) {
+                // Calculate the boundaries of this tile
+                std::size_t start_x = tile_x * tile_width;
+                std::size_t start_y = tile_y * tile_height;
+                std::size_t end_x = std::min(start_x + tile_width, _properties.x_size);
+                std::size_t end_y = std::min(start_y + tile_height, _properties.y_size);
+                
+                // Sum the values in this tile
+                std::uint64_t sum = 0;
+                for (std::size_t y = start_y; y < end_y; ++y) {
+                    for (std::size_t x = start_x; x < end_x; ++x) {
+                        sum += static_cast<std::uint64_t>(_data[_properties.idx(x, y)]);
+                    }
+                }
+                
+                // Add to result string with hyphen separator (except for first value)
+                if (tile_y > 0 || tile_x > 0) {
+                    result << "-";
+                }
+                result << sum;
+            }
+        }
+        
+        return result.str();
+    }
+
 private:
 
     grids::properties _properties;

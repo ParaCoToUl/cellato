@@ -18,7 +18,8 @@ struct gol_random_init {
             initial_state,
             params.y_size, params.x_size,
             gol_cell_state::alive, 0.2,
-            gol_cell_state::dead
+            gol_cell_state::dead,
+            params.seed
         );
 
         return initial_state;
