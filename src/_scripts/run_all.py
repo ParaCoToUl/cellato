@@ -29,10 +29,10 @@ class Tester:
                 "seed": 42,
                 "steps": {
                     # Same steps for verification
-                    "game-of-life": 15,
-                    "forest-fire": 15,
-                    "wire": 15,
-                    "greenberg-hastings": 15
+                    "game-of-life": 16,
+                    "forest-fire": 16,
+                    "wire": 16,
+                    "greenberg-hastings": 16
                 }
             },
             "measurement": {
