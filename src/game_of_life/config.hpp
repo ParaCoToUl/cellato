@@ -4,6 +4,7 @@
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./reference_implementation.hpp"
 #include "memory/state_dictionary.hpp"
 
 namespace game_of_life {
@@ -20,6 +21,8 @@ struct config {
         cell_state::dead, cell_state::alive>;
 
     using pretty_print = gol_pretty_print;
+
+    using reference_implementation = reference::runner;
 
     struct input {
         using random = gol_random_init;

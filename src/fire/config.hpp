@@ -4,6 +4,7 @@
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./reference_implementation.hpp"
 #include "memory/state_dictionary.hpp"
 
 #include <string>
@@ -21,6 +22,8 @@ struct config {
         cell_state::empty, cell_state::tree, cell_state::fire, cell_state::ash>;
 
     using pretty_print = fire_pretty_print;
+
+    using reference_implementation = reference::runner;
 
     struct input {
         using random = fire_random_init;

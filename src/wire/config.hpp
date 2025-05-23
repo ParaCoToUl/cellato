@@ -4,6 +4,7 @@
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./reference_implementation.hpp"
 #include "memory/state_dictionary.hpp"
 
 namespace wire {
@@ -20,6 +21,8 @@ struct config {
         cell_state::empty, cell_state::electron_head, cell_state::electron_tail, cell_state::conductor>;
 
     using pretty_print = wire_pretty_print;
+
+    using reference_implementation = reference::runner;
 
     struct input {
         using random = wire_random_init;

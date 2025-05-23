@@ -4,6 +4,7 @@
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./reference_implementation.hpp"
 #include "memory/state_dictionary.hpp"
 
 namespace greenberg {
@@ -21,6 +22,8 @@ struct config {
         ghm_cell_state::refractory_1, ghm_cell_state::refractory_2,
         ghm_cell_state::refractory_3, ghm_cell_state::refractory_4,
         ghm_cell_state::refractory_5, ghm_cell_state::refractory_6>;
+
+    using reference_implementation = reference::runner;
     
     using pretty_print = ghm_pretty_print;
     
