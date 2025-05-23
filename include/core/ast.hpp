@@ -15,6 +15,12 @@ struct state_constant {
     static constexpr state_t value = Value;
 };
 
+template <auto Value>
+using make_constant = constant<decltype(Value), Value>;
+
+template <auto Value>
+using make_state_constant = state_constant<decltype(Value), Value>;
+
 template <int x_offset_val, int y_offset_val>
 struct neighbor_at {
     static constexpr int x_offset = x_offset_val;
