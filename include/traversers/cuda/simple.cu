@@ -23,7 +23,7 @@ __global__ void process_grid_kernel(
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     
     // Skip if outside grid bounds or on border
-    if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1) return;
+    if (x < 1 || x >= width - 1 || y < 1 || y >= height - 1) return;
     
     cellib::memory::grids::point_in_grid state(input_data);
 
@@ -72,11 +72,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     
     CUCH(cudaDeviceSynchronize());
 
-    if (steps % 2 == 1) {
-        _final_grid = next;
-    } else {
-        _final_grid = current;
-    }
+    _final_grid = current;
 }
 
 template <typename evaluator_type, typename grid_type>

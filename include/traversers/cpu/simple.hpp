@@ -48,6 +48,10 @@ class traverser {
             callback_func(0, _input_grid);
         }
 
+        if constexpr (!std::is_same_v<callback, no_callback>) {
+            callback_func(0, *current);
+        }
+
         for (int step = 0; step < steps; ++step) {
 
             state.grid = current->data();
@@ -73,11 +77,7 @@ class traverser {
             std::swap(current, next);
         }
 
-        if (steps % 2 == 1) {
-            _final_grid = &_intermediate_grid;
-        } else {
-            _final_grid = &_input_grid;
-        }
+        _final_grid = current;
     }
 
     grid_t fetch_result() const {

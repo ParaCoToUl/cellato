@@ -11,6 +11,8 @@ import shutil
 # Define automata to test
 AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings"]
 
+smallest_dim = 6720
+
 class Tester:
     def __init__(self):
         self.automata = AUTOMATA
@@ -21,22 +23,22 @@ class Tester:
         # Test configurations
         self.test_configs = {
             "check": {
-                "rounds": 5,
+                "rounds": 2,
                 "warmup_rounds": 0,
-                "grid_sizes": [(512, 512)],
+                "grid_sizes": [(smallest_dim, smallest_dim)],
                 "seed": 42,
                 "steps": {
                     # Same steps for verification
-                    "game-of-life": 100,
-                    "forest-fire": 50,
-                    "wire": 200,
-                    "greenberg-hastings": 30
+                    "game-of-life": 15,
+                    "forest-fire": 15,
+                    "wire": 15,
+                    "greenberg-hastings": 15
                 }
             },
             "measurement": {
                 "rounds": 10,
                 "warmup_rounds": 5,
-                "grid_sizes": [(1024, 1024), (2048, 2048), (4096, 4096)],
+                "grid_sizes": [(smallest_dim, smallest_dim), (smallest_dim * 2, smallest_dim * 2), (smallest_dim * 3, smallest_dim * 3)],
                 "seed": 42,
                 "steps": {
                     # CPU implementations (slower)
@@ -62,7 +64,7 @@ class Tester:
         return [
             # CPU tests
             f"--automaton {automaton} --device CPU --traverser simple --evaluator standard --layout standard --x_size 512 --y_size 512 --steps 100 --seed 42",
-            f"--automaton {automaton} --device CPU --traverser simple --evaluator standard --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
+            f"--automaton {automaton} --device CPU --traverser simple --evaluator bit_array --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
             f"--automaton {automaton} --device CPU --traverser simple --evaluator bit_plates --layout bit_plates --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
             
             # CUDA standard tests
@@ -74,8 +76,8 @@ class Tester:
             f"--automaton {automaton} --device CUDA --traverser spacial_blocking --evaluator standard --layout standard --x_size 512 --y_size 512 --steps 100 --x_tile_size 1 --y_tile_size 4 --seed 42",
             
             # CUDA bit array tests with different precision
-            # f"--automaton {automaton} --device CUDA --traverser spacial_blocking --evaluator standard --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
-            # f"--automaton {automaton} --device CUDA --traverser spacial_blocking --evaluator standard --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 64 --seed 42",
+            f"--automaton {automaton} --device CUDA --traverser simple --evaluator bit_array --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
+            f"--automaton {automaton} --device CUDA --traverser simple --evaluator bit_array --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 64 --seed 42",
             
             # CUDA bit plates tests with different precision
             f"--automaton {automaton} --device CUDA --traverser simple --evaluator bit_plates --layout bit_plates --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
@@ -175,7 +177,7 @@ class Tester:
         
         # Create timestamp for the report file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_file = os.path.join(self.project_dir, f"report-check-{timestamp}.csv")
+        report_file = os.path.join(self.project_dir, 'results', f"report-check-{timestamp}.csv")
         
         # Get CSV header and write to report file
         header = self.get_csv_header()
@@ -233,7 +235,7 @@ class Tester:
         
         # Create timestamp for the report file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_file = os.path.join(self.project_dir, f"report-measurement-{timestamp}.csv")
+        report_file = os.path.join(self.project_dir, 'results', f"report-measurement-{timestamp}.csv")
         
         # Get CSV header and write to report file
         header = self.get_csv_header()
