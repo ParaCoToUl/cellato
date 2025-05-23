@@ -7,6 +7,7 @@ static_assert(false, "AUTOMATON_NAMESPACE must be defined");
 #include "traversers/cuda/simple.hpp"
 #include "evaluators/standard.hpp"
 #include "evaluators/bit_plates.hpp"
+#include "evaluators/bit_array.hpp"
 #include "memory/standard_grid.hpp"
 #include "memory/bit_plates_grid.hpp"
 #include "memory/bit_array_grid.hpp"
@@ -65,8 +66,8 @@ template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::simple::_run_
     >
 #define TRAVERSER_TYPE \
     cellib::traversers::cuda::spacial_blocking::traverser< \
-        cellib::evaluators::standard::evaluator<AUTOMATON_NAMESPACE::config::cell_state, \
-            AUTOMATON_NAMESPACE::config::algorithm, GRID_TYPE::cell_ptr_t>, \
+        cellib::evaluators::bit_array::evaluator< \
+            GRID_TYPE, AUTOMATON_NAMESPACE::config::algorithm>, \
         GRID_TYPE, \
         1, GRID_TYPE::cells_per_word \
     >
@@ -86,8 +87,8 @@ template void TRAVERSER_TYPE::run_kernel<cellib::traversers::cuda::spacial_block
     >
 #define TRAVERSER_TYPE \
     cellib::traversers::cuda::spacial_blocking::traverser< \
-        cellib::evaluators::standard::evaluator<AUTOMATON_NAMESPACE::config::cell_state, \
-            AUTOMATON_NAMESPACE::config::algorithm, GRID_TYPE::cell_ptr_t>, \
+        cellib::evaluators::bit_array::evaluator< \
+            GRID_TYPE, AUTOMATON_NAMESPACE::config::algorithm>, \
         GRID_TYPE, \
         1, GRID_TYPE::cells_per_word \
     >

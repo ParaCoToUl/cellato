@@ -3,6 +3,7 @@
 
 #include "../evaluators/standard.hpp"
 #include "../evaluators/bit_plates.hpp"
+#include "../evaluators/bit_array.hpp"
 #include "../memory/standard_grid.hpp"
 #include "../traversers/cpu/simple.hpp"
 #include "../memory/bit_plates_grid.hpp"
@@ -14,6 +15,9 @@ namespace cellib::run::test_suites {
 
 namespace grids = cellib::memory::grids;
 namespace evaluators = cellib::evaluators;
+
+#define CUDA_OPT "CUDA"
+#define CPU_OPT "CPU"
 
 namespace on_cuda {
     
@@ -39,7 +43,7 @@ namespace on_cuda {
         static bool is_for(cellib::run::run_params& params) {
             return params.automaton == cellular_automaton::name &&
                    params.traverser == "simple" &&
-                   params.device == "cuda" &&
+                   params.device == CUDA_OPT &&
                    params.evaluator == "standard" &&
                    params.layout == "standard";
         }
@@ -56,8 +60,7 @@ namespace on_cuda {
             using grid_t = grids::standard::grid<original_cell_t>;
             using evaluator_t = evaluators::standard::evaluator<original_cell_t, algorithm_t>;
 
-            using traverser_t = traversers::spacial_blocking::traverser<
-                evaluator_t, grid_t, y_tile_size, x_tile_size>;
+            using traverser_t = traversers::simple::traverser<evaluator_t, grid_t>;
 
             constexpr static int x_margin = 1;
             constexpr static int y_margin = 1;
@@ -65,7 +68,7 @@ namespace on_cuda {
             static bool is_for(cellib::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&
                        params.traverser == "spacial_blocking" &&
-                       params.device == "cuda" &&
+                       params.device == CUDA_OPT &&
                        params.evaluator == "standard" &&
                        params.layout == "standard" &&
                        params.y_tile_size == y_tile_size &&
@@ -88,19 +91,19 @@ namespace on_cuda {
             using state_dictionary_t = typename cellular_automaton::state_dictionary;
             
             using grid_t = grids::bit_array::grid<state_dictionary_t, grid_store_word_t>;
-            using evaluator_t = evaluators::standard::evaluator<original_cell_t, algorithm_t, typename grid_t::cell_ptr_t>;
+            using evaluator_t = evaluators::bit_array::evaluator<grid_t, algorithm_t>;
 
             using traverser_t = traversers::spacial_blocking::traverser<
                 evaluator_t, grid_t, 1, grid_t::cells_per_word>;
             
-            constexpr static int x_margin = 1;
+            constexpr static int x_margin = grid_t::cells_per_word;
             constexpr static int y_margin = 1;
 
             static bool is_for(cellib::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&
-                       params.traverser == "spacial_blocking" &&
-                       params.device == "cuda" &&
-                       params.evaluator == "standard" &&
+                       params.traverser == "simple" &&
+                       params.device == CUDA_OPT &&
+                       params.evaluator == "bit_array" &&
                        params.layout == "bit_array" &&
                        params.precision == sizeof(store_word_type) * 8;
             }
@@ -127,7 +130,7 @@ namespace on_cuda {
             static bool is_for(cellib::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&
                        params.traverser == "simple" &&
-                       params.device == "cuda" &&
+                       params.device == CUDA_OPT &&
                        params.evaluator == "bit_plates" &&
                        params.layout == "bit_plates" &&
                        params.precision == sizeof(grid_store_word_t) * 8;
@@ -160,7 +163,7 @@ namespace on_cpu {
         static bool is_for(cellib::run::run_params& params) {
             return params.automaton == cellular_automaton::name &&
                    params.traverser == "simple" &&
-                   params.device == "cpu" &&
+                   params.device == CPU_OPT &&
                    params.evaluator == "standard" &&
                    params.layout == "standard";
         }
@@ -180,18 +183,18 @@ namespace on_cpu {
             using state_dictionary_t = typename cellular_automaton::state_dictionary;
             
             using grid_t = grids::bit_array::grid<state_dictionary_t, grid_store_word_t>;
-            using evaluator_t = evaluators::standard::evaluator<original_cell_t, algorithm_t, typename grid_t::cell_ptr_t>;
-            
+            using evaluator_t = evaluators::bit_array::evaluator<grid_t, algorithm_t>;
+
             using traverser_t = traversers::simple::traverser<evaluator_t, grid_t>;
             
-            constexpr static int x_margin = 1;
+            constexpr static int x_margin = grid_t::cells_per_word;
             constexpr static int y_margin = 1;
 
             static bool is_for(cellib::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&
                        params.traverser == "simple" &&
-                       params.device == "cpu" &&
-                       params.evaluator == "standard" &&
+                       params.device == CPU_OPT &&
+                       params.evaluator == "bit_array" &&
                        params.layout == "bit_array" &&
                        params.precision == sizeof(store_word_type) * 8;
             }
@@ -218,7 +221,7 @@ namespace on_cpu {
             static bool is_for(cellib::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&
                        params.traverser == "simple" &&
-                       params.device == "cpu" &&
+                       params.device == CPU_OPT &&
                        params.evaluator == "bit_plates" &&
                        params.layout == "bit_plates" &&
                        params.precision == sizeof(grid_store_word_t) * 8;

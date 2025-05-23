@@ -71,7 +71,9 @@ public:
         auto execution_time = run_traverser(traverser, params);
 
         grid_t result = traverser.fetch_result();
-        auto result_as_standard = result.to_standard();
+        auto result_as_standard = result
+            .to_standard()
+            .template with_removed_margins<test_suite::x_margin, test_suite::y_margin>();
 
         return { execution_time, result_as_standard.get_checksum() };
     }

@@ -175,7 +175,9 @@ int main(int argc, char* argv[]) {
     #define cases_for(automaton) \
         test::on_cpu::standard<automaton>, \
         test::on_cpu::using_<std::uint32_t>::bit_array<automaton>, \
+        test::on_cpu::using_<std::uint64_t>::bit_array<automaton>, \
         test::on_cpu::using_<std::uint32_t>::bit_plates<automaton>, \
+        test::on_cpu::using_<std::uint64_t>::bit_plates<automaton>, \
         test::on_cuda::standard<automaton>, \
         test::on_cuda::standard<automaton>::with_spacial_blocking<1, 1>, \
         test::on_cuda::standard<automaton>::with_spacial_blocking<2, 1>, \

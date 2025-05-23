@@ -6,7 +6,7 @@ script_dir=$(dirname "$0")
 
 # Game of Life with standard grid on CUDA
 args="--automaton game-of-life \
---device cuda --layout standard --traverser simple --evaluator standard \
+--device CUDA --layout standard --traverser simple --evaluator standard \
 --warmup_rounds 3 --rounds 10 \
 --steps 100 --x_size 128 --y_size 128"
 

@@ -452,6 +452,9 @@ private:
                         next = bit_array::TestCellState::DYING; break;
                     case bit_array::TestCellState::DYING: 
                         next = bit_array::TestCellState::DEAD; break;
+                    default:
+                        tc.assert_true(false, "Unexpected state in cycling test");
+                        continue; // Skip to next iteration
                 }
                 
                 grid_data[idx] = next;

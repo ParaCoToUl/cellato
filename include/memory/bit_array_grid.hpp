@@ -52,60 +52,39 @@ public:
             : _proxy(proxy), _index(index) {}
 
         // Implicit conversion operator for reading
-        CUDA_CALLABLE operator typename states_dict_t::state_t() const {
+        CUDA_CALLABLE operator store_word_type() const {
             // Calculate which word and which bits within that word
             std::size_t word_index = _index / _proxy.cells_per_word;
             std::size_t bit_offset = (_index % _proxy.cells_per_word) * _proxy._bits_per_cell;
             
             // Extract bits for this cell
-            std::size_t state_index = (_proxy._data[word_index] >> bit_offset) & _proxy._cell_mask;
+            store_word_type state_index = (_proxy._data[word_index] >> bit_offset) & _proxy._cell_mask;
             
             // Convert back to enum state
-            return states_dict_t::index_to_state(state_index);
+            return state_index;
         }
 
-        // Assignment operator for writing
-        CUDA_CALLABLE CellReference& operator=(typename states_dict_t::state_t new_value) {
-            // Calculate which word and which bits within that word
-            std::size_t word_index = _index / _proxy.cells_per_word;
-            std::size_t bit_offset = (_index % _proxy.cells_per_word) * _proxy._bits_per_cell;
-            
-            // Clear existing bits at this position
-            _proxy._data[word_index] &= ~(_proxy._cell_mask << bit_offset);
-            
-            // Set new value bits
-            std::size_t state_index = states_dict_t::state_to_index(new_value);
-            _proxy._data[word_index] |= (state_index & _proxy._cell_mask) << bit_offset;
-            
-            return *this;
-        }
     };
 
     CUDA_CALLABLE BitArrayProxy(store_word_type* data)
         : _data(data) {}
 
     // Operator[] returns a reference proxy for both read and write access
-    CUDA_CALLABLE CellReference operator[](std::size_t index) {
+    CUDA_CALLABLE CellReference get_individual_cell_at(std::size_t index) {
         return CellReference(*this, index);
     }
     
     // Const version for read-only access
-    CUDA_CALLABLE typename states_dict_t::state_t operator[](std::size_t index) const {
-        // Calculate which word and which bits within that word
-        std::size_t word_index = index / cells_per_word;
-        std::size_t bit_offset = (index % cells_per_word) * _bits_per_cell;
-        
-        // Extract bits for this cell
-        std::size_t state_index = (_data[word_index] >> bit_offset) & _cell_mask;
-        
-        // Convert back to enum state
-        return states_dict_t::index_to_state(state_index);
+    CUDA_CALLABLE store_word_type& operator[](std::size_t index) {
+        return _data[index];
     }
 };
 
-template <typename states_dict_t, typename store_word_type = std::uint32_t, device device_type = device::CPU>
+template <typename states_dictionary_t, typename store_word_type = std::uint32_t, device device_type = device::CPU>
 class grid {
 public:
+    using states_dict_t = states_dictionary_t;
+
     constexpr static bool HAS_OWN_PRINT = false;
 
     // Number of bits needed to represent each cell state
@@ -133,6 +112,9 @@ public:
     // Constructor for creating empty grid of specified size
     grid(std::size_t y_size, std::size_t x_size)
         : _x_size(x_size), _y_size(y_size) {
+
+        assert_valid_dimensions(x_size, y_size);
+
         if constexpr (device_type == device::CPU) {
             // Calculate number of words needed
             std::size_t total_cells = x_size * y_size;
@@ -144,6 +126,9 @@ public:
     // Constructor for populating grid from existing data
     grid(std::size_t y_size, std::size_t x_size, const original_state_t* grid_input) 
         : _x_size(x_size), _y_size(y_size) {
+
+        assert_valid_dimensions(x_size, y_size);
+
         static_assert(device_type == device::CPU, "This constructor is only for CPU device");
         
         std::size_t total_cells = x_size * y_size;
@@ -158,6 +143,9 @@ public:
 
     // Constructor from standard grid
     grid(const cellib::memory::grids::standard::grid<original_state_t>& standard_grid) {
+
+        assert_valid_dimensions(standard_grid.x_size_physical(), standard_grid.y_size_physical());
+
         static_assert(device_type == device::CPU, "This constructor is only for CPU device");
         
         _x_size = standard_grid.x_size_physical();
@@ -177,6 +165,9 @@ public:
     // CUDA-specific constructor
     grid(cuda_params_t params)
         : _x_size(params.x_size), _y_size(params.y_size) {
+        
+        assert_valid_dimensions(params.x_size, params.y_size);
+
         static_assert(device_type == device::CUDA, "This constructor is only for CUDA device");
         
         _cuda_data = params.cuda_data;
@@ -265,7 +256,7 @@ public:
     // Size methods
     std::size_t x_size_logical() const { return _x_size; }
     std::size_t y_size_logical() const { return _y_size; }
-    std::size_t x_size_physical() const { return _x_size; }
+    std::size_t x_size_physical() const { return _x_size / cells_per_word; }
     std::size_t y_size_physical() const { return _y_size; }
 
     // Access to underlying data
@@ -329,6 +320,18 @@ private:
         std::size_t state_index = (_data[word_index] >> bit_offset) & cell_mask;
         
         return states_dict_t::index_to_state(state_index);
+    }
+
+    void assert_valid_dimensions(std::size_t x_size, std::size_t y_size) const {
+        (void) y_size;
+
+        if (x_size % cells_per_word != 0) {
+            throw std::invalid_argument("Grid x_size must be divisible by cells_per_word. x_size=" + 
+                                       std::to_string(x_size) + ", cells_per_word=" + 
+                                       std::to_string(cells_per_word) +
+                                       " (bits [" + std::to_string(sizeof(store_word_type) * 8) + 
+                                       "] / bits_per_cell [" + std::to_string(bits_per_cell) + "])");
+        } 
     }
 };
 
