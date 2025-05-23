@@ -1,12 +1,18 @@
 #ifndef CELLIB_MEMORY_STATE_DICTIONARY_HPP
 #define CELLIB_MEMORY_STATE_DICTIONARY_HPP
 
+#include <stdexcept>
+
 namespace cellib::memory::grids {
 
 template <typename states_enum, states_enum... states>
 class state_dictionary {
-    public:
+private:
+    constexpr static int log_2(int n) {
+        return (n < 2) ? 0 : 1 + log_2(n / 2);
+    }
 
+public:
     using index_t = int;
     using state_t = states_enum;
 
@@ -25,9 +31,7 @@ class state_dictionary {
         throw std::out_of_range("Index out of range");
     }
 
-
-    private:
-
+private:
     template <typename... Rest>
     static constexpr index_t state_to_index_impl(states_enum target, states_enum head) {
         return (target == head) ? 0 : throw std::out_of_range("State not found in dictionary");
@@ -36,10 +40,6 @@ class state_dictionary {
     template <typename... Rest>
     static constexpr index_t state_to_index_impl(states_enum target, states_enum head, Rest... tail) {
         return (target == head) ? 0 : 1 + state_to_index_impl(target, tail...);
-    }
-    
-    constexpr static int log_2(int n) {
-        return (n < 2) ? 0 : 1 + log_2(n / 2);
     }
 };
 
