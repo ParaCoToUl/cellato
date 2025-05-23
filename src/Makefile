@@ -1,9 +1,16 @@
 CXX = g++
+CXX_STD = c++20
 NVCC = nvcc
-CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O3 -I../include
+CXXFLAGS = -std=$(CXX_STD) -Wall -Wextra -Wpedantic -O3 -I../include
 NVCC_CC_BIN = $(shell which $(CXX))
-NVCCFLAGS = -std=c++20 -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN)
+NVCCFLAGS = -std=$(CXX_STD) -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -Wpedantic -Xcompiler -O3
 CMAKE = cmake
+
+CUDA_HOME = /usr/local/cuda
+
+INCLUDE_DIRS = -I../include -I$(DEP_DIR)/kokkos/include -I$(CUDA_HOME)/include
+LIB_DIRS = -L$(DEP_DIR)/kokkos/lib -L$(CUDA_HOME)/lib64
+LIBS = -lcudart
 
 # Directories
 SRC_DIR = .
@@ -45,10 +52,10 @@ install_kokkos:
 
 # Add directories dependency to object file creation rules
 $(MAIN_OBJ): $(MAIN_SRC) | directories
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS)
 
 $(TEST_OBJ): $(TEST_SRC) | directories
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS)
 
 # Pattern rule for CUDA files with vpath to find them
 vpath %.cu $(CUDA_DIRS)
@@ -57,10 +64,10 @@ $(OBJ_DIR)/%.o: %.cu | directories
 
 # Create separate executables for main app and tests
 $(TARGET): $(MAIN_OBJ) $(CUDA_OBJS)
-	$(NVCC) $(NVCCFLAGS) $^ -o $@
+	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)
 
 $(TEST_TARGET): $(TEST_OBJ)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)
 
 # Debug rule to print variables
 print-%:
@@ -73,6 +80,6 @@ unit_test: $(TEST_TARGET)
 	$(TEST_TARGET) $(ARGS)
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(DEP_DIR)
 
-.PHONY: all run test clean directories print-%
+.PHONY: all run test clean directories print-% install_deps install_kokkos
