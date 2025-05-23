@@ -1,12 +1,16 @@
 CXX = g++
 NVCC = nvcc
 CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O3 -I../include
-NVCCFLAGS = -std=c++20 -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr
+NVCC_CC_BIN = $(shell which $(CXX))
+NVCCFLAGS = -std=c++20 -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN)
+CMAKE = cmake
 
 # Directories
 SRC_DIR = .
 OBJ_DIR = ../bin
 BIN_DIR = ../bin
+DEP_DIR = ../_deps
+VENDOR_DIR = ../vendor
 CUDA_DIRS = ../include/evaluators ../include/traversers/cuda
 TEST_DIR = $(SRC_DIR)
 
@@ -29,6 +33,15 @@ all: directories $(TARGET) $(TEST_TARGET)
 
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
+
+install_deps: install_kokkos
+
+install_kokkos:
+	@echo "Installing Kokkos dependencies..."
+	@mkdir -p $(DEP_DIR) $(DEP_DIR)/kokkos
+	@$(CMAKE) -B $(DEP_DIR)/kokkos -S $(VENDOR_DIR)/kokkos -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_COMPILER=$(CXX) -D CMAKE_CXX_STANDARD=20 -D CMAKE_CUDA_COMPILER=$(NVCC) -D CMAKE_CUDA_HOST_COMPILER=$(NVCC_CC_BIN) -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ENABLE_SERIAL=ON -D Kokkos_ENABLE_TESTS=OFF -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_DEPRECATED_CODE_4=ON -D CMAKE_INSTALL_PREFIX=$(DEP_DIR)
+	@$(CMAKE) --build $(DEP_DIR)/kokkos --target install
+	@echo "Kokkos dependencies installed."
 
 # Add directories dependency to object file creation rules
 $(MAIN_OBJ): $(MAIN_SRC) | directories
