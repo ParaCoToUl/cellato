@@ -1,8 +1,9 @@
 #ifndef __FRAMEWORK_OF_CHOICE__FIRE_RUNNER_HPP
 #define __FRAMEWORK_OF_CHOICE__FIRE_RUNNER_HPP
 
-#include <vector>
 #include <cstddef>
+
+#include <vector>
 
 namespace __framework_of_choice__::fire {
 
@@ -15,8 +16,10 @@ struct runner {
         // ...
     }
 
-    std::vector<int> fetch_result() {
+    std::vector<int> fetch_result() const {
         // ...
+
+        return {};
     }
 };
 

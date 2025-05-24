@@ -96,14 +96,13 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
 }
 
 template <typename evaluator_type, typename grid_type, int Y_TILE_SIZE, int X_TILE_SIZE>
-typename traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::grid_t 
-traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::fetch_result() {
-    auto cpu_grid = _final_grid->to_cpu();
+auto traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::fetch_result() -> grid_t {
+    grid_t cpu_grid = _final_grid->to_cpu();
 
     _input_grid_cuda.free_cuda_memory();
     _intermediate_grid_cuda.free_cuda_memory();
 
-    return std::move(cpu_grid);
+    return cpu_grid;
 }
 
 } // namespace cellib::traversers::cuda::spacial_blocking

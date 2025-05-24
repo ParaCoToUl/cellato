@@ -88,7 +88,7 @@ struct runner {
         }
     }
 
-    std::vector<int> fetch_result() {
+    std::vector<int> fetch_result() const {
         std::vector<int> result(_x_size * _y_size);
         for (std::size_t i = 0; i < _current_grid.size(); ++i) {
             result[i] = static_cast<int>(_current_grid[i]);
