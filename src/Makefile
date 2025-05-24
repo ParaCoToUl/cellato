@@ -59,7 +59,8 @@ install_kokkos: $(VENDOR_DIR)/kokkos
 		-D Kokkos_ARCH_NATIVE=ON \
 		-D Kokkos_ENABLE_DEPRECATED_CODE_4=ON \
 		-D CMAKE_INSTALL_PREFIX=$(DEP_DIR)
-	@$(CMAKE) --build $(DEP_DIR)/kokkos --target install
+	@$(CMAKE) --build $(DEP_DIR)/kokkos
+	@$(CMAKE) --install $(DEP_DIR)/kokkos --prefix=$(DEP_DIR)
 	@echo "Kokkos dependencies installed."
 
 # Install LLVM dependencies according to https://github.com/halide/Halide?tab=readme-ov-file#acquiring-llvm
@@ -81,7 +82,7 @@ install_llvm: $(VENDOR_DIR)/llvm-project
 		-D LLVM_ENABLE_ZLIB=OFF \
 		-D LLVM_ENABLE_ZSTD=OFF \
 		-D LLVM_BUILD_32_BITS=OFF
-	@$(CMAKE) --build $(DEP_DIR)/llvm-build
+	@$(CMAKE) --build $(DEP_DIR)/llvm-build --parallel $(shell nproc)
 	@$(CMAKE) --install $(DEP_DIR)/llvm-build --prefix=$(DEP_DIR)
 	@echo "LLVM dependencies installed."
 
