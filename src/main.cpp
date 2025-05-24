@@ -9,6 +9,7 @@
 #include "experiments/run_params.hpp"
 #include "experiments/test_suites.hpp"
 #include "experiments/experiment_manager.hpp"
+#include "experiments/reference_impl_manager.hpp"
 #include "memory/grid_utils.hpp"
 
 #include "game_of_life/algorithm.hpp"
@@ -27,6 +28,15 @@
 template <typename... all_test_suites>
 struct switch_ {
     static void run(cellib::run::run_params& params) {
+        // If reference implementation is requested, handle it separately
+        if (params.reference_impl != "none") {
+            bool ref_executed = run_reference_impl(params);
+            if (!ref_executed) {
+                std::cerr << "No suitable reference implementation found for the given parameters." << std::endl;
+            }
+            return;
+        }
+        
         bool any_executed = (call<all_test_suites>(params) || ...);
         if (!any_executed) {
             std::cerr << "No suitable test suite found for the given parameters." << std::endl;
@@ -34,6 +44,39 @@ struct switch_ {
     }
 
 private:
+    static bool run_reference_impl(cellib::run::run_params& params) {
+        if (params.reference_impl == "baseline") {
+            if (params.automaton == "game-of-life") {
+                return run_reference_for_automaton<game_of_life::config>(params);
+            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
+                return run_reference_for_automaton<fire::config>(params);
+            } else if (params.automaton == "greenberg-hastings") {
+                return run_reference_for_automaton<greenberg::config>(params);
+            } else if (params.automaton == "wire") {
+                return run_reference_for_automaton<wire::config>(params);
+            }
+        }
+        return false;
+    }
+    
+    template <typename AutomatonConfig>
+    static bool run_reference_for_automaton(cellib::run::run_params& params) {
+        using runner_t = typename AutomatonConfig::reference_implementation;
+        using cell_state_t = typename AutomatonConfig::cell_state;
+        
+        // Generate initial state using the automaton's random initializer
+        auto initial_state = AutomatonConfig::input::random::init(params);
+        
+        // Run the reference implementation
+        cellib::run::reference_impl_manager<runner_t, cell_state_t> manager;
+        auto report = manager.run_experiment(params, initial_state);
+        
+        REPORT << report.csv_line() << std::endl;
+        report.pretty_print(LOG);
+        
+        return true;
+    }
+
     template <typename test_suite>
     static bool call(cellib::run::run_params& params) {
         if (!test_suite::is_for(params)) {
@@ -85,7 +128,19 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
     std::vector<std::string> optional {
         "print", "precision", "x_tile_size", "y_tile_size",
         "seed", "rounds", "warmup_rounds", "print_csv_header",
+        "reference_impl", "cuda_block_size_x", "cuda_block_size_y"
     };
+
+    if (parser.exists("reference_impl")) {
+        for (const auto& no_longer_required : {
+            "device", "traverser", "evaluator", "layout"
+        }) {
+            required.erase(
+                std::remove(required.begin(), required.end(), no_longer_required),
+                required.end()
+            );
+        }
+    }
 
     for (const auto& opt : required) {
         if (!parser.exists(opt)) {
@@ -101,6 +156,8 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
         .traverser = parser.get("traverser"),
         .evaluator = parser.get("evaluator"),
         .layout = parser.get("layout"),
+
+        .reference_impl = parser.exists("reference_impl") ? parser.get("reference_impl") : "none",
 
         .x_size = std::stoi(parser.get("x_size")),
         .y_size = std::stoi(parser.get("y_size")),
@@ -119,6 +176,9 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
         .print = parser.exists("print"),
         .help = parser.exists("help"),
         .print_csv_header = parser.exists("print_csv_header"),
+
+        .cuda_block_size_x = parser.exists("cuda_block_size_x") ? std::stoi(parser.get("cuda_block_size_x")) : 16,
+        .cuda_block_size_y = parser.exists("cuda_block_size_y") ? std::stoi(parser.get("cuda_block_size_y")) : 16
     };
 
     return params;
@@ -127,23 +187,27 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
 void print_usage() {
     std::cout << "Usage: ./cellib [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --automaton <name>       Name of the cellular automaton\n";
-    std::cout << "  --device <name>          Device to run on (CPU, CUDA)\n";
-    std::cout << "  --traverser <name>       Traverser type (simple, spacial_blocking)\n";
-    std::cout << "  --evaluator <name>       Evaluator type (standard, bit_plates)\n";
-    std::cout << "  --layout <name>          Layout type (standard, bit_array, bit_plates)\n";
-    std::cout << "  --x_size <number>        X size of the grid\n";
-    std::cout << "  --y_size <number>        Y size of the grid\n";
-    std::cout << "  --x_tile_size <number>   X tile size for CUDA\n";
-    std::cout << "  --y_tile_size <number>   Y tile size for CUDA\n";
-    std::cout << "  --rounds <number>        Number of rounds to run\n";
-    std::cout << "  --warmup_rounds <number> Number of warmup rounds to run\n";
-    std::cout << "  --steps <number>         Number of steps to run\n";
-    std::cout << "  --precision <number>     Precision for floating-point calculations (32, 64)\n";
-    std::cout << "  --seed <number>          Random seed for initialization\n";
-    std::cout << "  --print                  Print the grid after each step\n";
-    std::cout << "  --print_csv_header       Print CSV header\n";
-    std::cout << "  --help                   Show this help message\n";
+    std::cout << "  --automaton <name>           Name of the cellular automaton\n";
+    std::cout << "  --device <name>              Device to run on (CPU, CUDA)\n";
+    std::cout << "  --traverser <name>           Traverser type (simple, spacial_blocking)\n";
+    std::cout << "  --evaluator <name>           Evaluator type (standard, bit_plates)\n";
+    std::cout << "  --layout <name>              Layout type (standard, bit_array, bit_plates)\n";
+    std::cout << "  --reference_impl <name>      Reference implementation to use (standard, an5d, kokkos, halide)\n";
+    std::cout << "  --x_size <number>            X size of the grid\n";
+    std::cout << "  --y_size <number>            Y size of the grid\n";
+    std::cout << "  --x_tile_size <number>       X tile size for CUDA\n";
+    std::cout << "  --y_tile_size <number>       Y tile size for CUDA\n";
+    std::cout << "  --rounds <number>            Number of rounds to run\n";
+    std::cout << "  --warmup_rounds <number>     Number of warmup rounds to run\n";
+    std::cout << "  --steps <number>             Number of steps to run\n";
+    std::cout << "  --precision <number>         Precision for floating-point calculations (32, 64)\n";
+    std::cout << "  --seed <number>              Random seed for initialization\n";
+    std::cout << "  --print                      Print the grid after each step\n";
+    std::cout << "  --reference_impl             Use reference implementation for the automaton\n";
+    std::cout << "  --cuda_block_size_x <number> CUDA block size X (default: 16)\n";
+    std::cout << "  --cuda_block_size_y <number> CUDA block size Y (default: 16)\n";
+    std::cout << "  --print_csv_header           Print CSV header\n";
+    std::cout << "  --help                       Show this help message\n";
 }
 
 

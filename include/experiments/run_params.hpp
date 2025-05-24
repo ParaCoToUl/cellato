@@ -14,6 +14,8 @@ struct run_params {
     std::string traverser = "standard";
     std::string evaluator = "standard";
     std::string layout = "standard";
+
+    std::string reference_impl = "none";
     
     int x_size = 0;
     int y_size = 0;
@@ -34,6 +36,9 @@ struct run_params {
 
     bool print_csv_header = false;
 
+    int cuda_block_size_x = 16;
+    int cuda_block_size_y = 16;
+
     void print_to(std::ostream& os) {
         os << "Run Parameters:\n";
         os << "  Automaton: " << automaton << "\n";
@@ -41,6 +46,7 @@ struct run_params {
         os << "  Traverser: " << traverser << "\n";
         os << "  Evaluator: " << evaluator << "\n";
         os << "  Layout: " << layout << "\n";
+        os << "  Reference Implementation: " << reference_impl << "\n";
         os << "  Grid Size: (" << x_size << ", " << y_size << ")\n";
         os << "  Steps: " << steps << "\n";
         os << "  Print: " << (print ? "true" : "false") << "\n";
@@ -50,6 +56,7 @@ struct run_params {
         os << "  Seed: " << seed << "\n";
         os << "  X Tile Size: " << x_tile_size << "\n";
         os << "  Y Tile Size: " << y_tile_size << "\n";
+        os << "  CUDA Block Size: (" << cuda_block_size_x << ", " << cuda_block_size_y << ")\n";
         os << "  Print CSV Header: " << (print_csv_header ? "true" : "false") << "\n";
         os << "  Help: " << (help ? "true" : "false") << "\n";
     }
@@ -59,7 +66,7 @@ struct run_params {
     }
 
     static std::string csv_header() {
-        return "automaton,device,traverser,evaluator,layout,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,seed,precision";
+        return "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,precision";
     }
 
     std::string csv_line() const {
@@ -68,6 +75,7 @@ struct run_params {
                traverser + "," +
                evaluator + "," +
                layout + "," +
+               (reference_impl != "none" ? reference_impl : "") + "," +
                std::to_string(x_size) + "," +
                std::to_string(y_size) + "," +
                std::to_string(steps) + "," +
@@ -75,6 +83,8 @@ struct run_params {
                std::to_string(warmup_rounds) + "," +
                std::to_string(x_tile_size) + "," +
                std::to_string(y_tile_size) + "," +
+               std::to_string(cuda_block_size_x) + "," +
+               std::to_string(cuda_block_size_y) + "," +
                std::to_string(seed) + "," +
                std::to_string(precision);
     }

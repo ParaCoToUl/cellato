@@ -1,0 +1,87 @@
+#include "./reference_implementation.hpp"
+#include <cuda_runtime.h>
+#include "traversers/cuda_utils.cuh"
+
+namespace wire::reference {
+
+// CUDA kernel for WireWorld (single step)
+__global__ void wire_kernel(const wire_cell_state* current, wire_cell_state* next, 
+                           int width, int height) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (x == 0 || y == 0 || x >= width - 1 || y >= height - 1) return;
+    
+    const int idx = y * width + x;
+    
+    wire_cell_state cell_state = current[idx];
+    wire_cell_state next_state = cell_state;
+    
+    switch (cell_state) {
+        case wire_cell_state::empty:
+            // Empty remains empty
+            next_state = wire_cell_state::empty;
+            break;
+            
+        case wire_cell_state::electron_head:
+            // Electron head becomes electron tail
+            next_state = wire_cell_state::electron_tail;
+            break;
+            
+        case wire_cell_state::electron_tail:
+            // Electron tail becomes conductor
+            next_state = wire_cell_state::conductor;
+            break;
+            
+        case wire_cell_state::conductor:
+            // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
+            int electron_head_count = 0;
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    if (dx == 0 && dy == 0) continue; // Skip self
+                    
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    int nidx = ny * width + nx;
+                    if (current[nidx] == wire_cell_state::electron_head) {
+                        electron_head_count++;
+                    }
+                }
+            }
+            
+            if (electron_head_count == 1 || electron_head_count == 2) {
+                next_state = wire_cell_state::electron_head;
+            } else {
+                next_state = wire_cell_state::conductor;
+            }
+            break;
+    }
+    
+    next[idx] = next_state;
+}
+
+void runner::run_kernel(int steps) {
+    if (!d_current || !d_next) {
+        init_cuda();
+    }
+    
+    // Set up grid and block dimensions
+    dim3 block_size(_block_size_x, _block_size_y);
+    dim3 grid_dim((_x_size + block_size.x - 1) / block_size.x, 
+                 (_y_size + block_size.y - 1) / block_size.y);
+    
+    // Run steps iterations
+    for (int i = 0; i < steps; i++) {
+        // Launch kernel for one step
+        wire_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
+        
+        // Swap pointers for next iteration
+        wire_cell_state* temp = d_current;
+        d_current = d_next;
+        d_next = temp;
+    }
+
+    CUCH(cudaDeviceSynchronize());
+}
+
+} // namespace wire::reference

@@ -4,24 +4,41 @@
 #include <vector>
 #include <cstddef>
 #include "./algorithm.hpp"
+#include "experiments/run_params.hpp"
+#include "traversers/cuda_utils.cuh"
 
 namespace wire::reference {
 
 struct runner {
-    void init(int* grid, std::size_t x_size, std::size_t y_size) {
+    void init(const wire_cell_state* grid, std::size_t x_size, std::size_t y_size, 
+              const cellib::run::run_params& params = cellib::run::run_params()) {
         _x_size = x_size;
         _y_size = y_size;
+        _block_size_x = params.cuda_block_size_x;
+        _block_size_y = params.cuda_block_size_y;
         _current_grid.resize(x_size * y_size);
+        _next_grid.resize(x_size * y_size);  // Pre-allocate next_grid
         
         // Copy input grid
-        for (std::size_t i = 0; i < x_size * y_size; ++i) {
-            _current_grid[i] = static_cast<wire_cell_state>(grid[i]);
+        if (grid) {
+            for (std::size_t i = 0; i < x_size * y_size; ++i) {
+                _current_grid[i] = grid[i];
+            }
         }
     }
 
-    void run(int steps) {
-        std::vector<wire_cell_state> next_grid(_x_size * _y_size);
+    void init_cuda() {
+        const size_t grid_size = _x_size * _y_size * sizeof(wire_cell_state);
         
+        // Allocate device memory
+        CUCH(cudaMalloc(&d_current, grid_size));
+        CUCH(cudaMalloc(&d_next, grid_size));
+        
+        // Copy data to device
+        CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
+    }
+
+    void run(int steps) {
         for (int step = 0; step < steps; ++step) {
             // Process each cell
             for (std::size_t y = 1; y < _y_size - 1; ++y) {
@@ -70,7 +87,7 @@ struct runner {
                             break;
                     }
                     
-                    next_grid[y * _x_size + x] = next;
+                    _next_grid[y * _x_size + x] = next;
                 }
             }
             
@@ -78,27 +95,61 @@ struct runner {
             for (std::size_t y = 0; y < _y_size; ++y) {
                 for (std::size_t x = 0; x < _x_size; ++x) {
                     if (x == 0 || x == _x_size - 1 || y == 0 || y == _y_size - 1) {
-                        next_grid[y * _x_size + x] = _current_grid[y * _x_size + x];
+                        _next_grid[y * _x_size + x] = _current_grid[y * _x_size + x];
                     }
                 }
             }
             
             // Swap grids
-            _current_grid.swap(next_grid);
+            _current_grid.swap(_next_grid);
         }
     }
 
-    std::vector<int> fetch_result() const {
-        std::vector<int> result(_x_size * _y_size);
-        for (std::size_t i = 0; i < _current_grid.size(); ++i) {
-            result[i] = static_cast<int>(_current_grid[i]);
+    void run_on_cuda(int steps) {
+        if (!d_current || !d_next) {
+            init_cuda();
         }
-        return result;
+        run_kernel(steps);
+    }
+
+    std::vector<wire_cell_state> fetch_result() {
+        if (d_current) {
+            // Copy result back from device to host
+            const size_t grid_size = _x_size * _y_size * sizeof(wire_cell_state);
+            CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
+            
+            // Free CUDA memory
+            CUCH(cudaFree(d_current));
+            CUCH(cudaFree(d_next));
+            d_current = nullptr;
+            d_next = nullptr;
+        }
+        return _current_grid;
+    }
+
+    ~runner() {
+        if (d_current) {
+            cudaFree(d_current);
+            d_current = nullptr;
+        }
+        if (d_next) {
+            cudaFree(d_next);
+            d_next = nullptr;
+        }
     }
 
 private:
     std::size_t _x_size, _y_size;
+    int _block_size_x = 16;
+    int _block_size_y = 16;
     std::vector<wire_cell_state> _current_grid;
+    std::vector<wire_cell_state> _next_grid;
+    
+    // Device pointers
+    wire_cell_state* d_current = nullptr;
+    wire_cell_state* d_next = nullptr;
+
+    void run_kernel(int steps);
 };
 
 } // namespace wire::reference

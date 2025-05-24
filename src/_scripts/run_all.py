@@ -62,6 +62,10 @@ class Tester:
     def cases(self, automaton):
         """Define all test cases for a given automaton"""
         return [
+            # Baseline test (no traverser, no evaluator, no layout)
+            f"--automaton {automaton} --device CPU --reference_impl baseline --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
+            f"--automaton {automaton} --device CUDA --reference_impl baseline --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
+
             # CPU tests
             f"--automaton {automaton} --device CPU --traverser simple --evaluator standard --layout standard --x_size 512 --y_size 512 --steps 100 --seed 42",
             f"--automaton {automaton} --device CPU --traverser simple --evaluator bit_array --layout bit_array --x_size 512 --y_size 512 --steps 100 --precision 32 --seed 42",
@@ -116,16 +120,28 @@ class Tester:
     def run_case(self, args, report_file):
         """Run a single test case and save results to the report file"""
         # Extract case info for logging
+
+        try:
+            reference = re.search(r'--reference_impl (\w+)', args).group(1)
+        except AttributeError:
+            reference = "none"
+
         automaton = re.search(r'--automaton (\w+)', args).group(1)
         device = re.search(r'--device (\w+)', args).group(1)
-        layout = re.search(r'--layout (\w+)', args).group(1)
-        evaluator = re.search(r'--evaluator (\w+)', args).group(1)
-        traverser = re.search(r'--traverser (\w+)', args).group(1)
+
+        if reference == "none":
+            layout = re.search(r'--layout (\w+)', args).group(1)
+            evaluator = re.search(r'--evaluator (\w+)', args).group(1)
+            traverser = re.search(r'--traverser (\w+)', args).group(1)
+         
         x_size = re.search(r'--x_size (\d+)', args).group(1)
         y_size = re.search(r'--y_size (\d+)', args).group(1)
         steps = re.search(r'--steps (\d+)', args).group(1)
         
-        case_desc = f"{automaton} {device}/{traverser}/{evaluator}/{layout} {x_size}x{y_size} steps={steps}"
+        if reference == "none":
+            case_desc = f"{automaton} {device}/{traverser}/{evaluator}/{layout} {x_size}x{y_size} steps={steps}"
+        else:
+            case_desc = f"{automaton} reference={reference} {device} {x_size}x{y_size} steps={steps}"
         print(f"\nRunning case: {case_desc}")
         
         # Execute the program (without rebuilding)
@@ -208,7 +224,11 @@ class Tester:
                 
                 if checksum:
                     # Store result for this implementation
-                    impl_key = re.search(r'--device (\w+) --traverser (\w+) --evaluator (\w+) --layout (\w+)', case).group(0)
+                    try:
+                        impl_key = re.search(r'--device (\w+) --traverser (\w+) --evaluator (\w+) --layout (\w+)', case).group(0)
+                    except AttributeError:
+                        impl_key = re.search(r'--device (\w+) --reference_impl (\w+)', case).group(0)
+
                     automaton_checksums[automaton][impl_key] = checksum
         
         # Check if all implementations produce the same checksum for each automaton
