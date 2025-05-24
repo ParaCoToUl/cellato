@@ -12,6 +12,8 @@ INCLUDE_DIRS = -I../include -I$(DEP_DIR)/include -I$(CUDA_HOME)/include
 LIB_DIRS = -L$(DEP_DIR)/lib -L$(CUDA_HOME)/lib64
 LIBS = -lcudart
 
+ENABLE_KOKKOS = OFF
+
 # Directories
 SRC_DIR = .
 OBJ_DIR = ../bin
@@ -95,17 +97,21 @@ install_halide: install_llvm $(VENDOR_DIR)/Halide
 	@$(CMAKE) --build $(DEP_DIR)/halide
 	@echo "Halide dependencies installed."
 
+ifeq ($(ENABLE_KOKKOS), ON)
+DEFINES += -DENABLE_KOKKOS
+endif
+
 # Add directories dependency to object file creation rules
 $(MAIN_OBJ): $(MAIN_SRC) | directories
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS) $(DEFINES)
 
 $(TEST_OBJ): $(TEST_SRC) | directories
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS) $(DEFINES)
 
 # Pattern rule for CUDA files with vpath to find them
 vpath %.cu $(CUDA_DIRS)
 $(OBJ_DIR)/%.o: %.cu | directories
-	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES)
 
 # Create separate executables for main app and tests
 $(TARGET): $(MAIN_OBJ) $(CUDA_OBJS)
