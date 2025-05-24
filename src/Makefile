@@ -1,4 +1,4 @@
-CXX = g++
+CXX = g++-13
 CXX_STD = c++20
 NVCC = nvcc
 CXXFLAGS = -std=$(CXX_STD) -Wall -Wextra -Wpedantic -O3 -I../include
@@ -13,6 +13,8 @@ LIB_DIRS = -L$(DEP_DIR)/lib -L$(CUDA_HOME)/lib64
 LIBS = -lcudart
 
 ENABLE_KOKKOS = OFF
+ENABLE_HALIDE = OFF
+ENABLE_AN5D = OFF
 
 # Directories
 SRC_DIR = .
@@ -99,6 +101,14 @@ install_halide: install_llvm $(VENDOR_DIR)/Halide
 
 ifeq ($(ENABLE_KOKKOS), ON)
 DEFINES += -DENABLE_KOKKOS
+endif
+
+ifeq ($(ENABLE_HALIDE), ON)
+DEFINES += -DENABLE_HALIDE
+endif
+
+ifeq ($(ENABLE_AN5D), ON)
+DEFINES += -DENABLE_AN5D
 endif
 
 # Add directories dependency to object file creation rules
