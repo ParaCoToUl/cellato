@@ -68,6 +68,11 @@ private:
                 // TODO (@Erunno): run the Kokkos reference implementation for Wire
             }
         }
+#else
+        else if (params.reference_impl == "kokkos") {
+            std::cerr << "Kokkos reference implementation is not enabled in this build." << std::endl;
+            return false;
+        }
 #endif // ENABLE_KOKKOS
 
         return false;
