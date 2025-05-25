@@ -4,10 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <memory>
+#include <stdexcept>
 #include <vector>
-#include "experiments/run_params.hpp"
 
-#include "Kokkos_Core.hpp"
+#include "experiments/run_params.hpp"
 
 #ifndef ENABLE_KOKKOS
 #error "Kokkos is not enabled, this source file should not be compiled."
@@ -15,59 +16,45 @@
 
 namespace kokkos::fire {
 
+struct real_runner {
+    using value_type = std::uint8_t;
+
+    virtual ~real_runner() = default;
+
+    virtual void init(int* grid,
+                  const cellib::run::run_params& params) = 0;
+    virtual void run(int steps) = 0;
+    virtual std::vector<int> fetch_result() = 0;
+};
+
+std::unique_ptr<real_runner> create_runner();
+
 struct runner {
     using value_type = std::uint8_t;
 
     void init(int* grid,
               const cellib::run::run_params& params) {
-    
-        std::size_t x_size = params.grid_size_x;
-        std::size_t y_size = params.grid_size_y;
-
-        grid_ = Kokkos::View<value_type**>("grid", x_size, y_size);
-        next_grid_ = Kokkos::View<value_type**>("next_grid", x_size, y_size);
-        // Initialize the Kokkos view with the provided grid data
-        for (std::size_t i = 0; i < x_size; ++i) {
-            for (std::size_t j = 0; j < y_size; ++j) {
-                grid_(i, j) = grid[i * y_size + j];
-            }
+        if (!real_runner_) {
+            real_runner_ = create_runner();
         }
+
+        if (!real_runner_) {
+            throw std::runtime_error("Failed to create real_runner instance");
+        }
+
+        real_runner_->init(grid, params);
     }
 
     void run(int steps) {
-        for (int step = 0; step < steps; ++step) {
-            run_step();
-        }
+        real_runner_->run(steps);
     }
 
     std::vector<int> fetch_result() {
-        // ...
-
-        std::vector<int> result;
-        result.reserve(grid_.extent(0) * grid_.extent(1));
-
-        for (std::size_t i = 0; i < grid_.extent(0); ++i) {
-            for (std::size_t j = 0; j < grid_.extent(1); ++j) {
-                result.push_back(static_cast<int>(grid_(i, j)));
-            }
-        }
-
-        return result;
+        return real_runner_->fetch_result();
     }
 
 private:
-    void run_step() {
-        Kokkos::parallel_for("FireStep", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({1, 1}, {grid_.extent(0) - 1, grid_.extent(1) - 1}), KOKKOS_LAMBDA(const int i, const int j) {
-            // fire rules
-            next_grid_(i, j) = /* apply rules */ grid_(i, j); // Placeholder for actual fire rules logic
-        });
-
-        using std::swap;
-        swap(grid_, next_grid_);
-    }
-
-    Kokkos::View<value_type**> grid_;
-    Kokkos::View<value_type**> next_grid_;
+    std::unique_ptr<real_runner> real_runner_;
 };
 
 } // namespace kokkos::fire

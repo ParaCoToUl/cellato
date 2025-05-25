@@ -43,7 +43,12 @@ ifeq ($(ENABLE_KOKKOS), ON)
 DEFINES += -DENABLE_KOKKOS
 INCLUDE_DIRS += -I$(DEP_DIR)/include
 LIB_DIRS += -L$(DEP_DIR)/lib
-LIBS += -lkokkoscore
+LIBS += -lkokkoscore -lcuda
+EXTRA_CUDA_OBJS += $(OBJ_DIR)/kokkos_fire_runner.o $(OBJ_DIR)/kokkos_game_of_life_runner.o # $(OBJ_DIR)/kokkos_greenberg_runner.o $(OBJ_DIR)/kokkos_wire_runner.o
+
+$(OBJ_DIR)/kokkos_%_runner.o: $(SRC_DIR)/_relwork/kokkos/kokkos_%_runner.cu | directories
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) -I$(DEP_DIR)/include -extended-lambda
+
 endif
 
 ifeq ($(ENABLE_HALIDE), ON)
@@ -72,7 +77,7 @@ install_kokkos: $(VENDOR_DIR)/kokkos
 		-D CMAKE_CUDA_COMPILER=$(NVCC) \
 		-D CMAKE_CUDA_HOST_COMPILER=$(NVCC_CC_BIN) \
 		-D Kokkos_ENABLE_CUDA=ON \
-		-D Kokkos_ENABLE_OPENMP=ON \
+		-D Kokkos_ENABLE_CUDA_LAMBDA=ON \
 		-D Kokkos_ENABLE_SERIAL=ON \
 		-D Kokkos_ENABLE_TESTS=OFF \
 		-D Kokkos_ARCH_NATIVE=ON \
@@ -127,7 +132,7 @@ $(OBJ_DIR)/%.o: %.cu | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES)
 
 # Create separate executables for main app and tests
-$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS)
+$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS) $(EXTRA_CUDA_OBJS)
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)
 
 $(TEST_TARGET): $(TEST_OBJ)
