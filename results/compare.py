@@ -19,9 +19,6 @@ def load_data(csv_file):
 
 def process_data(df):
     """Process the dataframe to extract the required information."""
-    # Filter for CUDA device and simple traverser only
-    df = df[(df['device'] == 'CUDA') & (df['traverser'] == 'simple')]
-    
     # Create a dictionary to store the processed data
     result = {}
     
@@ -36,13 +33,23 @@ def process_data(df):
         for automaton in sorted(grid_df['automaton'].unique()):
             automaton_df = grid_df[grid_df['automaton'] == automaton]
             
-            # Get the baseline (standard evaluator)
-            baseline = automaton_df[(automaton_df['evaluator'] == 'standard') & 
-                                    (automaton_df['layout'] == 'standard')]
-            if not baseline.empty:
-                baseline_ns = baseline.iloc[0]['average_time_per_cell_ns']
+            # Get the true baseline (reference_impl = "baseline")
+            true_baseline = automaton_df[automaton_df['reference_impl'] == 'baseline']
+            if not true_baseline.empty:
+                true_baseline_ns = true_baseline.iloc[0]['average_time_per_cell_ns']
             else:
-                baseline_ns = None
+                true_baseline_ns = None
+            
+            # Get standard implementation (CUDA + simple + standard evaluator + standard layout)
+            standard_impl = automaton_df[(automaton_df['device'] == 'CUDA') & 
+                                        (automaton_df['traverser'] == 'simple') &
+                                        (automaton_df['evaluator'] == 'standard') & 
+                                        (automaton_df['layout'] == 'standard') &
+                                        (automaton_df['reference_impl'] != 'baseline')]
+            if not standard_impl.empty:
+                standard_impl_ns = standard_impl.iloc[0]['average_time_per_cell_ns']
+            else:
+                standard_impl_ns = None
             
             # Get bit_array and bit_plates results
             bit_array_32 = automaton_df[(automaton_df['evaluator'] == 'bit_array') & 
@@ -60,7 +67,8 @@ def process_data(df):
             
             # Extract the values
             results = {
-                'baseline': baseline_ns,
+                'true_baseline': true_baseline_ns,
+                'standard': standard_impl_ns,
                 'bit_array_32': None if bit_array_32.empty else bit_array_32.iloc[0]['average_time_per_cell_ns'],
                 'bit_array_64': None if bit_array_64.empty else bit_array_64.iloc[0]['average_time_per_cell_ns'],
                 'bit_plates_32': None if bit_plates_32.empty else bit_plates_32.iloc[0]['average_time_per_cell_ns'],
@@ -84,12 +92,12 @@ def format_cell(value, baseline=None):
     if value is None:
         return "N/A"
     
-    if baseline is None or baseline == value:
+    if baseline is None:
         return f"{value:.6f} ns"
     
     speedup = baseline / value
-    # Use green color for speedup values
-    return f"{value:.6f} ns ({Colors.GREEN}{speedup:.2f}x{Colors.RESET})"
+    color = Colors.GREEN if speedup > 1 else Colors.RED
+    return f"{value:.6f} ns ({color}{speedup:.2f}x{Colors.RESET})"
 
 def display_results(data):
     """Display the results in a formatted table."""
@@ -101,13 +109,13 @@ def display_results(data):
     }
     
     for (x_size, y_size), grid_data in sorted(data.items()):
-        print(f"{Colors.CYAN}{Colors.BOLD}{'=' * 80}{Colors.RESET}")
+        print(f"{Colors.CYAN}{Colors.BOLD}{'=' * 100}{Colors.RESET}")
         print(f"{Colors.CYAN}{Colors.BOLD}Grid Size: {x_size} x {y_size}{Colors.RESET}")
-        print(f"{Colors.CYAN}{Colors.BOLD}{'=' * 80}{Colors.RESET}")
+        print(f"{Colors.CYAN}{Colors.BOLD}{'=' * 100}{Colors.RESET}")
         
         # Column widths
-        col_widths = [15, 25, 25, 25, 25, 25]
-        columns = ["Automaton", "Baseline", "Bit Array (32-bit)", "Bit Array (64-bit)", "Bit Plates (32-bit)", "Bit Plates (64-bit)"]
+        col_widths = [15, 25, 25, 25, 25, 25, 25]
+        columns = ["Automaton", "True Baseline", "Standard", "Bit Array (32-bit)", "Bit Array (64-bit)", "Bit Plates (32-bit)", "Bit Plates (64-bit)"]
         
         # Print header with yellow color
         header = f"{Colors.YELLOW}{Colors.BOLD}{columns[0]:{col_widths[0]}}"
@@ -116,49 +124,57 @@ def display_results(data):
         header += Colors.RESET
         print(header)
         
-        print(f"{Colors.YELLOW}{'-' * 115}{Colors.RESET}")
+        print(f"{Colors.YELLOW}{'-' * 140}{Colors.RESET}")
         
         # Print each row
         for automaton, results in sorted(grid_data.items()):
-            baseline = results['baseline']
+            true_baseline = results['true_baseline']
             display_name = automaton_display.get(automaton, automaton)
             
             # Prepare cell values with colors
             automaton_cell = f"{Colors.BOLD}{display_name}{Colors.RESET}"
-            baseline_cell = format_cell(baseline)
-            bit_array_32_cell = format_cell(results['bit_array_32'], baseline)
-            bit_array_64_cell = format_cell(results['bit_array_64'], baseline)
-            bit_plates_32_cell = format_cell(results['bit_plates_32'], baseline)
-            bit_plates_64_cell = format_cell(results['bit_plates_64'], baseline)
+            true_baseline_cell = format_cell(true_baseline)
+            
+            # Standard implementation compared to true baseline
+            standard_cell = format_cell(results['standard'], true_baseline)
+            
+            # Other implementations compared to true baseline
+            bit_array_32_cell = format_cell(results['bit_array_32'], true_baseline)
+            bit_array_64_cell = format_cell(results['bit_array_64'], true_baseline)
+            bit_plates_32_cell = format_cell(results['bit_plates_32'], true_baseline)
+            bit_plates_64_cell = format_cell(results['bit_plates_64'], true_baseline)
             
             # Calculate padding for each cell based on visible length
             auto_visible_len = visible_len(automaton_cell)
             auto_padding = ' ' * (col_widths[0] - auto_visible_len)
             
-            baseline_visible_len = visible_len(baseline_cell)
+            baseline_visible_len = visible_len(true_baseline_cell)
             baseline_padding = ' ' * (col_widths[1] - baseline_visible_len)
             
+            standard_visible_len = visible_len(standard_cell)
+            standard_padding = ' ' * (col_widths[2] - standard_visible_len)
+            
             bit_array_32_visible_len = visible_len(bit_array_32_cell)
-            bit_array_32_padding = ' ' * (col_widths[2] - bit_array_32_visible_len)
+            bit_array_32_padding = ' ' * (col_widths[3] - bit_array_32_visible_len)
             
             bit_array_64_visible_len = visible_len(bit_array_64_cell)
-            bit_array_64_padding = ' ' * (col_widths[3] - bit_array_64_visible_len)
+            bit_array_64_padding = ' ' * (col_widths[4] - bit_array_64_visible_len)
             
             bit_plates_32_visible_len = visible_len(bit_plates_32_cell)
-            bit_plates_32_padding = ' ' * (col_widths[4] - bit_plates_32_visible_len)
+            bit_plates_32_padding = ' ' * (col_widths[5] - bit_plates_32_visible_len)
             
             bit_plates_64_visible_len = visible_len(bit_plates_64_cell)
-            bit_plates_64_padding = ' ' * (col_widths[5] - bit_plates_64_visible_len)
+            bit_plates_64_padding = ' ' * (col_widths[6] - bit_plates_64_visible_len)
             
             # Build row with correct spacing
-            row = f"{automaton_cell}{auto_padding}{baseline_cell}{baseline_padding}{bit_array_32_cell}{bit_array_32_padding}{bit_array_64_cell}{bit_array_64_padding}{bit_plates_32_cell}{bit_plates_32_padding}{bit_plates_64_cell}{bit_plates_64_padding}"
+            row = f"{automaton_cell}{auto_padding}{true_baseline_cell}{baseline_padding}{standard_cell}{standard_padding}{bit_array_32_cell}{bit_array_32_padding}{bit_array_64_cell}{bit_array_64_padding}{bit_plates_32_cell}{bit_plates_32_padding}{bit_plates_64_cell}{bit_plates_64_padding}"
             print(row)
         
         print()
 
 def main():
     if len(sys.argv) < 2:
-        print(f"{Colors.RED}Usage: python compare_v2.py <csv_file>{Colors.RESET}")
+        print(f"{Colors.RED}Usage: python compare.py <csv_file>{Colors.RESET}")
         return
     
     csv_file = sys.argv[1]
