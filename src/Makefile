@@ -39,6 +39,21 @@ CUDA_OBJS = $(patsubst %.cu,$(OBJ_DIR)/%.o,$(notdir $(CUDA_SRCS)))
 TARGET = $(BIN_DIR)/cellib_experiments
 TEST_TARGET = $(BIN_DIR)/cellib_tests
 
+ifeq ($(ENABLE_KOKKOS), ON)
+DEFINES += -DENABLE_KOKKOS
+INCLUDE_DIRS += -I$(DEP_DIR)/include
+LIB_DIRS += -L$(DEP_DIR)/lib
+LIBS += -lkokkoscore
+endif
+
+ifeq ($(ENABLE_HALIDE), ON)
+DEFINES += -DENABLE_HALIDE
+endif
+
+ifeq ($(ENABLE_AN5D), ON)
+DEFINES += -DENABLE_AN5D
+endif
+
 # Rules
 all: directories $(TARGET) $(TEST_TARGET)
 
@@ -52,7 +67,7 @@ install_kokkos: $(VENDOR_DIR)/kokkos
 	@mkdir -p $(DEP_DIR) $(DEP_DIR)/kokkos
 	@$(CMAKE) -B $(DEP_DIR)/kokkos -S $(VENDOR_DIR)/kokkos \
 		-D CMAKE_BUILD_TYPE=Release \
-		-D CMAKE_CXX_COMPILER=$(CXX)
+		-D CMAKE_CXX_COMPILER=$(NVCC_CC_BIN) \
 		-D CMAKE_CXX_STANDARD=20 \
 		-D CMAKE_CUDA_COMPILER=$(NVCC) \
 		-D CMAKE_CUDA_HOST_COMPILER=$(NVCC_CC_BIN) \
@@ -98,18 +113,6 @@ install_halide: install_llvm $(VENDOR_DIR)/Halide
 		-D Halide_LLVM_ROOT=$(shell realpath $(DEP_DIR))
 	@$(CMAKE) --build $(DEP_DIR)/halide
 	@echo "Halide dependencies installed."
-
-ifeq ($(ENABLE_KOKKOS), ON)
-DEFINES += -DENABLE_KOKKOS
-endif
-
-ifeq ($(ENABLE_HALIDE), ON)
-DEFINES += -DENABLE_HALIDE
-endif
-
-ifeq ($(ENABLE_AN5D), ON)
-DEFINES += -DENABLE_AN5D
-endif
 
 # Add directories dependency to object file creation rules
 $(MAIN_OBJ): $(MAIN_SRC) | directories
