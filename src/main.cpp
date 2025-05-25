@@ -56,6 +56,20 @@ private:
                 return run_reference_for_automaton<wire::config>(params);
             }
         }
+#ifdef ENABLE_KOKKOS
+        else if (params.reference_impl == "kokkos") {
+            if (params.automaton == "game-of-life") {
+                // TODO (@Erunno): run the Kokkos reference implementation for Game of Life
+            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
+                // TODO (@Erunno): run the Kokkos reference implementation for Fire
+            } else if (params.automaton == "greenberg-hastings") {
+                // TODO (@Erunno): run the Kokkos reference implementation for Greenberg-Hastings
+            } else if (params.automaton == "wire") {
+                // TODO (@Erunno): run the Kokkos reference implementation for Wire
+            }
+        }
+#endif // ENABLE_KOKKOS
+
         return false;
     }
     
