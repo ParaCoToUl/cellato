@@ -9,7 +9,7 @@ CMAKE = cmake
 CUDA_HOME = /usr/local/cuda
 
 INCLUDE_DIRS = -I../include -I$(DEP_DIR)/include -I$(CUDA_HOME)/include
-LIB_DIRS = -L$(DEP_DIR)/lib -L$(CUDA_HOME)/lib64
+LIB_DIRS = -L$(DEP_DIR)/lib -L$(DEP_DIR)/lib64 -L$(CUDA_HOME)/lib64
 LIBS = -lcudart
 
 ENABLE_KOKKOS = OFF
