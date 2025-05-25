@@ -1,4 +1,4 @@
-CXX = g++-13
+CXX = g++
 CXX_STD = c++20
 NVCC = nvcc
 CXXFLAGS = -std=$(CXX_STD) -Wall -Wextra -Wpedantic -O3 -I../include
