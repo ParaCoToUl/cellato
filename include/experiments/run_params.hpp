@@ -36,8 +36,8 @@ struct run_params {
 
     bool print_csv_header = false;
 
-    int cuda_block_size_x = 16;
-    int cuda_block_size_y = 16;
+    int cuda_block_size_x = 32;
+    int cuda_block_size_y = 8;
 
     void print_to(std::ostream& os) {
         os << "Run Parameters:\n";

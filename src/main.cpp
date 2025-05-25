@@ -196,8 +196,8 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
         .help = parser.exists("help"),
         .print_csv_header = parser.exists("print_csv_header"),
 
-        .cuda_block_size_x = parser.exists("cuda_block_size_x") ? std::stoi(parser.get("cuda_block_size_x")) : 16,
-        .cuda_block_size_y = parser.exists("cuda_block_size_y") ? std::stoi(parser.get("cuda_block_size_y")) : 16
+        .cuda_block_size_x = parser.exists("cuda_block_size_x") ? std::stoi(parser.get("cuda_block_size_x")) : 32,
+        .cuda_block_size_y = parser.exists("cuda_block_size_y") ? std::stoi(parser.get("cuda_block_size_y")) : 8
     };
 
     return params;

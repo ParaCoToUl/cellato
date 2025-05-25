@@ -7,11 +7,9 @@ namespace game_of_life::reference {
 // CUDA kernel for Game of Life (single step)
 __global__ void gol_kernel(const gol_cell_state* current, gol_cell_state* next, 
                            int width, int height) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    
-    if (x == 0 || y == 0 || x >= width - 1 || y >= height - 1) return;
-    
+    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
+    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
+        
     const int idx = y * width + x;
     
     // Count live neighbors (Moore neighborhood)
@@ -59,15 +57,18 @@ void runner::run_kernel(int steps) {
     
     // Set up grid and block dimensions
     dim3 block_size(_block_size_x, _block_size_y);
-    dim3 grid_dim((_x_size + block_size.x - 1) / block_size.x, 
-                 (_y_size + block_size.y - 1) / block_size.y);
+
+    auto _x_size_threads = _x_size - 2; // Exclude borders
+    auto _y_size_threads = _y_size - 2; // Exclude borders
+
+    dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x, 
+                 (_y_size_threads + block_size.y - 1) / block_size.y);
     
     // Run steps iterations
     for (int i = 0; i < steps; i++) {
         // Launch kernel for one step
         gol_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
-        
-        
+
         // Swap pointers for next iteration
         gol_cell_state* temp = d_current;
         d_current = d_next;

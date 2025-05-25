@@ -66,7 +66,7 @@ public:
         }
         
         grid_t grid = get_padded_grid(params, initial_state);
-        traverser_t traverser = get_initialized_traverser(grid);
+        traverser_t traverser = get_initialized_traverser(grid, params);
 
         auto execution_time = run_traverser(traverser, params);
 
@@ -116,9 +116,10 @@ public:
         return execution_time.count();
     }
 
-    traverser_t get_initialized_traverser(grid_t& grid) {
+    traverser_t get_initialized_traverser(grid_t& grid, 
+                                          const cellib::run::run_params& params) {
         traverser_t traverser;
-        traverser.init(grid);
+        traverser.init(grid, params);
         return traverser;
     }
 };

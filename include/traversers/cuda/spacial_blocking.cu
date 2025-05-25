@@ -62,7 +62,7 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
     // Calculate block and grid dimensions based on tile sizes
     // Each thread handles a Y_TILE_SIZE x X_TILE_SIZE tile
     // So we need fewer threads than with the simple traverser
-    dim3 blockDim(16, 16);  // Fixed block size
+    dim3 blockDim(_block_size_x, _block_size_y);
     dim3 gridDim(
         (width + blockDim.x * X_TILE_SIZE - 1) / (blockDim.x * X_TILE_SIZE),
         (height + blockDim.y * Y_TILE_SIZE - 1) / (blockDim.y * Y_TILE_SIZE)

@@ -19,11 +19,8 @@ __global__ void process_grid_kernel(
     size_t width,
     size_t height
 ) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    
-    // Skip if outside grid bounds or on border
-    if (x < 1 || x >= width - 1 || y < 1 || y >= height - 1) return;
+    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
+    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
     
     cellib::memory::grids::point_in_grid state(input_data);
 
@@ -45,11 +42,14 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     
     size_t width = current->x_size_physical();
     size_t height = current->y_size_physical();
+
+    size_t width_threads = width - 2; // Exclude borders
+    size_t height_threads = height - 2; // Exclude borders
     
-    dim3 blockDim(16, 16);
+    dim3 blockDim(_block_size_x, _block_size_y);
     dim3 gridDim(
-        (width + blockDim.x - 1) / blockDim.x,
-        (height + blockDim.y - 1) / blockDim.y
+        width_threads / blockDim.x,
+        height_threads / blockDim.y
     );
 
     for (int step = 0; step < steps; ++step) {

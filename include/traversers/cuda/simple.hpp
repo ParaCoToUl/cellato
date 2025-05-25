@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "../../memory/interface.hpp"
+#include "../../experiments/run_params.hpp"
 #include "../traverser_utils.hpp"
 
 namespace cellib::traversers::cuda::simple {
@@ -31,7 +32,18 @@ class traverser {
   public:
     traverser() : _final_grid(nullptr) {}
 
-    void init(grid_t grid) {
+    void init(grid_t grid, 
+              const cellib::run::run_params& params) {
+
+        _block_size_x = params.cuda_block_size_x;
+        _block_size_y = params.cuda_block_size_y;
+
+        if ((grid.x_size_physical() - 2) % _block_size_x != 0 ||
+            (grid.y_size_physical() - 2) % _block_size_y != 0) {
+            std::cerr << "Grid size must be divisible by block size.\n";
+            throw std::runtime_error("Invalid grid size for CUDA traverser.");
+        }
+
         _input_grid = std::move(grid);
         
         _input_grid_cuda = _input_grid.to_cuda();
@@ -64,6 +76,9 @@ private:
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;
     cuda_grid_t* _final_grid;
+
+    int _block_size_x = 16;
+    int _block_size_y = 16;
 
     struct _call_back_obj {
         virtual void call(int iteration, grid_t& grid) = 0;

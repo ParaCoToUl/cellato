@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <cstddef>
+#include <iostream>
+#include <stdexcept>
 #include "./algorithm.hpp"
 #include "experiments/run_params.hpp"
 #include "traversers/cuda_utils.cuh"
@@ -19,6 +21,13 @@ struct runner {
         _current_grid.resize(x_size * y_size);
         _next_grid.resize(x_size * y_size);  // Pre-allocate next_grid
         
+        if (params.device == "CUDA") {
+            if ((x_size - 2) % _block_size_x != 0 || (y_size - 2) % _block_size_y != 0) {
+                std::cerr << "Grid size must be divisible by block size.\n";
+                throw std::runtime_error("Invalid grid size for CUDA traverser.");
+            }
+        }
+
         // Copy input grid
         if (grid) {
             for (std::size_t i = 0; i < x_size * y_size; ++i) {

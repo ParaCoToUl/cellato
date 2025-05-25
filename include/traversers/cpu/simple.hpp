@@ -9,6 +9,7 @@
 
 #include "../../memory/interface.hpp"
 #include "../traverser_utils.hpp"
+#include "../../experiments/run_params.hpp"
 
 namespace cellib::traversers::cpu::simple {
 
@@ -25,7 +26,10 @@ class traverser {
 
   public:
 
-    void init(grid_t grid) {
+    void init(grid_t grid, 
+              const cellib::run::run_params& params) {
+        (void)params; // Unused parameter
+
         _input_grid = std::move(grid);
         _intermediate_grid = _input_grid;
         _final_grid = &_intermediate_grid;
@@ -35,7 +39,7 @@ class traverser {
 
     template <typename callback = no_callback>
     void run(int steps, callback&& callback_func = no_callback{}) {
-
+        
         auto current = &_input_grid;
         auto next = &_intermediate_grid;
 
