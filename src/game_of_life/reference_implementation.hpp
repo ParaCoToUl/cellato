@@ -12,17 +12,17 @@
 namespace game_of_life::reference {
 
 struct runner {
-    void init(const gol_cell_state* grid, std::size_t x_size, std::size_t y_size,
+    void init(const gol_cell_state* grid,
               const cellib::run::run_params& params = cellib::run::run_params()) {
-        _x_size = x_size;
-        _y_size = y_size;
+        _x_size = params.x_size;
+        _y_size = params.y_size;
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
-        _current_grid.resize(x_size * y_size);
-        _next_grid.resize(x_size * y_size);  // Pre-allocate next_grid
-        
+        _current_grid.resize(_x_size * _y_size);
+        _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
+
         if (params.device == "CUDA") {
-            if ((x_size - 2) % _block_size_x != 0 || (y_size - 2) % _block_size_y != 0) {
+            if ((_x_size - 2) % _block_size_x != 0 || (_y_size - 2) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
@@ -30,7 +30,7 @@ struct runner {
 
         // Copy input grid
         if (grid) {
-            for (std::size_t i = 0; i < x_size * y_size; ++i) {
+            for (std::size_t i = 0; i < _x_size * _y_size; ++i) {
                 _current_grid[i] = grid[i];
             }
         }

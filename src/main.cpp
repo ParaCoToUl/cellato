@@ -20,6 +20,16 @@
 #include "wire/config.hpp"
 
 #include "args-parser.hpp"
+#include "./_relwork/runner_wrapper.hpp"
+#include "./_relwork/__framework_of_choice__/fire/runner.hpp"
+#include "./_relwork/__framework_of_choice__/game_of_life/runner.hpp"
+
+#ifdef ENABLE_KOKKOS
+#include "./_relwork/kokkos/game_of_life/runner.hpp"
+#include "./_relwork/kokkos/fire/runner.hpp"
+#include "./_relwork/kokkos/greenberg/runner.hpp"
+#include "./_relwork/kokkos/wire/runner.hpp"
+#endif // ENABLE_KOKKOS
 
 
 #define LOG std::cerr
@@ -45,6 +55,7 @@ struct switch_ {
 
 private:
     static bool run_reference_impl(cellib::run::run_params& params) {
+
         if (params.reference_impl == "baseline") {
             if (params.automaton == "game-of-life") {
                 return run_reference_for_automaton<game_of_life::config>(params);
@@ -56,16 +67,26 @@ private:
                 return run_reference_for_automaton<wire::config>(params);
             }
         }
+
+        if (params.reference_impl == "_framework_of_choice_") {
+            if (params.automaton == "game-of-life") {
+                return run_relwork<game_of_life::config, __framework_of_choice__::game_of_life::runner>(params);
+            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
+                return run_relwork<fire::config, __framework_of_choice__::fire::runner>(params);
+            }
+            // ...
+        }
+
 #ifdef ENABLE_KOKKOS
         else if (params.reference_impl == "kokkos") {
             if (params.automaton == "game-of-life") {
-                // TODO (@Erunno): run the Kokkos reference implementation for Game of Life
+                return run_relwork<game_of_life::config, kokkos::game_of_life::runner>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                // TODO (@Erunno): run the Kokkos reference implementation for Fire
+                return run_relwork<fire::config, kokkos::fire::runner>(params);
             } else if (params.automaton == "greenberg-hastings") {
-                // TODO (@Erunno): run the Kokkos reference implementation for Greenberg-Hastings
+                return run_relwork<greenberg::config, kokkos::greenberg::runner>(params);
             } else if (params.automaton == "wire") {
-                // TODO (@Erunno): run the Kokkos reference implementation for Wire
+                return run_relwork<wire::config, kokkos::wire::runner>(params);
             }
         }
 #else
@@ -77,14 +98,23 @@ private:
 
         return false;
     }
-    
-    template <typename AutomatonConfig>
+
+    template <typename automaton_config, typename relwork_runner>
+    static bool run_relwork(cellib::run::run_params& params) {
+        return run_reference_for_automaton<
+            automaton_config,
+            relwork::runner_wrapper<
+                automaton_config, 
+                relwork_runner>>(params);
+    }
+
+    template <typename automaton_config,
+              typename runner_t = typename automaton_config::reference_implementation>
     static bool run_reference_for_automaton(cellib::run::run_params& params) {
-        using runner_t = typename AutomatonConfig::reference_implementation;
-        using cell_state_t = typename AutomatonConfig::cell_state;
+        using cell_state_t = typename automaton_config::cell_state;
         
         // Generate initial state using the automaton's random initializer
-        auto initial_state = AutomatonConfig::input::random::init(params);
+        auto initial_state = automaton_config::input::random::init(params);
         
         // Run the reference implementation
         cellib::run::reference_impl_manager<runner_t, cell_state_t> manager;

@@ -56,9 +56,13 @@ private:
         
         auto padded_grid = initial_grid.template with_empty_margins<margin, margin>();
         
+        run_params padded_params = params;
+        padded_params.x_size += 2 * margin;
+        padded_params.y_size += 2 * margin;
+        
         // Initialize the runner with padded grid
         runner_t runner;
-        runner.init(padded_grid.data(), padded_grid.x_size_physical(), padded_grid.y_size_physical(), params);
+        runner.init(padded_grid.data(), padded_params);
         
         if (params.device == "CUDA") {
             runner.init_cuda();

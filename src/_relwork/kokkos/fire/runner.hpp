@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include <vector>
+#include "experiments/run_params.hpp"
 
 #include "Kokkos_Core.hpp"
 
@@ -17,7 +18,12 @@ namespace kokkos::fire {
 struct runner {
     using value_type = std::uint8_t;
 
-    void init(int* grid, std::size_t x_size, std::size_t y_size) {
+    void init(int* grid,
+              const cellib::run::run_params& params) {
+    
+        std::size_t x_size = params.grid_size_x;
+        std::size_t y_size = params.grid_size_y;
+
         grid_ = Kokkos::View<value_type**>("grid", x_size, y_size);
         next_grid_ = Kokkos::View<value_type**>("next_grid", x_size, y_size);
         // Initialize the Kokkos view with the provided grid data
@@ -34,7 +40,7 @@ struct runner {
         }
     }
 
-    std::vector<int> fetch_result() const {
+    std::vector<int> fetch_result() {
         // ...
 
         std::vector<int> result;
