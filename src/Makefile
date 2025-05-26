@@ -6,11 +6,21 @@ NVCC_CC_BIN = $(shell which $(CXX))
 NVCCFLAGS = -std=$(CXX_STD) -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -O3
 CMAKE = cmake
 
+CUDA_VERSION = 12.6
+
 CUDA_HOME = /usr/local/cuda
 
-INCLUDE_DIRS = -I../include -I$(DEP_DIR)/include -I$(CUDA_HOME)/include
-LIB_DIRS = -L$(DEP_DIR)/lib -L$(DEP_DIR)/lib64 -L$(CUDA_HOME)/lib64
+INCLUDE_DIRS = -I../include -I$(CUDA_HOME)/include
+LIB_DIRS = -L$(CUDA_HOME)/lib64
 LIBS = -lcudart
+
+KOKKOS_HOME_INCLUDE = $(DEP_DIR)/include
+KOKKOS_HOME_LIB = $(DEP_DIR)/lib ${DEP_DIR}/lib64
+
+HALIDE_HOME_INCLUDE = "/usr/include/halide19"
+HALIDE_HOME_LIB = "/usr/lib/x86_64-linux-gnu/halide19"
+
+CUDA_DRIVER_LIB = $(shell pkg-config --libs cuda-$(CUDA_VERSION))
 
 ENABLE_KOKKOS = OFF
 ENABLE_HALIDE = OFF
@@ -41,18 +51,25 @@ TEST_TARGET = $(BIN_DIR)/cellib_tests
 
 ifeq ($(ENABLE_KOKKOS), ON)
 DEFINES += -DENABLE_KOKKOS
-INCLUDE_DIRS += -I$(DEP_DIR)/include
-LIB_DIRS += -L$(DEP_DIR)/lib
-LIBS += -lkokkoscore -lcuda
-EXTRA_CUDA_OBJS += $(OBJ_DIR)/kokkos_fire_runner.o $(OBJ_DIR)/kokkos_game_of_life_runner.o # $(OBJ_DIR)/kokkos_greenberg_runner.o $(OBJ_DIR)/kokkos_wire_runner.o
+INCLUDE_DIRS += $(KOKKOS_HOME_INCLUDE:%=-I%)
+LIB_DIRS += $(KOKKOS_HOME_LIB:%=-L%)
+LIBS += -lkokkoscore $(CUDA_DRIVER_LIB)
+EXTRA_OBJS += $(OBJ_DIR)/kokkos_game_of_life_runner.o $(OBJ_DIR)/kokkos_fire_runner.o # $(OBJ_DIR)/kokkos_greenberg_runner.o $(OBJ_DIR)/kokkos_wire_runner.o
 
 $(OBJ_DIR)/kokkos_%_runner.o: $(SRC_DIR)/_relwork/kokkos/kokkos_%_runner.cu | directories
-	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) -I$(DEP_DIR)/include -extended-lambda
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) $(KOKKOS_HOME_INCLUDE:%=-I%) -extended-lambda
 
 endif
 
 ifeq ($(ENABLE_HALIDE), ON)
 DEFINES += -DENABLE_HALIDE
+INCLUDE_DIRS += $(HALIDE_HOME_INCLUDE:%=-I%)
+LIB_DIRS += $(HALIDE_HOME_LIB:%=-L%)
+LIBS += -lHalide19
+EXTRA_OBJS += $(OBJ_DIR)/halide_game_of_life_runner.o # $(OBJ_DIR)/halide_fire_runner.o $(OBJ_DIR)/halide_greenberg_runner.o $(OBJ_DIR)/halide_wire_runner.o
+
+$(OBJ_DIR)/halide_%_runner.o: $(SRC_DIR)/_relwork/halide/halide_%_runner.cpp | directories
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(DEFINES) $(INCLUDE_DIRS)
 endif
 
 ifeq ($(ENABLE_AN5D), ON)
@@ -132,8 +149,8 @@ $(OBJ_DIR)/%.o: %.cu | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES)
 
 # Create separate executables for main app and tests
-$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS) $(EXTRA_CUDA_OBJS)
-	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)
+$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS) $(EXTRA_OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)
 
 $(TEST_TARGET): $(TEST_OBJ)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)

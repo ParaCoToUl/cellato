@@ -20,21 +20,31 @@
 #include "wire/config.hpp"
 
 #include "args-parser.hpp"
-#include "./_relwork/runner_wrapper.hpp"
-#include "./_relwork/__framework_of_choice__/fire/runner.hpp"
-#include "./_relwork/__framework_of_choice__/game_of_life/runner.hpp"
+#include "_relwork/runner_wrapper.hpp"
+#include "_relwork/__framework_of_choice__/fire/runner.hpp"
+#include "_relwork/__framework_of_choice__/game_of_life/runner.hpp"
 
-#include "./_relwork/gridtools/game_of_life/runner.hpp" 
-// #include "./_relwork/gridtools/fire/runner.hpp"
-// #include "./_relwork/gridtools/greenberg/runner.hpp"
-// #include "./_relwork/gridtools/wire/runner.hpp"
 
 #ifdef ENABLE_KOKKOS
-#include "./_relwork/kokkos/game_of_life/runner.hpp"
-#include "./_relwork/kokkos/fire/runner.hpp"
-#include "./_relwork/kokkos/greenberg/runner.hpp"
-#include "./_relwork/kokkos/wire/runner.hpp"
+#include "_relwork/kokkos/game_of_life/runner.hpp"
+#include "_relwork/kokkos/fire/runner.hpp"
+#include "_relwork/kokkos/greenberg/runner.hpp"
+#include "_relwork/kokkos/wire/runner.hpp"
 #endif // ENABLE_KOKKOS
+
+#ifdef ENABLE_GRIDTOOLS
+#include "_relwork/gridtools/game_of_life/runner.hpp" 
+// #include "_relwork/gridtools/fire/runner.hpp"
+// #include "_relwork/gridtools/greenberg/runner.hpp"
+// #include "_relwork/gridtools/wire/runner.hpp"
+#endif // ENABLE_GRIDTOOLS
+
+#ifdef ENABLE_HALIDE
+#include "_relwork/halide/game_of_life/runner.hpp"
+// #include "_relwork/halide/fire/runner.hpp"
+// #include "_relwork/halide/greenberg/runner.hpp"
+// #include "_relwork/halide/wire/runner.hpp"
+#endif // ENABLE_HALIDE
 
 
 #define LOG std::cerr
@@ -118,7 +128,26 @@ private:
             std::cerr << "Kokkos reference implementation is not enabled in this build." << std::endl;
             return false;
         }
-#endif // ENABLE_KOKKOS
+#endif // ENABLE_HALIDE
+
+#ifdef ENABLE_HALIDE
+        else if (params.reference_impl == "halide") {
+            if (params.automaton == "game-of-life") {
+                return run_relwork<game_of_life::config, halide::game_of_life::runner>(params);
+            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
+                // return run_relwork<fire::config, halide::fire::runner>(params);
+            } else if (params.automaton == "greenberg-hastings") {
+                // return run_relwork<greenberg::config, halide::greenberg::runner>(params);
+            } else if (params.automaton == "wire") {
+                // return run_relwork<wire::config, halide::wire::runner>(params);
+            }
+        }
+#else
+        else if (params.reference_impl == "halide") {
+            std::cerr << "Halide reference implementation is not enabled in this build." << std::endl;
+            return false;
+        }
+#endif // ENABLE_HALIDE
 
         return false;
     }
