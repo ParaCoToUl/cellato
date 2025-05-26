@@ -18,8 +18,8 @@ struct config {
     
     using cell_state = fire_cell_state;
     using state_dictionary = cellib::memory::grids::state_dictionary<
-        cell_state,
-        cell_state::empty, cell_state::tree, cell_state::fire, cell_state::ash>;
+        cell_state::empty, cell_state::tree,
+        cell_state::fire, cell_state::ash>;
 
     using pretty_print = fire_pretty_print;
 

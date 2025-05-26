@@ -17,7 +17,6 @@ struct config {
     
     using cell_state = gol_cell_state;
     using state_dictionary = cellib::memory::grids::state_dictionary<
-        cell_state,
         cell_state::dead, cell_state::alive>;
 
     using pretty_print = gol_pretty_print;

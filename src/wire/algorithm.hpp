@@ -15,14 +15,14 @@ enum class wire_cell_state {
 };
 
 // --- Define constants for cell states ---
-using empty = state_constant<wire_cell_state, wire_cell_state::empty>;
-using electron_head = state_constant<wire_cell_state, wire_cell_state::electron_head>;
-using electron_tail = state_constant<wire_cell_state, wire_cell_state::electron_tail>;
-using conductor = state_constant<wire_cell_state, wire_cell_state::conductor>;
+using empty = state_constant<wire_cell_state::empty>;
+using electron_head = state_constant<wire_cell_state::electron_head>;
+using electron_tail = state_constant<wire_cell_state::electron_tail>;
+using conductor = state_constant<wire_cell_state::conductor>;
 
 // --- Integer constants ---
-using c_1 = constant<int, 1>;
-using c_2 = constant<int, 2>;
+using c_1 = constant<1>;
+using c_2 = constant<2>;
 
 // --- Predicates for cell state checks ---
 using cell_is_empty = p<current_state, equals, empty>;

@@ -3,23 +3,17 @@
 
 namespace cellib::ast {
 
-template <typename value_t, value_t Value>
+template <auto Value>
 struct constant {
-    using type = value_t;
-    static constexpr value_t value = Value;
+    using type = decltype(Value);
+    static constexpr type value = Value;
 };
 
-template <typename state_t, state_t Value>
+template <auto Value>
 struct state_constant {
-    using type = state_t;
-    static constexpr state_t value = Value;
+    using type = decltype(Value);
+    static constexpr type value = Value;
 };
-
-template <auto Value>
-using make_constant = constant<decltype(Value), Value>;
-
-template <auto Value>
-using make_state_constant = state_constant<decltype(Value), Value>;
 
 template <int x_offset_val, int y_offset_val>
 struct neighbor_at {

@@ -14,13 +14,13 @@ enum class fire_cell_state {
 };
 
 // Define constants for cell states
-using empty = state_constant<fire_cell_state, fire_cell_state::empty>;
-using tree = state_constant<fire_cell_state, fire_cell_state::tree>;
-using ash = state_constant<fire_cell_state, fire_cell_state::ash>;
-using fire = state_constant<fire_cell_state, fire_cell_state::fire>;
+using empty = state_constant<fire_cell_state::empty>;
+using tree = state_constant<fire_cell_state::tree>;
+using ash = state_constant<fire_cell_state::ash>;
+using fire = state_constant<fire_cell_state::fire>;
 
 // Define integer constants
-using c_0 = constant<int, 0>;
+using c_0 = constant<0>;
 
 // Define predicates for cell state checks
 using cell_is_empty = p<current_state, equals, empty>;

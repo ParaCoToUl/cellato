@@ -19,16 +19,15 @@ enum class BitEvalTestState {
 
 // Define the state dictionary for testing
 using BitEvalTestDict = cellib::memory::grids::state_dictionary<
-    BitEvalTestState, 
     BitEvalTestState::DEAD, 
     BitEvalTestState::ALIVE, 
     BitEvalTestState::DYING
 >;
 
 // Create state constants for tests
-using dead = cellib::ast::state_constant<BitEvalTestState, BitEvalTestState::DEAD>;
-using alive = cellib::ast::state_constant<BitEvalTestState, BitEvalTestState::ALIVE>;
-using dying = cellib::ast::state_constant<BitEvalTestState, BitEvalTestState::DYING>;
+using dead = cellib::ast::state_constant<BitEvalTestState::DEAD>;
+using alive = cellib::ast::state_constant<BitEvalTestState::ALIVE>;
+using dying = cellib::ast::state_constant<BitEvalTestState::DYING>;
 
 // Helper for tests to avoid long type names
 template <typename Algorithm>

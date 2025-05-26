@@ -2,10 +2,12 @@
 #define CELLIB_MEMORY_STATE_DICTIONARY_HPP
 
 #include <stdexcept>
+#include <tuple>
+#include <type_traits>
 
 namespace cellib::memory::grids {
 
-template <typename states_enum, states_enum... states>
+template <auto... states>
 class state_dictionary {
 private:
     constexpr static int log_2(int n) {
@@ -14,7 +16,7 @@ private:
 
 public:
     using index_t = int;
-    using state_t = states_enum;
+    using state_t = decltype((states, ...));
 
     static constexpr index_t number_of_values = sizeof...(states);
     static constexpr index_t needed_bits = state_dictionary::log_2(number_of_values - 1) + 1;
@@ -33,12 +35,12 @@ public:
 
 private:
     template <typename... Rest>
-    static constexpr index_t state_to_index_impl(states_enum target, states_enum head) {
+    static constexpr index_t state_to_index_impl(state_t target, state_t head) {
         return (target == head) ? 0 : throw std::out_of_range("State not found in dictionary");
     }
 
     template <typename... Rest>
-    static constexpr index_t state_to_index_impl(states_enum target, states_enum head, Rest... tail) {
+    static constexpr index_t state_to_index_impl(state_t target, state_t head, Rest... tail) {
         return (target == head) ? 0 : 1 + state_to_index_impl(target, tail...);
     }
 };

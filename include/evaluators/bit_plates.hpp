@@ -39,15 +39,15 @@ template <typename cell_row_type, typename state_dictionary_type>
 using state_t = cellib::memory::grids::point_in_grid<
     grid_cell_data_type<cell_row_type, state_dictionary_type>>;
 
-template <typename cell_row_type, typename state_dictionary_type, typename const_type, const_type Value>
-struct evaluator<cell_row_type, state_dictionary_type, constant<const_type, Value>> {
+template <typename cell_row_type, typename state_dictionary_type, auto Value>
+struct evaluator<cell_row_type, state_dictionary_type, constant<Value>> {
     CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
         return vector_int_factory::from_constant<cell_row_type, Value>();
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename state_type, state_type Value>
-struct evaluator<cell_row_type, state_dictionary_type, state_constant<state_type, Value>> {
+template <typename cell_row_type, typename state_dictionary_type, auto Value>
+struct evaluator<cell_row_type, state_dictionary_type, state_constant<Value>> {
     CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
         constexpr auto index = state_dictionary_type::state_to_index(Value);
         return vector_int_factory::from_constant<cell_row_type, index>();
@@ -217,7 +217,7 @@ template <typename cell_row_type, typename state_dictionary_type, typename cell_
 struct evaluator<
     cell_row_type, state_dictionary_type,
     count_neighbors<
-        state_constant<cell_state_type, CellStateValue>,
+        state_constant<CellStateValue>,
         moore_8_neighbors>> {
 
     template <typename E>
@@ -259,7 +259,7 @@ template <typename cell_row_type, typename state_dictionary_type, typename cell_
 struct evaluator<
     cell_row_type, state_dictionary_type,
     count_neighbors<
-        state_constant<cell_state_type, CellStateValue>,
+        state_constant<CellStateValue>,
         moore_4_neighbors>> {
 
     template <typename E>

@@ -17,8 +17,8 @@ struct config {
     
     using cell_state = wire_cell_state;
     using state_dictionary = cellib::memory::grids::state_dictionary<
-        cell_state,
-        cell_state::empty, cell_state::electron_head, cell_state::electron_tail, cell_state::conductor>;
+        cell_state::empty, cell_state::electron_head,
+        cell_state::electron_tail, cell_state::conductor>;
 
     using pretty_print = wire_pretty_print;
 

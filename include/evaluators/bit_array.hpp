@@ -69,16 +69,16 @@ struct evaluator {
 // Implement specific expression evaluators below
 
 // Constants
-template <typename grid_t, typename const_type, const_type Value, std::size_t subcell_offset>
-struct _impl_evaluator<grid_t, constant<const_type, Value>, subcell_offset> {
-    CUDA_CALLABLE static const_type evaluate(state_t<grid_t> /* state */) {
+template <typename grid_t, auto Value, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, constant<Value>, subcell_offset> {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> /* state */) {
         return Value;
     }
 };
 
 // State constants
 template <typename grid_t, typename state_type, state_type Value, std::size_t subcell_offset>
-struct _impl_evaluator<grid_t, state_constant<state_type, Value>, subcell_offset> {
+struct _impl_evaluator<grid_t, state_constant<Value>, subcell_offset> {
     using store_type = typename grid_t::store_type;
     using dictionary_t = typename grid_t::states_dict_t;
 

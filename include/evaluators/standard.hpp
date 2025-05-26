@@ -21,16 +21,16 @@ struct evaluator {};
 template <typename cell_type, typename cell_ptr_type = cell_type*>
 using state_t = grids::point_in_grid<cell_ptr_type>;
 
-template <typename cell_type, typename cell_ptr_type, typename const_type, const_type Value>
-struct evaluator<cell_type, constant<const_type, Value>, cell_ptr_type> {
-    static CUDA_CALLABLE const_type evaluate(state_t<cell_type, cell_ptr_type> /* state */) {
+template <typename cell_type, typename cell_ptr_type, auto Value>
+struct evaluator<cell_type, constant<Value>, cell_ptr_type> {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> /* state */) {
         return Value;
     }
 };
 
-template <typename cell_type, typename cell_ptr_type, typename state_type, state_type Value>
-struct evaluator<cell_type, state_constant<state_type, Value>, cell_ptr_type> {
-    static CUDA_CALLABLE state_type evaluate(state_t<cell_type, cell_ptr_type> /* state */) {
+template <typename cell_type, typename cell_ptr_type, auto Value>
+struct evaluator<cell_type, state_constant<Value>, cell_ptr_type> {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> /* state */) {
         return Value;
     }
 };

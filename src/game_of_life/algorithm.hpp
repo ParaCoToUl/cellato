@@ -12,12 +12,12 @@ enum class gol_cell_state {
 };
 
 // Define constants for cell states
-using alive = state_constant<gol_cell_state, gol_cell_state::alive>;
-using dead = state_constant<gol_cell_state, gol_cell_state::dead>;
+using alive = state_constant<gol_cell_state::alive>;
+using dead = state_constant<gol_cell_state::dead>;
 
 // Define integer constants
-using c_2 = constant<int, 2>;
-using c_3 = constant<int, 3>;
+using c_2 = constant<2>;
+using c_3 = constant<3>;
 
 // Define predicates for cell state checks
 using cell_is_alive = p<current_state, equals, alive>;

@@ -19,17 +19,17 @@ enum class ghm_cell_state {
 };
 
 // Constants for each state
-using quiescent = state_constant<ghm_cell_state, ghm_cell_state::quiescent>;
-using excited = state_constant<ghm_cell_state, ghm_cell_state::excited>;
-using refractory_1 = state_constant<ghm_cell_state, ghm_cell_state::refractory_1>;
-using refractory_2 = state_constant<ghm_cell_state, ghm_cell_state::refractory_2>;
-using refractory_3 = state_constant<ghm_cell_state, ghm_cell_state::refractory_3>;
-using refractory_4 = state_constant<ghm_cell_state, ghm_cell_state::refractory_4>;
-using refractory_5 = state_constant<ghm_cell_state, ghm_cell_state::refractory_5>;
-using refractory_6 = state_constant<ghm_cell_state, ghm_cell_state::refractory_6>;
+using quiescent = state_constant<ghm_cell_state::quiescent>;
+using excited = state_constant<ghm_cell_state::excited>;
+using refractory_1 = state_constant<ghm_cell_state::refractory_1>;
+using refractory_2 = state_constant<ghm_cell_state::refractory_2>;
+using refractory_3 = state_constant<ghm_cell_state::refractory_3>;
+using refractory_4 = state_constant<ghm_cell_state::refractory_4>;
+using refractory_5 = state_constant<ghm_cell_state::refractory_5>;
+using refractory_6 = state_constant<ghm_cell_state::refractory_6>;
 
 // Define integer constants
-using c_0 = constant<int, 0>;
+using c_0 = constant<0>;
 
 // Define predicates for cell state checks
 using cell_is_quiescent = p<current_state, equals, quiescent>;

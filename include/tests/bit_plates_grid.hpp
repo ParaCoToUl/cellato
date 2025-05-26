@@ -31,7 +31,6 @@ inline std::string to_string(const TestCellState& state) {
 
 // Define the state dictionary for testing
 using TestStateDictionary = cellib::memory::grids::state_dictionary<
-    TestCellState, 
     TestCellState::DEAD, 
     TestCellState::ALIVE, 
     TestCellState::DYING
