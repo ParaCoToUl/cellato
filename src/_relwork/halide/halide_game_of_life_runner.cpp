@@ -56,7 +56,7 @@ struct game_of_life_runner : public real_runner {
                 // Set the target to CPU
                 Target target = get_host_target();
                 clamp.compile_jit(target);
-            } else if (params.device == "GPU") {
+            } else if (params.device == "CUDA") {
                 // Set the target to CUDA
                 Target target = get_host_target();
                 target.set_feature(Target::CUDA);
