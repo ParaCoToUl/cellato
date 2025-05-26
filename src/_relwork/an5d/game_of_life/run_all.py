@@ -12,6 +12,8 @@ print(csv_header)
 # Directories to process (grid sizes)
 directories = ["2048", "4096", "8192", "16386"]
 
+args = sys.argv[1:]
+
 for directory in directories:
     # Navigate to the directory
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), directory))
@@ -19,8 +21,16 @@ for directory in directories:
     # Check if executable exists, if not, build it
     if not os.path.exists("GOL_an5d"):
         try:
-            subprocess.run(["make", "clean"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            subprocess.run(["make"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            clean_result = subprocess.run(["make", "clean"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            if clean_result.returncode != 0:
+                print(f"Error cleaning in {directory}: {clean_result.stderr.decode()}", file=sys.stderr)
+                os.chdir("..")
+                continue
+            make_result = subprocess.run(["make"] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            if make_result.returncode != 0:
+                print(f"Error building in {directory}: {make_result.stderr.decode()}", file=sys.stderr)
+                os.chdir("..")
+                continue
         except Exception as e:
             print(f"Error building in {directory}: {e}", file=sys.stderr)
             os.chdir("..")
@@ -76,7 +86,7 @@ for directory in directories:
     avg_time_per_cell_ns = (avg_time_ms * 1e6) / (cells_per_iter * iterations)
     
     # Format CSV line
-    csv_line = (f"game-of-life,,,,,"  # automaton,device,traverser,evaluator,layout
+    csv_line = (f"game-of-life,CUDA,,,,"  # automaton,device,traverser,evaluator,layout
                f"an5d,"               # reference_impl
                f"{logical_size},{logical_size},"  # x_size,y_size
                f"{iterations},10,5,"  # steps,rounds,warmup_rounds
