@@ -7,6 +7,6 @@
 [submodule "vendor/Halide"]
 	path = vendor/Halide
 	url = https://github.com/halide/Halide.git
-[submodule "src/_relwork/an5d/game_of_life/vendor/gridtools"]
-	path = src/_relwork/an5d/game_of_life/vendor/gridtools
+[submodule "vendor/gridtools"]
+	path = vendor/gridtools
 	url = http://github.com/GridTools/gridtools.git
