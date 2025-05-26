@@ -116,7 +116,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, 
 };
 
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
-struct evaluator<cell_type, count_neighbors<CellStateValue, moore_4_neighbors>, cell_ptr_type> {
+struct evaluator<cell_type, count_neighbors<CellStateValue, von_neumann_4_neighbors>, cell_ptr_type> {
     static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
         int sum = 0;
 

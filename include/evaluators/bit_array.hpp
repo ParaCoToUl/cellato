@@ -185,7 +185,7 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, moore_8_neighbors
 };
 
 template <typename grid_t, typename CellStateValue, std::size_t subcell_offset>
-struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, moore_4_neighbors>, subcell_offset> {
+struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, von_neumann_4_neighbors>, subcell_offset> {
     
     template <int x_offset, int y_offset>
     using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;

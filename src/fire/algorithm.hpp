@@ -29,7 +29,7 @@ using cell_is_ash = p<current_state, equals, ash>;
 using cell_is_fire = p<current_state, equals, fire>;
 
 // Count fire cells in the von Neumann neighborhood
-using fire_count = count_neighbors<fire, moore_4_neighbors>;
+using fire_count = count_neighbors<fire, von_neumann_4_neighbors>;
 
 // Define predicates for neighbor checks
 using has_fire_neighbors = p<fire_count, greater_than, c_0>;

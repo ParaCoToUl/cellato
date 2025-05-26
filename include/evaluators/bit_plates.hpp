@@ -260,7 +260,7 @@ struct evaluator<
     cell_row_type, state_dictionary_type,
     count_neighbors<
         state_constant<CellStateValue>,
-        moore_4_neighbors>> {
+        von_neumann_4_neighbors>> {
 
     template <typename E>
     using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
