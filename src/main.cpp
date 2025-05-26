@@ -24,6 +24,11 @@
 #include "./_relwork/__framework_of_choice__/fire/runner.hpp"
 #include "./_relwork/__framework_of_choice__/game_of_life/runner.hpp"
 
+#include "./_relwork/gridtools/game_of_life/runner.hpp" 
+// #include "./_relwork/gridtools/fire/runner.hpp"
+// #include "./_relwork/gridtools/greenberg/runner.hpp"
+// #include "./_relwork/gridtools/wire/runner.hpp"
+
 #ifdef ENABLE_KOKKOS
 #include "./_relwork/kokkos/game_of_life/runner.hpp"
 #include "./_relwork/kokkos/fire/runner.hpp"
@@ -68,7 +73,7 @@ private:
             }
         }
 
-        if (params.reference_impl == "_framework_of_choice_") {
+        else if (params.reference_impl == "_framework_of_choice_") {
             if (params.automaton == "game-of-life") {
                 return run_relwork<game_of_life::config, __framework_of_choice__::game_of_life::runner>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
@@ -76,6 +81,25 @@ private:
             }
             // ...
         }
+
+#ifdef ENABLE_GRIDTOOLS
+        else if (params.reference_impl == "gridtools") {
+            if (params.automaton == "game-of-life") {
+                return run_relwork<game_of_life::config, gridtools::game_of_life::runner>(params);
+            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
+                // return run_relwork<fire::config, gridtools::fire::runner>(params);
+            } else if (params.automaton == "greenberg-hastings") {
+                // return run_relwork<greenberg::config, gridtools::greenberg::runner>(params);
+            } else if (params.automaton == "wire") {
+                // return run_relwork<wire::config, gridtools::wire::runner>(params);
+            }
+        }
+#else
+        else if (params.reference_impl == "gridtools") {
+            std::cerr << "GridTools reference implementation is not enabled in this build." << std::endl;
+            return false;
+        }
+#endif // ENABLE_GRIDTOOLS
 
 #ifdef ENABLE_KOKKOS
         else if (params.reference_impl == "kokkos") {
