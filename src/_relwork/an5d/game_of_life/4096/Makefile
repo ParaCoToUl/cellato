@@ -1,5 +1,6 @@
 CC=g++
 NVCC=nvcc
+NVCC_CC_BIN = $(shell which $(CC))
 CXXFLAGS= -O3 -std=c++11 -lm 
 CUDAFLAGS= -gencode arch=compute_50,code=sm_50 \
            -gencode arch=compute_52,code=sm_52 \
@@ -17,17 +18,17 @@ EXE=main
 all: $(EXE)
 
 GOL_AN5D_4096_host.o : GOL_AN5D_4096_host.cu
-	$(NVCC) $(CXXFLAGS) $(CUDAFLAGS) GOL_AN5D_4096_host.cu
+	$(NVCC) -ccbin $(NVCC_CC_BIN) $(CXXFLAGS) $(CUDAFLAGS) GOL_AN5D_4096_host.cu 
 
-GOL_AN5D_4096_kernel.o: GOL_AN5D_4096_kernel.cu
-	$(NVCC) $(CXXFLAGS) $(CUDAFLAGS) GOL_AN5D_4096_kernel.cu
+GOL_AN5D_4096_kernel.o: GOL_AN5D_4096_kernel.cu 
+	$(NVCC) -ccbin $(NVCC_CC_BIN) $(CXXFLAGS) $(CUDAFLAGS) GOL_AN5D_4096_kernel.cu  
 
 NVCC ?= nvcc
 CUDA_PATH ?= /usr/local/cuda
 LDLIBS += -L$(CUDA_PATH)/lib64 -lcudart
 
 main: GOL_AN5D_4096_host.o GOL_AN5D_4096_kernel.o
-	$(NVCC) $(CXXFLAGS) -o GOL_an5d GOL_AN5D_4096_host.o GOL_AN5D_4096_kernel.o -O3 -Xcompiler -Wextra -std=c++11 -lm $(LDLIBS)
+	$(NVCC) -ccbin $(NVCC_CC_BIN) $(CXXFLAGS) -o GOL_an5d GOL_AN5D_4096_host.o GOL_AN5D_4096_kernel.o -O3 -Xcompiler -Wextra -std=c++11 -lm $(LDLIBS)
 
 clean:
 	rm -rf GOL_an5d *.o
