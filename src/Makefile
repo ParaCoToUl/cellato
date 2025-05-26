@@ -20,11 +20,14 @@ KOKKOS_HOME_LIB = $(DEP_DIR)/kokkos-install/lib ${DEP_DIR}/kokkos-install/lib64
 HALIDE_HOME_INCLUDE = "/usr/include/halide19"
 HALIDE_HOME_LIB = "/usr/lib/x86_64-linux-gnu/halide19"
 
+GRIDTOOLS_HOME_INCLUDE = $(DEP_DIR)/gridtools/include
+GRIDTOOLS_HOME_LIB = $(DEP_DIR)/gridtools/lib ${DEP_DIR}/gridtools/lib64
+
 CUDA_DRIVER_LIB = $(shell pkg-config --libs cuda-$(CUDA_VERSION))
 
 ENABLE_KOKKOS = OFF
 ENABLE_HALIDE = OFF
-ENABLE_AN5D = OFF
+ENABLE_GRIDTOOLS = OFF
 
 # Directories
 SRC_DIR = .
@@ -72,8 +75,19 @@ $(OBJ_DIR)/halide_%_runner.o: $(SRC_DIR)/_relwork/halide/halide_%_runner.cpp | d
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(DEFINES) $(INCLUDE_DIRS)
 endif
 
-ifeq ($(ENABLE_AN5D), ON)
-DEFINES += -DENABLE_AN5D
+ifeq ($(ENABLE_GRIDTOOLS), ON)
+DEFINES += -DENABLE_GRIDTOOLS
+INCLUDE_DIRS += $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
+# LIB_DIRS += $(GRIDTOOLS_HOME_LIB:%=-L%)
+# LIBS += -lgridtools
+EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CUDA_runner.o # $(OBJ_DIR)/gridtools_fire_CUDA_runner.o $(OBJ_DIR)/gridtools_greenberg_CUDA_runner.o $(OBJ_DIR)/gridtools_wire_CUDA_runner.o
+EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CPU_runner.o # $(OBJ_DIR)/gridtools_fire_CPU_runner.o $(OBJ_DIR)/gridtools_greenberg_CPU_runner.o $(OBJ_DIR)/gridtools_wire_CPU_runner.o
+
+$(OBJ_DIR)/gridtools_%_CUDA_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cu $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.ixx | directories
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
+
+$(OBJ_DIR)/gridtools_%_CPU_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cpp $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.ixx | directories
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(DEFINES) $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
 endif
 
 # Rules
@@ -82,7 +96,7 @@ all: directories $(TARGET) $(TEST_TARGET)
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
-install_deps: install_kokkos install_halide
+install_deps: install_kokkos install_halide install_gridtools
 
 install_kokkos: $(VENDOR_DIR)/kokkos
 	@echo "Installing Kokkos dependencies..."
@@ -99,9 +113,9 @@ install_kokkos: $(VENDOR_DIR)/kokkos
 		-D Kokkos_ENABLE_TESTS=OFF \
 		-D Kokkos_ARCH_NATIVE=ON \
 		-D Kokkos_ENABLE_DEPRECATED_CODE_4=ON \
-		-D CMAKE_INSTALL_PREFIX=$(DEP_DIR)/kokkos-install
+		-D CMAKE_INSTALL_PREFIX=$(shell realpath $(DEP_DIR)/kokkos-install)
 	@$(CMAKE) --build $(DEP_DIR)/kokkos-build --parallel $(shell nproc) --config Release
-	@$(CMAKE) --install $(DEP_DIR)/kokkos-build --prefix=$(DEP_DIR)/kokkos-install
+	@$(CMAKE) --install $(DEP_DIR)/kokkos-build --prefix=$(shell realpath $(DEP_DIR)/kokkos-install)
 	@echo "Kokkos dependencies installed."
 
 # Install LLVM dependencies according to https://github.com/halide/Halide?tab=readme-ov-file#acquiring-llvm
@@ -136,6 +150,15 @@ install_halide: install_llvm $(VENDOR_DIR)/Halide
 	@$(CMAKE) --build $(DEP_DIR)/halide --parallel $(shell nproc) --config Release
 	@echo "Halide dependencies installed."
 
+install_gridtools: $(VENDOR_DIR)/gridtools
+	@echo "Installing GridTools dependencies..."
+	@mkdir -p $(DEP_DIR)/gridtools
+	@$(CMAKE) -B $(DEP_DIR)/gridtools -S $(VENDOR_DIR)/gridtools \
+		-D CMAKE_BUILD_TYPE=Release \
+		-D CMAKE_INSTALL_PREFIX=$(shell realpath $(DEP_DIR)/gridtools)
+	@$(CMAKE) --build $(DEP_DIR)/gridtools --parallel $(shell nproc) --config Release
+	@$(CMAKE) --install $(DEP_DIR)/gridtools --prefix=$(shell realpath $(DEP_DIR)/gridtools)
+
 # Add directories dependency to object file creation rules
 $(MAIN_OBJ): $(MAIN_SRC) | directories
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS) $(DEFINES)
@@ -168,4 +191,4 @@ unit_test: $(TEST_TARGET)
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR) $(DEP_DIR)
 
-.PHONY: all run test clean directories print-% install_deps install_kokkos install_llvm install_halide
+.PHONY: all run test clean directories print-% install_deps install_kokkos install_llvm install_halide install_gridtools
