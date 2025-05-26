@@ -1,6 +1,8 @@
 #ifndef GRIDTOOLS_GAME_OF_LIFE_RUNNER_HPP
 #define GRIDTOOLS_GAME_OF_LIFE_RUNNER_HPP
 
+#ifdef GRIDTOOLS_ENABLED
+
 #include <gridtools/common/defs.hpp>
 #include <gridtools/stencil/cartesian.hpp>
 #include <gridtools/storage/builder.hpp>
@@ -118,5 +120,7 @@ public:
 };
 
 }
+
+#endif // GRIDTOOLS_ENABLED
 
 #endif // GRIDTOOLS_GAME_OF_LIFE_RUNNER_HPP
