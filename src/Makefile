@@ -14,8 +14,8 @@ INCLUDE_DIRS = -I../include -I$(CUDA_HOME)/include
 LIB_DIRS = -L$(CUDA_HOME)/lib64
 LIBS = -lcudart
 
-KOKKOS_HOME_INCLUDE = $(DEP_DIR)/include
-KOKKOS_HOME_LIB = $(DEP_DIR)/lib ${DEP_DIR}/lib64
+KOKKOS_HOME_INCLUDE = $(DEP_DIR)/kokkos-install/include
+KOKKOS_HOME_LIB = $(DEP_DIR)/kokkos-install/lib ${DEP_DIR}/kokkos-install/lib64
 
 HALIDE_HOME_INCLUDE = "/usr/include/halide19"
 HALIDE_HOME_LIB = "/usr/lib/x86_64-linux-gnu/halide19"
@@ -86,8 +86,8 @@ install_deps: install_kokkos install_halide
 
 install_kokkos: $(VENDOR_DIR)/kokkos
 	@echo "Installing Kokkos dependencies..."
-	@mkdir -p $(DEP_DIR) $(DEP_DIR)/kokkos
-	@$(CMAKE) -B $(DEP_DIR)/kokkos -S $(VENDOR_DIR)/kokkos \
+	@mkdir -p $(DEP_DIR)/kokkos-build $(DEP_DIR)/kokkos-install
+	@$(CMAKE) -B $(DEP_DIR)/kokkos-build -S $(VENDOR_DIR)/kokkos \
 		-D CMAKE_BUILD_TYPE=Release \
 		-D CMAKE_CXX_COMPILER=$(NVCC_CC_BIN) \
 		-D CMAKE_CXX_STANDARD=20 \
@@ -99,15 +99,15 @@ install_kokkos: $(VENDOR_DIR)/kokkos
 		-D Kokkos_ENABLE_TESTS=OFF \
 		-D Kokkos_ARCH_NATIVE=ON \
 		-D Kokkos_ENABLE_DEPRECATED_CODE_4=ON \
-		-D CMAKE_INSTALL_PREFIX=$(DEP_DIR)
-	@$(CMAKE) --build $(DEP_DIR)/kokkos
-	@$(CMAKE) --install $(DEP_DIR)/kokkos --prefix=$(DEP_DIR)
+		-D CMAKE_INSTALL_PREFIX=$(DEP_DIR)/kokkos-install
+	@$(CMAKE) --build $(DEP_DIR)/kokkos-build --parallel $(shell nproc) --config Release
+	@$(CMAKE) --install $(DEP_DIR)/kokkos-build --prefix=$(DEP_DIR)/kokkos-install
 	@echo "Kokkos dependencies installed."
 
 # Install LLVM dependencies according to https://github.com/halide/Halide?tab=readme-ov-file#acquiring-llvm
 install_llvm: $(VENDOR_DIR)/llvm-project
 	@echo "Installing LLVM dependencies..."
-	@mkdir -p $(DEP_DIR) $(DEP_DIR)/llvm-build
+	@mkdir -p $(DEP_DIR)/llvm-build
 	@$(CMAKE) -B $(DEP_DIR)/llvm-build -S $(VENDOR_DIR)/llvm-project/llvm \
 		-D CMAKE_BUILD_TYPE=Release \
 		-D LLVM_ENABLE_PROJECTS="clang;lld;clang-tools-extra" \
@@ -123,17 +123,17 @@ install_llvm: $(VENDOR_DIR)/llvm-project
 		-D LLVM_ENABLE_ZLIB=OFF \
 		-D LLVM_ENABLE_ZSTD=OFF \
 		-D LLVM_BUILD_32_BITS=OFF
-	@$(CMAKE) --build $(DEP_DIR)/llvm-build --parallel $(shell nproc)
+	@$(CMAKE) --build $(DEP_DIR)/llvm-build --parallel $(shell nproc) --config Release
 	@$(CMAKE) --install $(DEP_DIR)/llvm-build --prefix=$(DEP_DIR)
 	@echo "LLVM dependencies installed."
 
 install_halide: install_llvm $(VENDOR_DIR)/Halide
 	@echo "Installing Halide dependencies..."
-	@mkdir -p $(DEP_DIR) $(DEP_DIR)/halide
+	@mkdir -p $(DEP_DIR)/halide
 	@$(CMAKE) -B $(DEP_DIR)/halide -S $(VENDOR_DIR)/Halide \
 		-D CMAKE_BUILD_TYPE=Release \
 		-D Halide_LLVM_ROOT=$(shell realpath $(DEP_DIR))
-	@$(CMAKE) --build $(DEP_DIR)/halide
+	@$(CMAKE) --build $(DEP_DIR)/halide --parallel $(shell nproc) --config Release
 	@echo "Halide dependencies installed."
 
 # Add directories dependency to object file creation rules

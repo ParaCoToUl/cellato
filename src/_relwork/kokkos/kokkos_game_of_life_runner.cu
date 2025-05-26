@@ -8,7 +8,7 @@ namespace kokkos::game_of_life {
 struct game_of_life_runner : public real_runner {
     using value_type = std::uint8_t;
 
-    enum class space {
+    static inline enum class space {
         CPU,
         CUDA
     } execution_space = space::CPU;
@@ -60,7 +60,7 @@ struct game_of_life_runner : public real_runner {
     }
 
     void run_step_cpu() {
-        Kokkos::parallel_for("GoLStep", Kokkos::MDRangePolicy(Kokkos::Serial(), {1, 1}, {grid_.extent(0) - 1, grid_.extent(1) - 1}), KOKKOS_CLASS_LAMBDA(const int i, const int j) {
+        Kokkos::parallel_for("GoLStepCPU", Kokkos::MDRangePolicy(Kokkos::Serial(), {1, 1}, {grid_.extent(0) - 1, grid_.extent(1) - 1}), KOKKOS_CLASS_LAMBDA(const int i, const int j) {
             // game_of_life rules
             auto neighbors = grid_(i - 1, j - 1) + grid_(i - 1, j) + grid_(i - 1, j + 1) +
                              grid_(i, j - 1) + grid_(i, j + 1) +
@@ -73,13 +73,15 @@ struct game_of_life_runner : public real_runner {
     }
 
     void run_step_cuda() {
-        Kokkos::parallel_for("GoLStep", Kokkos::MDRangePolicy(Kokkos::Cuda(), {1, 1}, {grid_.extent(0) - 1, grid_.extent(1) - 1}), KOKKOS_CLASS_LAMBDA(const int i, const int j) {
+        Kokkos::parallel_for("GoLStepCUDA", Kokkos::MDRangePolicy(Kokkos::Cuda(), {1, 1}, {grid_.extent(0) - 1, grid_.extent(1) - 1}, /* tiling */ {16, 16}), KOKKOS_CLASS_LAMBDA(const int i, const int j) {
             // game_of_life rules
             auto neighbors = grid_(i - 1, j - 1) + grid_(i - 1, j) + grid_(i - 1, j + 1) +
                              grid_(i, j - 1) + grid_(i, j + 1) +
                              grid_(i + 1, j - 1) + grid_(i + 1, j) + grid_(i + 1, j + 1);
             next_grid_(i, j) = grid_(i, j) ? (neighbors == 2 || neighbors == 3) : (neighbors == 3);
         });
+
+        Kokkos::fence(); // Ensure all operations are complete before swapping
 
         using std::swap;
         swap(grid_, next_grid_);
@@ -102,6 +104,8 @@ private:
                         *space = space::CUDA;
                     }
                     init_settings_.set_device_id(0);
+                } else {
+                    throw std::runtime_error("Unsupported device: " + params.device);
                 }
 
                 Kokkos::initialize(init_settings_);
