@@ -83,10 +83,10 @@ INCLUDE_DIRS += $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
 EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CUDA_runner.o # $(OBJ_DIR)/gridtools_fire_CUDA_runner.o $(OBJ_DIR)/gridtools_greenberg_CUDA_runner.o $(OBJ_DIR)/gridtools_wire_CUDA_runner.o
 EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CPU_runner.o # $(OBJ_DIR)/gridtools_fire_CPU_runner.o $(OBJ_DIR)/gridtools_greenberg_CPU_runner.o $(OBJ_DIR)/gridtools_wire_CPU_runner.o
 
-$(OBJ_DIR)/gridtools_%_CUDA_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cu $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.ixx | directories
+$(OBJ_DIR)/gridtools_%_CUDA_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cu $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.inl | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
 
-$(OBJ_DIR)/gridtools_%_CPU_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cpp $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.ixx | directories
+$(OBJ_DIR)/gridtools_%_CPU_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cpp $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.inl | directories
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(DEFINES) $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
 endif
 

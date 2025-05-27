@@ -1,4 +1,4 @@
-#include "gridtools_game_of_life_runner.ixx"
+#include "gridtools_game_of_life_runner.inl"
 
 namespace gridtools::game_of_life {
 
