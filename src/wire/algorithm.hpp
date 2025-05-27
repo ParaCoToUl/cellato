@@ -46,20 +46,17 @@ using has_one_or_two_electron_head_neighbors =
 // Rule 4: conductor → electron head if exactly 1 or 2 neighboring cells 
 //         are electron heads, otherwise remains conductor
 using wire_algorithm = 
-    if_<cell_is_empty>::
-    then_<empty>::
-    elif_<cell_is_electron_head>::
-    then_<electron_tail>::
-    elif_<cell_is_electron_tail>::
-    then_<conductor>::
-    elif_<cell_is_conductor>::
-    then_<
-        if_<has_one_or_two_electron_head_neighbors>::
-        then_<electron_head>::
-        else_<conductor>
-    >::
-    else_<empty>; // Default case, though it shouldn't be reached
-
+    if_< cell_is_electron_head >::then_<
+        electron_tail
+    >::elif_< cell_is_electron_tail >::then_<
+        conductor
+    >::elif_< cell_is_conductor >::then_<
+        if_<has_one_or_two_electron_head_neighbors>::then_<
+            electron_head
+        >::else_<
+            conductor
+        >
+    >::else_<empty>; // If cell is empty, it remains empty
 }
 
 #endif // WIRE_ALGORITHM_HPP

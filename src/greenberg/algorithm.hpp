@@ -55,25 +55,20 @@ Rules:
 3. If cell is in refractory_n state, it transitions to refractory_n+1 or back to quiescent
 */
 using ghm_algorithm = 
-    if_<cell_is_quiescent>::
-    then_<
-        if_<has_excited_neighbors>::
-        then_<excited>::
-        else_<quiescent>
+    if_< cell_is_quiescent >::then_<
+        if_< has_excited_neighbors >::then_<
+            excited
+        >::else_<
+            quiescent
+        >
     >::
-    elif_<cell_is_excited>::
-    then_<refractory_1>::
-    elif_<cell_is_refractory_1>::
-    then_<refractory_2>::
-    elif_<cell_is_refractory_2>::
-    then_<refractory_3>::
-    elif_<cell_is_refractory_3>::
-    then_<refractory_4>::
-    elif_<cell_is_refractory_4>::
-    then_<refractory_5>::
-    elif_<cell_is_refractory_5>::
-    then_<refractory_6>::
-    else_<quiescent>; // refractory_6 goes back to quiescent
+    elif_< cell_is_excited      >::then_< refractory_1 >::
+    elif_< cell_is_refractory_1 >::then_< refractory_2 >::
+    elif_< cell_is_refractory_2 >::then_< refractory_3 >::
+    elif_< cell_is_refractory_3 >::then_< refractory_4 >::
+    elif_< cell_is_refractory_4 >::then_< refractory_5 >::
+    elif_< cell_is_refractory_5 >::then_< refractory_6 >::
+    else_< quiescent >; // refractory_6 goes back to quiescent
 
 }
 

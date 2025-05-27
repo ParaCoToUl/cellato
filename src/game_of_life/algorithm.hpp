@@ -33,16 +33,19 @@ using has_two_or_three_alive_neighbors = p<has_two_alive_neighbors, or_, has_thr
 
 // Define the Game of Life algorithm
 using gol_algorithm = 
-    if_<cell_is_alive>::
-    then_<
-        if_<has_two_or_three_alive_neighbors>::
-            then_<alive>::
-            else_<dead>
+    if_< cell_is_alive >::then_<
+        if_< has_two_or_three_alive_neighbors >::then_<
+            alive
+        >::else_<
+            dead
+        >
     >::
     else_< // cell_is_dead
-        if_<has_three_alive_neighbors>::
-            then_<alive>::
-            else_<dead>
+        if_< has_three_alive_neighbors >::then_<
+            alive
+        >::else_<
+            dead
+        >
     >;
 
 }

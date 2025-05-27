@@ -37,21 +37,24 @@ using no_fire_neighbors = p<fire_count, equals, c_0>;
 
 // Define the Forest Fire algorithm
 using fire_algorithm = 
-    if_<cell_is_empty>::
-    then_<empty>::
-    elif_<cell_is_ash>::
-    then_<
-        if_<has_fire_neighbors>::
-        then_<ash>::
-        else_<empty>
+    if_< cell_is_fire >::then_<
+        ash
     >::
-    elif_<cell_is_tree>::
-    then_<
-        if_<has_fire_neighbors>::
-        then_<fire>::
-        else_<tree>
+    elif_< cell_is_ash >::then_<
+        if_< has_fire_neighbors >::then_<
+            ash
+        >::else_<
+            empty
+        >
     >::
-    else_<ash>; // If cell is FIRE, it becomes ASH
+    elif_< cell_is_tree >::then_<
+        if_< has_fire_neighbors >::then_<
+            fire
+        >::else_<
+            tree
+        >
+    >::
+    else_< empty >; // If cell is empty, it remains empty
 
 }
 
