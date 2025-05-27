@@ -19,19 +19,10 @@ struct game_of_life_runner : public real_runner {
                 grid(x, y - 1) + grid(x, y + 1) +
                 grid(x + 1, y - 1) + grid(x + 1, y) + grid(x + 1, y + 1);
 
-            step(x, y) = select(
-                neighbors(x, y) == 3, 1, // Cell becomes alive if exactly 3 neighbors
-                select(
-                    neighbors(x, y) == 2, grid(x, y), // Cell stays alive if exactly 2 neighbors
-                    0 // Cell dies otherwise
-                )
+            step(x, y) = select(grid(x, y) == cast<value_type>(1), // Alive cell
+                select(neighbors(x, y) == 2 || neighbors(x, y) == 3, cast<value_type>(1), cast<value_type>(0)), // Alive cell rules
+                select(neighbors(x, y) == 3, cast<value_type>(1), cast<value_type>(0)) // Dead cell rules
             );
-
-            // Slower rules:
-            // step(x, y) = select(grid(x, y) == cast<value_type>(1), // Alive cell
-            //     select(neighbors(x, y) == 2 || neighbors(x, y) == 3, cast<value_type>(1), cast<value_type>(0)), // Alive cell rules
-            //     select(neighbors(x, y) == 3, cast<value_type>(1), cast<value_type>(0)) // Dead cell rules
-            // );
 
             clamp = BoundaryConditions::constant_exterior(
                 step, cast<value_type>(0), {
