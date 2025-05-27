@@ -19,6 +19,11 @@ KOKKOS_HOME_LIB = $(DEP_DIR)/kokkos-install/lib ${DEP_DIR}/kokkos-install/lib64
 
 HALIDE_HOME_INCLUDE = "/usr/include/halide19"
 HALIDE_HOME_LIB = "/usr/lib/x86_64-linux-gnu/halide19"
+HALIDE_LIBS = -lHalide19
+
+# HALIDE_HOME_INCLUDE = $(DEP_DIR)/halide-install/include
+# HALIDE_HOME_LIB = $(DEP_DIR)/halide-install/lib ${DEP_DIR}/halide-install/lib64
+# HALIDE_LIBS = -lHalide
 
 GRIDTOOLS_HOME_INCLUDE = $(DEP_DIR)/gridtools/include
 GRIDTOOLS_HOME_LIB = $(DEP_DIR)/gridtools/lib ${DEP_DIR}/gridtools/lib64
@@ -68,7 +73,7 @@ ifeq ($(ENABLE_HALIDE), ON)
 DEFINES += -DENABLE_HALIDE
 INCLUDE_DIRS += $(HALIDE_HOME_INCLUDE:%=-I%)
 LIB_DIRS += $(HALIDE_HOME_LIB:%=-L%)
-LIBS += -lHalide19
+LIBS += $(HALIDE_LIBS)
 EXTRA_OBJS += $(OBJ_DIR)/halide_game_of_life_runner.o # $(OBJ_DIR)/halide_fire_runner.o $(OBJ_DIR)/halide_greenberg_runner.o $(OBJ_DIR)/halide_wire_runner.o
 
 $(OBJ_DIR)/halide_%_runner.o: $(SRC_DIR)/_relwork/halide/halide_%_runner.cpp | directories
@@ -121,7 +126,7 @@ install_kokkos: $(VENDOR_DIR)/kokkos
 # Install LLVM dependencies according to https://github.com/halide/Halide?tab=readme-ov-file#acquiring-llvm
 install_llvm: $(VENDOR_DIR)/llvm-project
 	@echo "Installing LLVM dependencies..."
-	@mkdir -p $(DEP_DIR)/llvm-build
+	@mkdir -p $(DEP_DIR)/llvm-build $(DEP_DIR)/llvm-install
 	@$(CMAKE) -B $(DEP_DIR)/llvm-build -S $(VENDOR_DIR)/llvm-project/llvm \
 		-D CMAKE_BUILD_TYPE=Release \
 		-D LLVM_ENABLE_PROJECTS="clang;lld;clang-tools-extra" \
@@ -138,16 +143,17 @@ install_llvm: $(VENDOR_DIR)/llvm-project
 		-D LLVM_ENABLE_ZSTD=OFF \
 		-D LLVM_BUILD_32_BITS=OFF
 	@$(CMAKE) --build $(DEP_DIR)/llvm-build --parallel $(shell nproc) --config Release
-	@$(CMAKE) --install $(DEP_DIR)/llvm-build --prefix=$(DEP_DIR)
+	@$(CMAKE) --install $(DEP_DIR)/llvm-build --prefix=$(shell realpath $(DEP_DIR)/llvm-install)
 	@echo "LLVM dependencies installed."
 
-install_halide: install_llvm $(VENDOR_DIR)/Halide
+install_halide: $(VENDOR_DIR)/Halide
 	@echo "Installing Halide dependencies..."
-	@mkdir -p $(DEP_DIR)/halide
+	@mkdir -p $(DEP_DIR)/halide $(DEP_DIR)/halide-install
 	@$(CMAKE) -B $(DEP_DIR)/halide -S $(VENDOR_DIR)/Halide \
 		-D CMAKE_BUILD_TYPE=Release \
-		-D Halide_LLVM_ROOT=$(shell realpath $(DEP_DIR))
+		-D Halide_LLVM_ROOT=$(shell realpath $(DEP_DIR)/llvm-install)
 	@$(CMAKE) --build $(DEP_DIR)/halide --parallel $(shell nproc) --config Release
+	@$(CMAKE) --install $(DEP_DIR)/halide --prefix=$(shell realpath $(DEP_DIR)/halide-install)
 	@echo "Halide dependencies installed."
 
 install_gridtools: $(VENDOR_DIR)/gridtools
@@ -158,6 +164,9 @@ install_gridtools: $(VENDOR_DIR)/gridtools
 		-D CMAKE_INSTALL_PREFIX=$(shell realpath $(DEP_DIR)/gridtools)
 	@$(CMAKE) --build $(DEP_DIR)/gridtools --parallel $(shell nproc) --config Release
 	@$(CMAKE) --install $(DEP_DIR)/gridtools --prefix=$(shell realpath $(DEP_DIR)/gridtools)
+
+print_libraries:
+	@echo "${KOKKOS_HOME_LIB} ${HALIDE_HOME_LIB} ${GRIDTOOLS_HOME_LIB}"
 
 # Add directories dependency to object file creation rules
 $(MAIN_OBJ): $(MAIN_SRC) | directories
@@ -191,4 +200,4 @@ unit_test: $(TEST_TARGET)
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR) $(DEP_DIR)
 
-.PHONY: all run test clean directories print-% install_deps install_kokkos install_llvm install_halide install_gridtools
+.PHONY: all run test clean directories print-% install_deps install_kokkos install_llvm install_halide install_gridtools print_libraries

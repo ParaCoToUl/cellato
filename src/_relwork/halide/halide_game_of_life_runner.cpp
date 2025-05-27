@@ -65,7 +65,6 @@ struct game_of_life_runner : public real_runner {
                 }
 
                 clamp.gpu_tile(x, y, xi, yi, xo, yo, 16, 16);
-                clamp.gpu_threads(xo, yo);
                 clamp.compile_jit(target);
             } else {
                 throw std::runtime_error("Unsupported device: " + params.device);
