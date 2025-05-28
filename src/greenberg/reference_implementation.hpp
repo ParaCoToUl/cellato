@@ -58,17 +58,21 @@ struct runner {
                     
                     if (current == ghm_cell_state::quiescent) {
                         // Quiescent cell becomes excited if it has at least one excited neighbor
-                        // Check all 8 neighbors using explicit indexing
-                        next = ghm_cell_state::quiescent;
-                        if (_current_grid[(y - 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Top-left
-                            _current_grid[(y - 1) * _x_size +  x     ] == ghm_cell_state::excited || // Top
-                            _current_grid[(y - 1) * _x_size + (x + 1)] == ghm_cell_state::excited || // Top-right
-                            _current_grid[ y      * _x_size + (x - 1)] == ghm_cell_state::excited || // Left
-                            _current_grid[ y      * _x_size + (x + 1)] == ghm_cell_state::excited || // Right
-                            _current_grid[(y + 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Bottom-left
-                            _current_grid[(y + 1) * _x_size +  x     ] == ghm_cell_state::excited || // Bottom
-                            _current_grid[(y + 1) * _x_size + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
+                        auto excited_count =
+                            (_current_grid[(y - 1) * _x_size + (x - 1)] == ghm_cell_state::excited) + // Top-left
+                            (_current_grid[(y - 1) * _x_size +  x     ] == ghm_cell_state::excited) + // Top
+                            (_current_grid[(y - 1) * _x_size + (x + 1)] == ghm_cell_state::excited) + // Top-right
+                            (_current_grid[ y      * _x_size + (x - 1)] == ghm_cell_state::excited) + // Left
+                            (_current_grid[ y      * _x_size + (x + 1)] == ghm_cell_state::excited) + // Right
+                            (_current_grid[(y + 1) * _x_size + (x - 1)] == ghm_cell_state::excited) + // Bottom-left
+                            (_current_grid[(y + 1) * _x_size +  x     ] == ghm_cell_state::excited) + // Bottom
+                            (_current_grid[(y + 1) * _x_size + (x + 1)] == ghm_cell_state::excited);  // Bottom-right
+
+                        if (excited_count > 0) {
                             next = ghm_cell_state::excited;
+                        }
+                        else {
+                            next = ghm_cell_state::quiescent; // Remains quiescent if no excited neighbors
                         }
                     }
                     else if (current == ghm_cell_state::excited) {

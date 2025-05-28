@@ -3,7 +3,7 @@ CXX_STD = c++20
 NVCC = nvcc
 CXXFLAGS = -std=$(CXX_STD) -Wall -Wextra -Wpedantic -O3 -I../include
 NVCC_CC_BIN = $(shell which $(CXX))
-NVCCFLAGS = -std=$(CXX_STD) -O3 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -O3
+NVCCFLAGS = -std=$(CXX_STD) -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -O3
 CMAKE = cmake
 
 CUDA_VERSION = 12.6

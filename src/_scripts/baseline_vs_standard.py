@@ -12,11 +12,11 @@ RESET_COLOR = "\033[0m"
 
 # Set consistent parameters
 class CUDA:
-    GRID_SIZE = 16384  # Reasonably sized grid for performance comparison
+    GRID_SIZE = 8192  # Reasonably sized grid for performance comparison
     STEPS = 1000       # Number of steps for each run
 class CPU:
-    GRID_SIZE = 4096   # Reasonably sized grid for performance comparison
-    STEPS = 50         # Number of steps for CPU runs
+    GRID_SIZE = 2048   # Reasonably sized grid for performance comparison
+    STEPS = 30         # Number of steps for CPU runs
 
 ROUNDS = 5         # Number of measurement rounds
 WARMUP = 2         # Number of warmup rounds
@@ -97,7 +97,8 @@ def main():
                 # Standard CUDA
                 f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}"
             ) 
-            for block_y in [1, 2, 4, 8, 16, 32]
+            # for block_y in [1, 2, 4, 8, 16, 32]
+            for block_y in [4]  # has been shown to be the best for all automata
         ]
 
         #flatten the list of test cases

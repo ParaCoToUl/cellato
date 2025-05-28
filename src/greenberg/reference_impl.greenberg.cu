@@ -17,18 +17,23 @@ __global__ void greenberg_kernel(const ghm_cell_state* current, ghm_cell_state* 
     
     if (cell_state == ghm_cell_state::quiescent) {
         // Quiescent becomes excited if it has at least one excited neighbor
-        // Check all 8 neighbors using explicit indexing
-        next_state = ghm_cell_state::quiescent;
-        if (current[(y - 1) * width + (x - 1)] == ghm_cell_state::excited || // Top-left
-            current[(y - 1) * width +  x     ] == ghm_cell_state::excited || // Top
-            current[(y - 1) * width + (x + 1)] == ghm_cell_state::excited || // Top-right
-            current[ y      * width + (x - 1)] == ghm_cell_state::excited || // Left
-            current[ y      * width + (x + 1)] == ghm_cell_state::excited || // Right
-            current[(y + 1) * width + (x - 1)] == ghm_cell_state::excited || // Bottom-left
-            current[(y + 1) * width +  x     ] == ghm_cell_state::excited || // Bottom
-            current[(y + 1) * width + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
+        auto excited_count =
+            (current[(y - 1) * width + (x - 1)] == ghm_cell_state::excited) + // Top-left
+            (current[(y - 1) * width +  x     ] == ghm_cell_state::excited) + // Top
+            (current[(y - 1) * width + (x + 1)] == ghm_cell_state::excited) + // Top-right
+            (current[ y      * width + (x - 1)] == ghm_cell_state::excited) + // Left
+            (current[ y      * width + (x + 1)] == ghm_cell_state::excited) + // Right
+            (current[(y + 1) * width + (x - 1)] == ghm_cell_state::excited) + // Bottom-left
+            (current[(y + 1) * width +  x     ] == ghm_cell_state::excited) + // Bottom
+            (current[(y + 1) * width + (x + 1)] == ghm_cell_state::excited);  // Bottom-right
+
+        if (excited_count > 0) {
             next_state = ghm_cell_state::excited;
         }
+        else {
+            next_state = ghm_cell_state::quiescent; // Remains quiescent if no excited neighbors
+        }
+ 
     }
     else if (cell_state == ghm_cell_state::excited) {
         // Excited cell becomes refractory_1
