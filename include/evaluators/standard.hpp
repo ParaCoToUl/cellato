@@ -125,6 +125,29 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, von_neumann_4_neighb
     }
 };
 
+// example of nested specialization for count_neighbors with moore_8_neighbors for better performance
+
+template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
+struct evaluator<cell_type, 
+        greater_than< 
+            count_neighbors<CellStateValue, moore_8_neighbors>, 
+            state_constant<0>
+        >, cell_ptr_type> {
+    static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
+        auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
+
+        return
+            state.grid[(state.position.x - 1) + (state.position.y - 1) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x - 1) + (state.position.y    ) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x - 1) + (state.position.y + 1) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x    ) + (state.position.y - 1) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x    ) + (state.position.y + 1) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x + 1) + (state.position.y - 1) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x + 1) + (state.position.y    ) * state.properties.x_size] == target_value ||
+            state.grid[(state.position.x + 1) + (state.position.y + 1) * state.properties.x_size] == target_value;
+    }
+};
+
 } // namespace cellib::evaluators::standard
 
 #endif // CELLIB_STANDARD_EVALUATORS_HPP
