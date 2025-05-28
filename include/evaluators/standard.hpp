@@ -1,6 +1,10 @@
 #ifndef CELLIB_STANDARD_EVALUATORS_HPP
 #define CELLIB_STANDARD_EVALUATORS_HPP
 
+#include <cstddef>
+
+#include <utility>
+
 #include "../core/ast.hpp"
 #include "../memory/interface.hpp"
 
@@ -96,44 +100,28 @@ struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
 struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, cell_ptr_type> {
     static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
-        int sum = 0;
-        for (int dx = -1; dx <= 1; ++dx) {
-            for (int dy = -1; dy <= 1; ++dy) {
-                if (dx == 0 && dy == 0) continue;
+        auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
-                int nx = state.position.x + dx;
-                int ny = state.position.y + dy;
+        return [target_value, state, x = state.position.x, y = state.position.y, x_size = state.properties.x_size]<std::size_t... I> (std::index_sequence<I...>) {
+            constexpr int dx[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+            constexpr int dy[] = {-1, -1, -1, 0, 0, 1, 1, 1};
 
-                auto state_at_nxy = state.grid[nx + ny * state.properties.x_size];
-
-                if (state_at_nxy == evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state)) {
-                    sum += 1;
-                }
-            }
-        }
-        return sum;
+            return (... + (state.grid[(x + dx[I]) + (y + dy[I]) * x_size] == target_value));
+        }(std::make_index_sequence<8>{});
     }
 };
 
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
 struct evaluator<cell_type, count_neighbors<CellStateValue, von_neumann_4_neighbors>, cell_ptr_type> {
     static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
-        int sum = 0;
+        auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
-        const int dx[] = {0, 0, 1, -1};
-        const int dy[] = {1, -1, 0, 0};
+        return [target_value, state, x = state.position.x, y = state.position.y, x_size = state.properties.x_size]<std::size_t... I> (std::index_sequence<I...>) {
+            constexpr int dx[] = {0, 0, 1, -1};
+            constexpr int dy[] = {1, -1, 0, 0};
 
-        for (int i = 0; i < 4; ++i) {
-            int nx = state.position.x + dx[i];
-            int ny = state.position.y + dy[i];
-
-            auto state_at_nxy = state.grid[nx + ny * state.properties.x_size];
-
-            if (state_at_nxy == evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state)) {
-                sum += 1;
-            }
-        }
-        return sum;
+            return (... + (state.grid[(x + dx[I]) + (y + dy[I]) * x_size] == target_value));
+        }(std::make_index_sequence<4>{});
     }
 };
 
