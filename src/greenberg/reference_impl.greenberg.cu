@@ -18,20 +18,17 @@ __global__ void greenberg_kernel(const ghm_cell_state* current, ghm_cell_state* 
     switch (cell_state) {
         case ghm_cell_state::quiescent:
             // Quiescent becomes excited if it has at least one excited neighbor
+            // Check all 8 neighbors using explicit indexing
             next_state = ghm_cell_state::quiescent;
-            for (int dy = -1; dy <= 1; ++dy) {
-                for (int dx = -1; dx <= 1; ++dx) {
-                    if (dx == 0 && dy == 0) continue; // Skip self
-                    
-                    int nx = x + dx;
-                    int ny = y + dy;
-                    int nidx = ny * width + nx;
-                    if (current[nidx] == ghm_cell_state::excited) {
-                        next_state = ghm_cell_state::excited;
-                        break;
-                    }
-                }
-                if (next_state == ghm_cell_state::excited) break;
+            if (current[(y - 1) * width + (x - 1)] == ghm_cell_state::excited || // Top-left
+                current[(y - 1) * width +  x     ] == ghm_cell_state::excited || // Top
+                current[(y - 1) * width + (x + 1)] == ghm_cell_state::excited || // Top-right
+                current[ y      * width + (x - 1)] == ghm_cell_state::excited || // Left
+                current[ y      * width + (x + 1)] == ghm_cell_state::excited || // Right
+                current[(y + 1) * width + (x - 1)] == ghm_cell_state::excited || // Bottom-left
+                current[(y + 1) * width +  x     ] == ghm_cell_state::excited || // Bottom
+                current[(y + 1) * width + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
+                next_state = ghm_cell_state::excited;
             }
             break;
             

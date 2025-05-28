@@ -59,18 +59,17 @@ struct runner {
                     switch (current) {
                         case ghm_cell_state::quiescent:
                             // Quiescent cell becomes excited if it has at least one excited neighbor
-                            for (int dy = -1; dy <= 1; ++dy) {
-                                for (int dx = -1; dx <= 1; ++dx) {
-                                    if (dx == 0 && dy == 0) continue; // Skip self
-                                    
-                                    std::size_t nx = x + dx;
-                                    std::size_t ny = y + dy;
-                                    if (_current_grid[ny * _x_size + nx] == ghm_cell_state::excited) {
-                                        next = ghm_cell_state::excited;
-                                        break;
-                                    }
-                                }
-                                if (next == ghm_cell_state::excited) break;
+                            // Check all 8 neighbors using explicit indexing
+                            next = ghm_cell_state::quiescent;
+                            if (_current_grid[(y - 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Top-left
+                                _current_grid[(y - 1) * _x_size +  x     ] == ghm_cell_state::excited || // Top
+                                _current_grid[(y - 1) * _x_size + (x + 1)] == ghm_cell_state::excited || // Top-right
+                                _current_grid[ y      * _x_size + (x - 1)] == ghm_cell_state::excited || // Left
+                                _current_grid[ y      * _x_size + (x + 1)] == ghm_cell_state::excited || // Right
+                                _current_grid[(y + 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Bottom-left
+                                _current_grid[(y + 1) * _x_size +  x     ] == ghm_cell_state::excited || // Bottom
+                                _current_grid[(y + 1) * _x_size + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
+                                next = ghm_cell_state::excited;
                             }
                             break;
                             

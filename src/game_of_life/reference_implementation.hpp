@@ -54,20 +54,16 @@ struct runner {
             for (std::size_t y = 1; y < _y_size - 1; ++y) {
                 for (std::size_t x = 1; x < _x_size - 1; ++x) {
                     // Count live neighbors (Moore neighborhood)
-                    int live_neighbors = 0;
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        for (int dx = -1; dx <= 1; ++dx) {
-                            // Skip self
-                            if (dx == 0 && dy == 0) continue;
-                            
-                            std::size_t nx = x + dx;
-                            std::size_t ny = y + dy;
-                            if (_current_grid[ny * _x_size + nx] == gol_cell_state::alive) {
-                                live_neighbors++;
-                            }
-                        }
-                    }
-                    
+                    int live_neighbors =
+                        (_current_grid[(y - 1) * _x_size + (x - 1)] == gol_cell_state::alive) + // Top-left
+                        (_current_grid[(y - 1) * _x_size +  x     ] == gol_cell_state::alive) + // Top
+                        (_current_grid[(y - 1) * _x_size + (x + 1)] == gol_cell_state::alive) + // Top-right
+                        (_current_grid[ y * _x_size      + (x - 1)] == gol_cell_state::alive) + // Left
+                        (_current_grid[ y * _x_size      + (x + 1)] == gol_cell_state::alive) + // Right
+                        (_current_grid[(y + 1) * _x_size + (x - 1)] == gol_cell_state::alive) + // Bottom-left
+                        (_current_grid[(y + 1) * _x_size +  x     ] == gol_cell_state::alive) + // Bottom
+                        (_current_grid[(y + 1) * _x_size + (x + 1)] == gol_cell_state::alive);  // Bottom-right
+
                     // Apply Game of Life rules
                     gol_cell_state current = _current_grid[y * _x_size + x];
                     gol_cell_state next;

@@ -50,9 +50,6 @@ struct runner {
     }
     
     void run(int steps) {
-        const int dx[4] = {0, 0, 1, -1};
-        const int dy[4] = {1, -1, 0, 0};
-        
         for (int step = 0; step < steps; ++step) {
             // Process each cell
             for (std::size_t y = 1; y < _y_size - 1; ++y) {
@@ -68,16 +65,14 @@ struct runner {
                             break;
                             
                         case fire_cell_state::tree:
-                            // Tree catches fire if any von Neumann neighbor (N,E,S,W) is on fire
+                            // Tree catches fire if any von Neumann neighbor is on fire
+                            // Use explicit indexing for the 4 von Neumann neighbors
                             next = fire_cell_state::tree;
-                            // Check only the 4 adjacent neighbors (von Neumann neighborhood)
-                            for (int i = 0; i < 4; ++i) {
-                                std::size_t nx = x + dx[i];
-                                std::size_t ny = y + dy[i];
-                                if (_current_grid[ny * _x_size + nx] == fire_cell_state::fire) {
-                                    next = fire_cell_state::fire;
-                                    break;
-                                }
+                            if (_current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
+                                _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
+                                _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
+                                _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire) {  // West
+                                next = fire_cell_state::fire;
                             }
                             break;
                             
@@ -87,24 +82,15 @@ struct runner {
                             break;
                             
                         case fire_cell_state::ash:
-                            // Ash remains ash if it has fire neighbors, otherwise becomes empty
-                            bool has_fire_neighbor = false;
+                            // Check if ash has fire neighbors using explicit indexing
+                            bool has_fire_neighbor = 
+                                _current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
+                                _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
+                                _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
+                                _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire;    // West
                             
-                            // Check only the 4 adjacent neighbors (von Neumann neighborhood)
-                            for (int i = 0; i < 4; ++i) {
-                                std::size_t nx = x + dx[i];
-                                std::size_t ny = y + dy[i];
-                                if (_current_grid[ny * _x_size + nx] == fire_cell_state::fire) {
-                                    has_fire_neighbor = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (has_fire_neighbor) {
-                                next = fire_cell_state::ash;
-                            } else {
-                                next = fire_cell_state::empty;
-                            }
+                            // Ash cell with fire neighbors remains ash, others become empty
+                            next = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;
                             break;
                     }
                     

@@ -12,21 +12,16 @@ __global__ void gol_kernel(const gol_cell_state* current, gol_cell_state* next,
         
     const int idx = y * width + x;
     
-    // Count live neighbors (Moore neighborhood)
-    int live_neighbors = 0;
-    for (int dy = -1; dy <= 1; ++dy) {
-        for (int dx = -1; dx <= 1; ++dx) {
-            // Skip self
-            if (dx == 0 && dy == 0) continue;
-            
-            int nx = x + dx;
-            int ny = y + dy;
-            int nidx = ny * width + nx;
-            if (current[nidx] == gol_cell_state::alive) {
-                live_neighbors++;
-            }
-        }
-    }
+    // Count live neighbors using explicit indexing (Moore neighborhood)
+    int live_neighbors = 
+        (current[(y - 1) * width + (x - 1)] == gol_cell_state::alive) + // Top-left
+        (current[(y - 1) * width +  x     ] == gol_cell_state::alive) + // Top
+        (current[(y - 1) * width + (x + 1)] == gol_cell_state::alive) + // Top-right
+        (current[ y      * width + (x - 1)] == gol_cell_state::alive) + // Left
+        (current[ y      * width + (x + 1)] == gol_cell_state::alive) + // Right
+        (current[(y + 1) * width + (x - 1)] == gol_cell_state::alive) + // Bottom-left
+        (current[(y + 1) * width +  x     ] == gol_cell_state::alive) + // Bottom
+        (current[(y + 1) * width + (x + 1)] == gol_cell_state::alive);  // Bottom-right
     
     // Apply Game of Life rules
     gol_cell_state cell_state = current[idx];

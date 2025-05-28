@@ -7,6 +7,9 @@ import re
 # Define automata to test
 AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings"]
 
+GREY_COLOR = "\033[90m"
+RESET_COLOR = "\033[0m"
+
 # Set consistent parameters
 class CUDA:
     GRID_SIZE = 16384  # Reasonably sized grid for performance comparison
@@ -74,7 +77,7 @@ def main():
     
     # Run the tests
     for automaton in AUTOMATA:
-        print(f"Running tests for {automaton}...", file=sys.stderr)
+        print(f"{GREY_COLOR}Running tests for {automaton}...{RESET_COLOR}", file=sys.stderr)
         
         # Test cases: baseline and standard on both CPU and CUDA
         test_cases = [
@@ -92,7 +95,7 @@ def main():
         ]
         
         for test_case in test_cases:
-            print(f"Running: {test_case}", file=sys.stderr)
+            print(f"{GREY_COLOR}Running: {test_case}{RESET_COLOR}", file=sys.stderr)
             csv_line = run_test(executable, test_case)
             if csv_line:
                 print(csv_line)  # Print CSV data to stdout

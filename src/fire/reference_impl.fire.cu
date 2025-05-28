@@ -15,9 +15,6 @@ __global__ void fire_kernel(const fire_cell_state* current, fire_cell_state* nex
     fire_cell_state cell_state = current[idx];
     fire_cell_state next_state = cell_state;
     
-    const int dx[4] = {0, 0, 1, -1};
-    const int dy[4] = {1, -1, 0, 0};
-
     switch (cell_state) {
         case fire_cell_state::empty:
             // Empty remains empty
@@ -26,16 +23,13 @@ __global__ void fire_kernel(const fire_cell_state* current, fire_cell_state* nex
             
         case fire_cell_state::tree:
             // Tree catches fire if any von Neumann neighbor is on fire
+            // Use explicit indexing for the 4 von Neumann neighbors
             next_state = fire_cell_state::tree;
-            // Check von Neumann neighbors (N, S, E, W)
-            for (int i = 0; i < 4; i++) {
-                int nx = x + dx[i];
-                int ny = y + dy[i];
-                int nidx = ny * width + nx;
-                if (current[nidx] == fire_cell_state::fire) {
-                    next_state = fire_cell_state::fire;
-                    break;
-                }
+            if (current[(y - 1) * width + x] == fire_cell_state::fire ||  // North
+                current[y * width + (x + 1)] == fire_cell_state::fire ||  // East
+                current[(y + 1) * width + x] == fire_cell_state::fire ||  // South
+                current[y * width + (x - 1)] == fire_cell_state::fire) {  // West
+                next_state = fire_cell_state::fire;
             }
             break;
             
@@ -45,25 +39,15 @@ __global__ void fire_kernel(const fire_cell_state* current, fire_cell_state* nex
             break;
             
         case fire_cell_state::ash:
-            // Check if ash has fire neighbors
-            bool has_fire_neighbor = false;
-            // Check only von Neumann neighbors (N, S, E, W)
-            for (int i = 0; i < 4; i++) {
-                int nx = x + dx[i];
-                int ny = y + dy[i];
-                int nidx = ny * width + nx;
-                if (current[nidx] == fire_cell_state::fire) {
-                    has_fire_neighbor = true;
-                    break;
-                }
-            }
+            // Check if ash has fire neighbors using explicit indexing
+            bool has_fire_neighbor = 
+                current[(y - 1) * width + x] == fire_cell_state::fire ||  // North
+                current[y * width + (x + 1)] == fire_cell_state::fire ||  // East
+                current[(y + 1) * width + x] == fire_cell_state::fire ||  // South
+                current[y * width + (x - 1)] == fire_cell_state::fire;    // West
             
             // Ash cell with fire neighbors remains ash, others become empty
-            if (has_fire_neighbor) {
-                next_state = fire_cell_state::ash;
-            } else {
-                next_state = fire_cell_state::empty;
-            }
+            next_state = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;
             break;
     }
     
