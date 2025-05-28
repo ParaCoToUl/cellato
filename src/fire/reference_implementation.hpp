@@ -58,40 +58,35 @@ struct runner {
                     fire_cell_state current = _current_grid[y * _x_size + x];
                     fire_cell_state next = current;
                     
-                    switch (current) {
-                        case fire_cell_state::empty:
-                            // Empty remains empty
-                            next = fire_cell_state::empty;
-                            break;
-                            
-                        case fire_cell_state::tree:
-                            // Tree catches fire if any von Neumann neighbor is on fire
-                            // Use explicit indexing for the 4 von Neumann neighbors
-                            next = fire_cell_state::tree;
-                            if (_current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
-                                _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
-                                _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
-                                _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire) {  // West
-                                next = fire_cell_state::fire;
-                            }
-                            break;
-                            
-                        case fire_cell_state::fire:
-                            // Fire becomes ash
-                            next = fire_cell_state::ash;
-                            break;
-                            
-                        case fire_cell_state::ash:
-                            // Check if ash has fire neighbors using explicit indexing
-                            bool has_fire_neighbor = 
-                                _current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
-                                _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
-                                _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
-                                _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire;    // West
-                            
-                            // Ash cell with fire neighbors remains ash, others become empty
-                            next = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;
-                            break;
+                    if (current == fire_cell_state::empty) {
+                        // Empty remains empty
+                        next = fire_cell_state::empty;
+                    } 
+                    else if (current == fire_cell_state::tree) {
+                        // Tree catches fire if any von Neumann neighbor is on fire
+                        // Use explicit indexing for the 4 von Neumann neighbors
+                        next = fire_cell_state::tree;
+                        if (_current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
+                            _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
+                            _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
+                            _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire) {  // West
+                            next = fire_cell_state::fire;
+                        }
+                    }
+                    else if (current == fire_cell_state::fire) {
+                        // Fire becomes ash
+                        next = fire_cell_state::ash;
+                    }
+                    else if (current == fire_cell_state::ash) {
+                        // Check if ash has fire neighbors using explicit indexing
+                        bool has_fire_neighbor = 
+                            _current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
+                            _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
+                            _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
+                            _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire;    // West
+                        
+                        // Ash cell with fire neighbors remains ash, others become empty
+                        next = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;
                     }
                     
                     _next_grid[y * _x_size + x] = next;

@@ -56,53 +56,44 @@ struct runner {
                     ghm_cell_state current = _current_grid[y * _x_size + x];
                     ghm_cell_state next = current;
                     
-                    switch (current) {
-                        case ghm_cell_state::quiescent:
-                            // Quiescent cell becomes excited if it has at least one excited neighbor
-                            // Check all 8 neighbors using explicit indexing
-                            next = ghm_cell_state::quiescent;
-                            if (_current_grid[(y - 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Top-left
-                                _current_grid[(y - 1) * _x_size +  x     ] == ghm_cell_state::excited || // Top
-                                _current_grid[(y - 1) * _x_size + (x + 1)] == ghm_cell_state::excited || // Top-right
-                                _current_grid[ y      * _x_size + (x - 1)] == ghm_cell_state::excited || // Left
-                                _current_grid[ y      * _x_size + (x + 1)] == ghm_cell_state::excited || // Right
-                                _current_grid[(y + 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Bottom-left
-                                _current_grid[(y + 1) * _x_size +  x     ] == ghm_cell_state::excited || // Bottom
-                                _current_grid[(y + 1) * _x_size + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
-                                next = ghm_cell_state::excited;
-                            }
-                            break;
-                            
-                        case ghm_cell_state::excited:
-                            // Excited cell becomes refractory_1
-                            next = ghm_cell_state::refractory_1;
-                            break;
-                            
-                        case ghm_cell_state::refractory_1:
-                            // Refractory cells progress through refractory states
-                            next = ghm_cell_state::refractory_2;
-                            break;
-                            
-                        case ghm_cell_state::refractory_2:
-                            next = ghm_cell_state::refractory_3;
-                            break;
-                            
-                        case ghm_cell_state::refractory_3:
-                            next = ghm_cell_state::refractory_4;
-                            break;
-                            
-                        case ghm_cell_state::refractory_4:
-                            next = ghm_cell_state::refractory_5;
-                            break;
-                            
-                        case ghm_cell_state::refractory_5:
-                            next = ghm_cell_state::refractory_6;
-                            break;
-                            
-                        case ghm_cell_state::refractory_6:
-                            // Last refractory state returns to quiescent
-                            next = ghm_cell_state::quiescent;
-                            break;
+                    if (current == ghm_cell_state::quiescent) {
+                        // Quiescent cell becomes excited if it has at least one excited neighbor
+                        // Check all 8 neighbors using explicit indexing
+                        next = ghm_cell_state::quiescent;
+                        if (_current_grid[(y - 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Top-left
+                            _current_grid[(y - 1) * _x_size +  x     ] == ghm_cell_state::excited || // Top
+                            _current_grid[(y - 1) * _x_size + (x + 1)] == ghm_cell_state::excited || // Top-right
+                            _current_grid[ y      * _x_size + (x - 1)] == ghm_cell_state::excited || // Left
+                            _current_grid[ y      * _x_size + (x + 1)] == ghm_cell_state::excited || // Right
+                            _current_grid[(y + 1) * _x_size + (x - 1)] == ghm_cell_state::excited || // Bottom-left
+                            _current_grid[(y + 1) * _x_size +  x     ] == ghm_cell_state::excited || // Bottom
+                            _current_grid[(y + 1) * _x_size + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
+                            next = ghm_cell_state::excited;
+                        }
+                    }
+                    else if (current == ghm_cell_state::excited) {
+                        // Excited cell becomes refractory_1
+                        next = ghm_cell_state::refractory_1;
+                    }
+                    else if (current == ghm_cell_state::refractory_1) {
+                        // Refractory cells progress through refractory states
+                        next = ghm_cell_state::refractory_2;
+                    }
+                    else if (current == ghm_cell_state::refractory_2) {
+                        next = ghm_cell_state::refractory_3;
+                    }
+                    else if (current == ghm_cell_state::refractory_3) {
+                        next = ghm_cell_state::refractory_4;
+                    }
+                    else if (current == ghm_cell_state::refractory_4) {
+                        next = ghm_cell_state::refractory_5;
+                    }
+                    else if (current == ghm_cell_state::refractory_5) {
+                        next = ghm_cell_state::refractory_6;
+                    }
+                    else if (current == ghm_cell_state::refractory_6) {
+                        // Last refractory state returns to quiescent
+                        next = ghm_cell_state::quiescent;
                     }
                     
                     _next_grid[y * _x_size + x] = next;

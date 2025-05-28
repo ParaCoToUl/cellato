@@ -15,53 +15,44 @@ __global__ void greenberg_kernel(const ghm_cell_state* current, ghm_cell_state* 
     ghm_cell_state cell_state = current[idx];
     ghm_cell_state next_state = cell_state;
     
-    switch (cell_state) {
-        case ghm_cell_state::quiescent:
-            // Quiescent becomes excited if it has at least one excited neighbor
-            // Check all 8 neighbors using explicit indexing
-            next_state = ghm_cell_state::quiescent;
-            if (current[(y - 1) * width + (x - 1)] == ghm_cell_state::excited || // Top-left
-                current[(y - 1) * width +  x     ] == ghm_cell_state::excited || // Top
-                current[(y - 1) * width + (x + 1)] == ghm_cell_state::excited || // Top-right
-                current[ y      * width + (x - 1)] == ghm_cell_state::excited || // Left
-                current[ y      * width + (x + 1)] == ghm_cell_state::excited || // Right
-                current[(y + 1) * width + (x - 1)] == ghm_cell_state::excited || // Bottom-left
-                current[(y + 1) * width +  x     ] == ghm_cell_state::excited || // Bottom
-                current[(y + 1) * width + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
-                next_state = ghm_cell_state::excited;
-            }
-            break;
-            
-        case ghm_cell_state::excited:
-            // Excited cell becomes refractory_1
-            next_state = ghm_cell_state::refractory_1;
-            break;
-            
-        case ghm_cell_state::refractory_1:
-            // Progress through refractory states
-            next_state = ghm_cell_state::refractory_2;
-            break;
-            
-        case ghm_cell_state::refractory_2:
-            next_state = ghm_cell_state::refractory_3;
-            break;
-            
-        case ghm_cell_state::refractory_3:
-            next_state = ghm_cell_state::refractory_4;
-            break;
-            
-        case ghm_cell_state::refractory_4:
-            next_state = ghm_cell_state::refractory_5;
-            break;
-            
-        case ghm_cell_state::refractory_5:
-            next_state = ghm_cell_state::refractory_6;
-            break;
-            
-        case ghm_cell_state::refractory_6:
-            // Last refractory state returns to quiescent
-            next_state = ghm_cell_state::quiescent;
-            break;
+    if (cell_state == ghm_cell_state::quiescent) {
+        // Quiescent becomes excited if it has at least one excited neighbor
+        // Check all 8 neighbors using explicit indexing
+        next_state = ghm_cell_state::quiescent;
+        if (current[(y - 1) * width + (x - 1)] == ghm_cell_state::excited || // Top-left
+            current[(y - 1) * width +  x     ] == ghm_cell_state::excited || // Top
+            current[(y - 1) * width + (x + 1)] == ghm_cell_state::excited || // Top-right
+            current[ y      * width + (x - 1)] == ghm_cell_state::excited || // Left
+            current[ y      * width + (x + 1)] == ghm_cell_state::excited || // Right
+            current[(y + 1) * width + (x - 1)] == ghm_cell_state::excited || // Bottom-left
+            current[(y + 1) * width +  x     ] == ghm_cell_state::excited || // Bottom
+            current[(y + 1) * width + (x + 1)] == ghm_cell_state::excited) { // Bottom-right
+            next_state = ghm_cell_state::excited;
+        }
+    }
+    else if (cell_state == ghm_cell_state::excited) {
+        // Excited cell becomes refractory_1
+        next_state = ghm_cell_state::refractory_1;
+    }
+    else if (cell_state == ghm_cell_state::refractory_1) {
+        // Progress through refractory states
+        next_state = ghm_cell_state::refractory_2;
+    }
+    else if (cell_state == ghm_cell_state::refractory_2) {
+        next_state = ghm_cell_state::refractory_3;
+    }
+    else if (cell_state == ghm_cell_state::refractory_3) {
+        next_state = ghm_cell_state::refractory_4;
+    }
+    else if (cell_state == ghm_cell_state::refractory_4) {
+        next_state = ghm_cell_state::refractory_5;
+    }
+    else if (cell_state == ghm_cell_state::refractory_5) {
+        next_state = ghm_cell_state::refractory_6;
+    }
+    else if (cell_state == ghm_cell_state::refractory_6) {
+        // Last refractory state returns to quiescent
+        next_state = ghm_cell_state::quiescent;
     }
     
     next[idx] = next_state;

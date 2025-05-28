@@ -57,41 +57,36 @@ struct runner {
                     wire_cell_state current = _current_grid[y * _x_size + x];
                     wire_cell_state next = current;
                     
-                    switch (current) {
-                        case wire_cell_state::empty:
-                            // Empty remains empty
-                            next = wire_cell_state::empty;
-                            break;
-                            
-                        case wire_cell_state::electron_head:
-                            // Electron head becomes electron tail
-                            next = wire_cell_state::electron_tail;
-                            break;
-                            
-                        case wire_cell_state::electron_tail:
-                            // Electron tail becomes conductor
+                    if (current == wire_cell_state::empty) {
+                        // Empty remains empty
+                        next = wire_cell_state::empty;
+                    }
+                    else if (current == wire_cell_state::electron_head) {
+                        // Electron head becomes electron tail
+                        next = wire_cell_state::electron_tail;
+                    }
+                    else if (current == wire_cell_state::electron_tail) {
+                        // Electron tail becomes conductor
+                        next = wire_cell_state::conductor;
+                    }
+                    else if (current == wire_cell_state::conductor) {
+                        // Count electron heads in the Moore neighborhood using explicit indexing
+                        int electron_head_count = 
+                            (_current_grid[(y - 1) * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Top-left
+                            (_current_grid[(y - 1) * _x_size +  x     ] == wire_cell_state::electron_head) + // Top
+                            (_current_grid[(y - 1) * _x_size + (x + 1)] == wire_cell_state::electron_head) + // Top-right
+                            (_current_grid[ y      * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Left
+                            (_current_grid[ y      * _x_size + (x + 1)] == wire_cell_state::electron_head) + // Right
+                            (_current_grid[(y + 1) * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Bottom-left
+                            (_current_grid[(y + 1) * _x_size +  x     ] == wire_cell_state::electron_head) + // Bottom
+                            (_current_grid[(y + 1) * _x_size + (x + 1)] == wire_cell_state::electron_head);  // Bottom-right
+                        
+                        // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
+                        if (electron_head_count == 1 || electron_head_count == 2) {
+                            next = wire_cell_state::electron_head;
+                        } else {
                             next = wire_cell_state::conductor;
-                            break;
-                            
-                        case wire_cell_state::conductor:
-                            // Count electron heads in the Moore neighborhood using explicit indexing
-                            int electron_head_count = 
-                                (_current_grid[(y - 1) * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Top-left
-                                (_current_grid[(y - 1) * _x_size +  x     ] == wire_cell_state::electron_head) + // Top
-                                (_current_grid[(y - 1) * _x_size + (x + 1)] == wire_cell_state::electron_head) + // Top-right
-                                (_current_grid[ y      * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Left
-                                (_current_grid[ y      * _x_size + (x + 1)] == wire_cell_state::electron_head) + // Right
-                                (_current_grid[(y + 1) * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Bottom-left
-                                (_current_grid[(y + 1) * _x_size +  x     ] == wire_cell_state::electron_head) + // Bottom
-                                (_current_grid[(y + 1) * _x_size + (x + 1)] == wire_cell_state::electron_head);  // Bottom-right
-                            
-                            // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
-                            if (electron_head_count == 1 || electron_head_count == 2) {
-                                next = wire_cell_state::electron_head;
-                            } else {
-                                next = wire_cell_state::conductor;
-                            }
-                            break;
+                        }
                     }
                     
                     _next_grid[y * _x_size + x] = next;

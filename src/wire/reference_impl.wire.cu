@@ -15,41 +15,36 @@ __global__ void wire_kernel(const wire_cell_state* current, wire_cell_state* nex
     wire_cell_state cell_state = current[idx];
     wire_cell_state next_state = cell_state;
     
-    switch (cell_state) {
-        case wire_cell_state::empty:
-            // Empty remains empty
-            next_state = wire_cell_state::empty;
-            break;
-            
-        case wire_cell_state::electron_head:
-            // Electron head becomes electron tail
-            next_state = wire_cell_state::electron_tail;
-            break;
-            
-        case wire_cell_state::electron_tail:
-            // Electron tail becomes conductor
+    if (cell_state == wire_cell_state::empty) {
+        // Empty remains empty
+        next_state = wire_cell_state::empty;
+    }
+    else if (cell_state == wire_cell_state::electron_head) {
+        // Electron head becomes electron tail
+        next_state = wire_cell_state::electron_tail;
+    }
+    else if (cell_state == wire_cell_state::electron_tail) {
+        // Electron tail becomes conductor
+        next_state = wire_cell_state::conductor;
+    }
+    else if (cell_state == wire_cell_state::conductor) {
+        // Count electron heads in the Moore neighborhood using explicit indexing
+        int electron_head_count = 
+            (current[(y - 1) * width + (x - 1)] == wire_cell_state::electron_head) + // Top-left
+            (current[(y - 1) * width +  x     ] == wire_cell_state::electron_head) + // Top
+            (current[(y - 1) * width + (x + 1)] == wire_cell_state::electron_head) + // Top-right
+            (current[ y      * width + (x - 1)] == wire_cell_state::electron_head) + // Left
+            (current[ y      * width + (x + 1)] == wire_cell_state::electron_head) + // Right
+            (current[(y + 1) * width + (x - 1)] == wire_cell_state::electron_head) + // Bottom-left
+            (current[(y + 1) * width +  x     ] == wire_cell_state::electron_head) + // Bottom
+            (current[(y + 1) * width + (x + 1)] == wire_cell_state::electron_head);  // Bottom-right
+        
+        // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
+        if (electron_head_count == 1 || electron_head_count == 2) {
+            next_state = wire_cell_state::electron_head;
+        } else {
             next_state = wire_cell_state::conductor;
-            break;
-            
-        case wire_cell_state::conductor:
-            // Count electron heads in the Moore neighborhood using explicit indexing
-            int electron_head_count = 
-                (current[(y - 1) * width + (x - 1)] == wire_cell_state::electron_head) + // Top-left
-                (current[(y - 1) * width +  x     ] == wire_cell_state::electron_head) + // Top
-                (current[(y - 1) * width + (x + 1)] == wire_cell_state::electron_head) + // Top-right
-                (current[ y      * width + (x - 1)] == wire_cell_state::electron_head) + // Left
-                (current[ y      * width + (x + 1)] == wire_cell_state::electron_head) + // Right
-                (current[(y + 1) * width + (x - 1)] == wire_cell_state::electron_head) + // Bottom-left
-                (current[(y + 1) * width +  x     ] == wire_cell_state::electron_head) + // Bottom
-                (current[(y + 1) * width + (x + 1)] == wire_cell_state::electron_head);  // Bottom-right
-            
-            // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
-            if (electron_head_count == 1 || electron_head_count == 2) {
-                next_state = wire_cell_state::electron_head;
-            } else {
-                next_state = wire_cell_state::conductor;
-            }
-            break;
+        }
     }
     
     next[idx] = next_state;
