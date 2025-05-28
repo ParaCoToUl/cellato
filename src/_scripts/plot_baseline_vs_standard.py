@@ -56,7 +56,8 @@ def process_csv(csv_path):
 def create_plot(df, output_path):
     """Create a side-by-side plot comparing CPU and CUDA implementations"""
     # Get unique automata for the x-axis
-    automata = df['automaton'].unique()
+    # automata = df['automaton'].unique()
+    automata = ['game-of-life', 'forest-fire', 'wire', 'greenberg-hastings']
     
     # Use publication-quality settings
     plt.style.use('seaborn-v0_8-whitegrid')
