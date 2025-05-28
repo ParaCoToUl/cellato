@@ -80,19 +80,28 @@ def main():
         print(f"{GREY_COLOR}Running tests for {automaton}...{RESET_COLOR}", file=sys.stderr)
         
         # Test cases: baseline and standard on both CPU and CUDA
-        test_cases = [
+        test_cases_cpu = [
             # Baseline CPU
             f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
             # Standard CPU
             f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # Baseline CUDA
-            f"--automaton {automaton} --seed 42 --device CUDA --reference_impl baseline --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
-
-            # Standard CUDA
-            f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}"
         ]
+
+        test_cases_gpu = [
+            (
+                # Baseline CUDA
+                f"--automaton {automaton} --seed 42 --device CUDA --reference_impl baseline --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
+
+                # Standard CUDA
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}"
+            ) 
+            for block_y in [1, 2, 4, 8, 16, 32]
+        ]
+
+        #flatten the list of test cases
+        test_cases = test_cases_cpu + [case for sublist in test_cases_gpu for case in sublist]
         
         for test_case in test_cases:
             print(f"{GREY_COLOR}Running: {test_case}{RESET_COLOR}", file=sys.stderr)

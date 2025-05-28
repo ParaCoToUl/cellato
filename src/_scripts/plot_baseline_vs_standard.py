@@ -7,19 +7,48 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def process_csv(csv_path):
-    """Process the CSV file and extract relevant data"""
+    """Process the CSV file and extract relevant data, finding best y_block_size for each case"""
     # Read CSV file
     df = pd.read_csv(csv_path)
     
-    # Filter for baseline and standard implementations only
+    # Process baseline implementations
     baseline_df = df[df['reference_impl'] == 'baseline'].copy()
-    standard_df = df[(df['traverser'] == 'simple') & 
-                     (df['evaluator'] == 'standard') & 
-                     (df['layout'] == 'standard')].copy()
     
-    # Combine dataframes for easier plotting
+    # Process standard implementations
+    standard_df = df[(df['traverser'] == 'simple') & 
+                    (df['evaluator'] == 'standard') & 
+                    (df['layout'] == 'standard')].copy()
+    
+    # Find best y_block_size for each automaton and device
+    best_baseline = []
+    best_standard = []
+    
+    # Group by automaton and device to find the best y_block_size
+    for (automaton, device), group in baseline_df.groupby(['automaton', 'device']):
+        if len(group) > 1:  # There are multiple block sizes to choose from
+            best_row = group.loc[group['average_time_per_cell_ns'].idxmin()]
+            best_baseline.append(best_row)
+            print(f"Best y_block_size for {automaton} on {device} (baseline): {best_row['cuda_block_size_y']} with {best_row['average_time_per_cell_ns']:.6f} ns/cell")
+        else:  # Only one row (likely CPU which doesn't use block sizes)
+            best_baseline.append(group.iloc[0])
+    
+    for (automaton, device), group in standard_df.groupby(['automaton', 'device']):
+        if len(group) > 1:  # There are multiple block sizes to choose from
+            best_row = group.loc[group['average_time_per_cell_ns'].idxmin()]
+            best_standard.append(best_row)
+            print(f"Best y_block_size for {automaton} on {device} (standard): {best_row['cuda_block_size_y']} with {best_row['average_time_per_cell_ns']:.6f} ns/cell")
+        else:  # Only one row (likely CPU which doesn't use block sizes)
+            best_standard.append(group.iloc[0])
+    
+    # Convert lists back to dataframes
+    baseline_df = pd.DataFrame(best_baseline)
+    standard_df = pd.DataFrame(best_standard)
+    
+    # Add implementation column for plotting
     baseline_df['implementation'] = 'baseline'
     standard_df['implementation'] = 'standard'
+    
+    # Combine dataframes for plotting
     plot_df = pd.concat([baseline_df, standard_df])
     
     return plot_df
