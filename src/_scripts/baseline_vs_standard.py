@@ -8,9 +8,13 @@ import re
 AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings"]
 
 # Set consistent parameters
-GRID_SIZE = 16384  # Reasonably sized grid for performance comparison
-CUDA_STEPS = 1000  # Number of steps for each run
-CPU_STEPS = 50     # Number of steps for CPU runs
+class CUDA:
+    GRID_SIZE = 16384  # Reasonably sized grid for performance comparison
+    STEPS = 1000       # Number of steps for each run
+class CPU:
+    GRID_SIZE = 4096   # Reasonably sized grid for performance comparison
+    STEPS = 50         # Number of steps for CPU runs
+
 ROUNDS = 5         # Number of measurement rounds
 WARMUP = 2         # Number of warmup rounds
 
@@ -75,16 +79,16 @@ def main():
         # Test cases: baseline and standard on both CPU and CUDA
         test_cases = [
             # Baseline CPU
-            f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {GRID_SIZE} --y_size {GRID_SIZE} --steps {CPU_STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
             # Standard CPU
-            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {GRID_SIZE} --y_size {GRID_SIZE} --steps {CPU_STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
             # Baseline CUDA
-            f"--automaton {automaton} --seed 42 --device CUDA --reference_impl baseline --x_size {GRID_SIZE} --y_size {GRID_SIZE} --steps {CUDA_STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            f"--automaton {automaton} --seed 42 --device CUDA --reference_impl baseline --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
             # Standard CUDA
-            f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --x_size {GRID_SIZE} --y_size {GRID_SIZE} --steps {CUDA_STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}"
+            f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}"
         ]
         
         for test_case in test_cases:
