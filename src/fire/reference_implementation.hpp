@@ -33,6 +33,7 @@ struct runner {
         if (grid) {
             for (std::size_t i = 0; i < _x_size * _y_size; ++i) {
                 _current_grid[i] = grid[i];
+                _next_grid[i] = grid[i];
             }
         }
     }
@@ -108,15 +109,6 @@ struct runner {
                     }
                     
                     _next_grid[y * _x_size + x] = next;
-                }
-            }
-            
-            // Copy border cells unchanged
-            for (std::size_t y = 0; y < _y_size; ++y) {
-                for (std::size_t x = 0; x < _x_size; ++x) {
-                    if (x == 0 || x == _x_size - 1 || y == 0 || y == _y_size - 1) {
-                        _next_grid[y * _x_size + x] = _current_grid[y * _x_size + x];
-                    }
                 }
             }
             
