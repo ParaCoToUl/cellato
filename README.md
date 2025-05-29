@@ -44,10 +44,10 @@ With zero-overhead abstractions powered by template metaprogramming, Cellato let
 
 | Automaton              | Description                               | Cellato Rule                     |
 | ---------------------- | ----------------------------------------- | -------------------------------- |
-| **Game of Life**       | Conway’s binary grid (Moore neighborhood) | `src/game_of_life/algorithm.hpp` |
-| **Forest Fire**        | Tree ↔ Fire ↔ Ash ↔ Empty (von Neumann)   | `src/fire/config.hpp`            |
-| **Wireworld**          | Digital circuit simulator (4 states)      | `src/wire/config.hpp`            |
-| **Greenberg–Hastings** | Excitable medium with refractory states   | `src/greenberg/config.hpp`       |
+| **Game of Life**       | Conway’s binary grid (Moore neighborhood) | [`src/game_of_life/algorithm.hpp`](./src/game_of_life/algorithm.hpp) |
+| **Forest Fire**        | Tree ↔ Fire ↔ Ash ↔ Empty (von Neumann)   | [`src/fire/algorithm.hpp`](./src/fire/algorithm.hpp)            |
+| **Wireworld**          | Digital circuit simulator (4 states)      | [`src/wire/algorithm.hpp`](./src/wire/algorithm.hpp)            |
+| **Greenberg–Hastings** | Excitable medium with refractory states   | [`src/greenberg/algorithm.hpp`](./src/greenberg/algorithm.hpp)       |
 
 ### 🔗 Related Work
 
@@ -55,10 +55,10 @@ We also implemented Game of Life in several other frameworks under `src/_relwork
 
 | Framework | Path                      |
 | --------- | ------------------------- |
-| Kokkos    | `src/_relwork/kokkos/`    |
-| GridTools | `src/_relwork/gridtools/` |
-| Halide    | `src/_relwork/halide/`    |
-| AN5D      | `src/_relwork/an5d/`      |
+| Kokkos    | [`src/_relwork/kokkos/`](./src/_relwork/kokkos/)    |
+| GridTools | [`src/_relwork/gridtools/`](./src/_relwork/gridtools/) |
+| Halide    | [`src/_relwork/halide/`](./src/_relwork/halide/)    |
+| AN5D      | [`src/_relwork/an5d/`](./src/_relwork/an5d/)      |
 
 > **Note:** All are integrated into our CLI test harness except AN5D, which you must build separately with its `Makefile`.
 
@@ -70,10 +70,10 @@ All core headers live in [`include/`](./include/). Key components:
 
 | Component                  | Header                                                                                                     |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **AST nodes**              | `include/core/ast.hpp`                                                                                     |
-| **Evaluators**             | `include/evaluators/standard.hpp` • `bit_array.hpp` • `bit_plates.hpp`                                     |
-| **Memory layouts**         | `include/memory/standard_grid.hpp` • `bit_array_grid.hpp` • `bit_plates_grid.hpp`                          |
-| **Traversors (iteration)** | CPU: `traversers/cpu/simple.hpp`<br>CUDA: `traversers/cuda/simple.{hpp,cu}`, `…/spatial_blocking.{hpp,cu}` |
+| **AST nodes**              | [`include/core/ast.hpp`](./include/core/ast.hpp)                                                                                     |
+| **Evaluators**             | [`include/evaluators/standard.hpp`](./include/evaluators/standard.hpp) • [`bit_array.hpp`](./include/evaluators/bit_array.hpp) • [`bit_plates.hpp`](./include/evaluators/bit_plates.hpp)                                    |
+| **Memory layouts**         | [`include/memory/standard_grid.hpp`](./include/memory/standard_grid.hpp) • [`bit_array_grid.hpp`](include/memory/bit_array_grid.hpp) • [`bit_plates_grid.hpp`](./include/memory/bit_plates_grid.hpp)                          |
+| **Traversors (iteration)** | CPU: [`traversers/cpu/simple.hpp`](./traversers/cpu/simple.hpp)<br>CUDA: `traversers/cuda/simple.{hpp,cu}` [.hpp](./include/traversers/cuda/simple.hpp) [.cu](./include/traversers/cuda/simple.cu), `…/spatial_blocking.{hpp,cu}` [.hpp](./include/traversers/cuda/spatial_blocking.hpp) [.cu](./include/traversers/cuda/spatial_blocking.cu) |
 
 
 ## 📖 Tutorial
