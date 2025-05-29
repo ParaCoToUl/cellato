@@ -64,17 +64,17 @@ def create_plot(df, output_path):
     plt.rcParams.update({
         'font.family': 'serif',
         'font.serif': ['Times New Roman', 'DejaVu Serif', 'Palatino', 'Computer Modern Roman'],
-        'font.size': 12,
-        'axes.labelsize': 14,
-        'axes.titlesize': 16,
-        'xtick.labelsize': 12,
-        'ytick.labelsize': 12,
-        'legend.fontsize': 12,
+        'font.size': 15,
+        'axes.labelsize': 17,
+        'axes.titlesize': 19,
+        'xtick.labelsize': 15,
+        'ytick.labelsize': 15,
+        'legend.fontsize': 15,
         'figure.dpi': 300
     })
     
-    # Set up the figure with two subplots side by side
-    fig, (ax_cpu, ax_cuda) = plt.subplots(1, 2, figsize=(10, 5))
+    # Set up the figure with two subplots side by side - make it taller
+    fig, (ax_cpu, ax_cuda) = plt.subplots(1, 2, figsize=(10, 5.2))  # Increased height from 5 to 6.5
     
     # Define consistent colors for baseline and standard implementations
     baseline_color = '#1f77b4'  # Blue
@@ -84,8 +84,8 @@ def create_plot(df, output_path):
     baseline_hatch = ''  # No hatching
     standard_hatch = '//'  # Diagonal lines
     
-    # Set width of bars
-    bar_width = 0.35
+    # Set width of bars - make narrower
+    bar_width = 0.25  # Reduced from 0.35
     
     # Set positions of bars on X axis
     index = np.arange(len(automata))
@@ -142,8 +142,9 @@ def create_plot(df, output_path):
                 standard_bars.append(bar)
     
     # Customize the plots
-    ax_cpu.set_ylabel('Time per cell (ns)', fontweight='bold')
-    ax_cuda.set_ylabel('Time per cell (ns)', fontweight='bold')
+    # Move y-axis label further from the plot with labelpad
+    ax_cpu.set_ylabel('Time per cell [ns]', labelpad=15)  # Added labelpad=15
+    # ax_cuda.set_ylabel('Time per cell (ns)', fontweight='bold')
     
     ax_cpu.set_xticks(index)
     ax_cuda.set_xticks(index)
@@ -162,27 +163,23 @@ def create_plot(df, output_path):
     ax_cpu.grid(True, linestyle='--', alpha=0.7, axis='y')
     ax_cuda.grid(True, linestyle='--', alpha=0.7, axis='y')
     
-    # Add device labels to identify the plots
-    ax_cpu.text(0.5, 0.95, 'CPU', transform=ax_cpu.transAxes, 
-                horizontalalignment='center', fontsize=16, fontweight='bold')
-    ax_cuda.text(0.5, 0.95, 'CUDA', transform=ax_cuda.transAxes, 
-                 horizontalalignment='center', fontsize=16, fontweight='bold')
+    # Add device labels as titles above the plots (rather than inside them)
+    ax_cpu.set_title('CPU', fontsize=18, fontweight='bold', pad=15)
+    ax_cuda.set_title('CUDA', fontsize=18, fontweight='bold', pad=15)
     
-    # Add a single legend for both subplots
-    fig.legend(
+    # Add legend to the top left corner of the CPU graph (instead of between subplots)
+    ax_cpu.legend(
         [baseline_bars[0], standard_bars[0]], 
         ['Baseline', 'Cellato (Standard)'], 
-        loc='lower center', 
-        bbox_to_anchor=(0.5, -0.12),
-        ncol=2,
+        loc='upper left',
         frameon=True,
         fancybox=False,
-        edgecolor='black'
+        edgecolor='black',
+        ncol=1  # Stack vertically instead of horizontally
     )
     
     # Adjust subplot spacing
     plt.tight_layout()
-    plt.subplots_adjust(bottom=0.2)  # Make room for the legend below
     
     # Save as both PNG and PDF for publication
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
