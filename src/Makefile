@@ -54,8 +54,8 @@ CUDA_SRCS = $(foreach dir,$(CUDA_DIRS),$(wildcard $(dir)/*.cu))
 CUDA_OBJS = $(patsubst %.cu,$(OBJ_DIR)/%.o,$(notdir $(CUDA_SRCS)))
 
 # Main targets
-TARGET = $(BIN_DIR)/cellib_experiments
-TEST_TARGET = $(BIN_DIR)/cellib_tests
+TARGET = $(BIN_DIR)/cellato
+TEST_TARGET = $(BIN_DIR)/cellato_tests
 
 ifeq ($(ENABLE_KOKKOS), ON)
 DEFINES += -DENABLE_KOKKOS

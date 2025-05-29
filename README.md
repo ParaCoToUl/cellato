@@ -1,100 +1,191 @@
-# Cellular Beauty: A DSL for Cellular Automata 🧬🔍
+# Cellato: A DSL for Cellular Automata 🧬🔍
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![doi](https://img.shields.io/badge/DOI-TBD-blue)](https://doi.org/TBD)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![doi](https://img.shields.io/badge/DOI-TODO-blue)](https://doi.org/TODO)
 
-This repository is associated with the following paper:  
+This repository accompanies our paper:
 
 ```
-@article{brabec2023cellato,
-  title={Cellato: a DSL for Cellular Automata based on C++ Template Meta-programming},
-  author={Brabec, Maty\'{a}\v{s} and Klepl, Ji\v{r}\'{\i} and Kruli\v{s}, Martin},
-  journal={TBD},
-  year={2023},
-  publisher={TBD}
+@article{
+    TODO
 }
 ```
 
-![Cellular Automata Examples](./ca-examples.gif)
+## 🚀 Overview
 
-## About  
+Cellular automata (CA) are versatile models used across physics, biology, computer science, and environmental science. Unfortunately, most implementations conflate the **rule logic**, **evaluation strategy**, and **memory layout**, making it hard to experiment with new optimizations. **Cellato** solves this by offering an embedded C++ DSL that cleanly separates:
 
-Cellular automata (CA) are powerful modeling tools used across scientific disciplines, but their implementations often tightly couple algorithm logic, evaluation strategies, and memory layouts. **Cellato** addresses this limitation with a flexible, embedded C++ DSL that leverages template metaprogramming to express CA rules concisely. By cleanly separating four orthogonal concerns—Algorithm (rule), Evaluator (cell update), Layout (memory organization), and Traversor (iteration strategy)—Cellato enables users to experiment with different optimizations without modifying their rule logic.
+1. **Algorithm** (rule definition)
+2. **Evaluator** (how each cell is updated)
+3. **Layout** (memory representation)
+4. **Traversor** (iteration strategy)
 
-Cellato provides:
-- A type-level expression language for defining CA rules
-- Support for diverse memory layouts (standard arrays, bit-packed arrays, bit-plates)
-- Platform independence (CPU, CUDA) with the same rule definition
-- Efficient evaluators specialized for each layout
-- Zero overhead abstractions that match handwritten kernel performance
+With zero-overhead abstractions powered by template metaprogramming, Cellato lets you swap in different layouts (standard arrays, bit-packed arrays, bit-plates) and execution back-ends (CPU, CUDA) without touching your rule code.
 
-## Index  
+---
 
-The repository includes implementations of four canonical cellular automata and various optimizations:
+## 📂 Repository Structure
 
-| Component | Description | Link |  
-|-----------|-------------|------|  
-| **Game of Life** | Conway's Game of Life implementation using Cellato DSL | [Link](./src/game_of_life/algorithm.hpp) |  
-| **Forest Fire** | Forest Fire model with von Neumann neighborhood | [Link](./src/fire/config.hpp) |  
-| **Wireworld** | Digital circuit simulator with four states | [Link](./src/wire/config.hpp) |  
-| **Greenberg-Hastings** | Excitable medium with multiple refractory states | [Link](./src/greenberg/config.hpp) |
-| **Standard Layout** | Simple contiguous array layout | [Link](./src/memory/standard_grid.hpp) |
-| **Bit Array Layout** | Bit-packed representation for efficient storage | [Link](./src/memory/bit_array_grid.hpp) |
-| **Bit Plates Layout** | SOA-style bit planes for SIMD optimization | [Link](./src/memory/bit_plates_grid.hpp) |
-| **CPU Traverser** | Sequential and parallel CPU traversal | [Link](./src/traversers/cpu_traverser.hpp) |
-| **CUDA Traverser** | GPU execution with flexible tiling | [Link](./src/traversers/cuda_traverser.hpp) |
-| **Framework Comparison** | Benchmarks against Kokkos, GridTools, Halide, AN5D | [Link](./src/_relwork/) |
+```
+.
+├── LICENSE
+├── README.md
+├── include/             ← Cellato library headers
+├── src/
+│   ├── game_of_life/    ← Game of Life example
+│   ├── fire/            ← Forest Fire example
+│   ├── wire/            ← Wireworld example
+│   ├── greenberg/       ← Greenberg–Hastings example
+│   ├── _relwork/        ← Reference implementations
+│   └── _scripts/        ← Benchmark & plotting scripts
+└── results/             ← Benchmark outputs (CSV, PNG, PDF)
+```
 
-## Tutorial  
+### 🔍 Canonical Models
 
-### Prerequisites
+| Automaton              | Description                               | Cellato Rule                     |
+| ---------------------- | ----------------------------------------- | -------------------------------- |
+| **Game of Life**       | Conway’s binary grid (Moore neighborhood) | `src/game_of_life/algorithm.hpp` |
+| **Forest Fire**        | Tree ↔ Fire ↔ Ash ↔ Empty (von Neumann)   | `src/fire/config.hpp`            |
+| **Wireworld**          | Digital circuit simulator (4 states)      | `src/wire/config.hpp`            |
+| **Greenberg–Hastings** | Excitable medium with refractory states   | `src/greenberg/config.hpp`       |
 
-- C++17 compatible compiler (GCC 9+ recommended)
-- CUDA toolkit 11.0+ (for GPU support)
-- CMake 3.15+
+### 🔗 Related Work
+
+We also implemented Game of Life in several other frameworks under `src/_relwork/`:
+
+| Framework | Path                      |
+| --------- | ------------------------- |
+| Kokkos    | `src/_relwork/kokkos/`    |
+| GridTools | `src/_relwork/gridtools/` |
+| Halide    | `src/_relwork/halide/`    |
+| AN5D      | `src/_relwork/an5d/`      |
+
+> **Note:** All are integrated into our CLI test harness except AN5D, which you must build separately with its `Makefile`.
+
+---
+
+## 🛠️ Cellato Library
+
+All core headers live in [`include/`](./include/). Key components:
+
+| Component                  | Header                                                                                                     |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **AST nodes**              | `include/core/ast.hpp`                                                                                     |
+| **Evaluators**             | `include/evaluators/standard.hpp` • `bit_array.hpp` • `bit_plates.hpp`                                     |
+| **Memory layouts**         | `include/memory/standard_grid.hpp` • `bit_array_grid.hpp` • `bit_plates_grid.hpp`                          |
+| **Traversors (iteration)** | CPU: `traversers/cpu/simple.hpp`<br>CUDA: `traversers/cuda/simple.{hpp,cu}`, `…/spatial_blocking.{hpp,cu}` |
+
+
+## 📖 Tutorial
+
+### 🔧 Prerequisites
+
+* **Compiler:** GCC 13.2.0
+* **CUDA:** NVCC V12.8.61
 
 ### Compilation
 
 ```bash
-# Clone the repository
-git clone https://github.com/matyas-brabec/cellato
+# Clone & enter
+git clone https://github.com/matyas-brabec/cellato.git
 cd cellato
 
-# Build
+# Build everything
 make
+./bin/cellato <options>
 
-# Run tests (optional)
-make test
+# Or via Make:
+make run ARGS="<options>"
 ```
 
-### Running Examples
+To enable reference back-ends, toggle these `Makefile` flags (default OFF):
 
-The main executable provides a command-line interface for running cellular automata simulations:
+```make
+ENABLE_KOKKOS   = OFF
+ENABLE_HALIDE   = OFF
+ENABLE_GRIDTOOLS= OFF
+```
+---
+
+### ▶️ Running Examples
 
 ```bash
-# Run Game of Life with standard layout on CPU
-./bin/cellib --automaton game-of-life --device CPU --traverser simple --evaluator standard --layout standard --x_size 256 --y_size 256 --steps 100
+# Game of Life on CPU, standard layout
+./bin/cellato \
+  --automaton game-of-life \
+  --device CPU \
+  --traverser simple \
+  --evaluator standard \
+  --layout standard \
+  --x_size 256 --y_size 256 \
+  --steps 100
 
-# Run Game of Life with bit array optimization on CUDA
-./bin/cellib --automaton game-of-life --device CUDA --traverser spacial_blocking --evaluator bit_array --layout bit_array --x_size 1024 --y_size 1024 --steps 1000 --cuda_block_size_x 32 --cuda_block_size_y 8
+# Game of Life on CUDA with bit-plates
+./bin/cellato \
+  --automaton game-of-life \
+  --device CUDA \
+  --traverser simple \
+  --evaluator bit_plates \
+  --layout bit_plates \
+  --x_size 4096 --y_size 4096 \
+  --steps 1000 \
+  --cuda_block_size_x 32 --cuda_block_size_y 8
 
-# Compare with reference implementations
-./bin/cellib --automaton game-of-life --reference_impl kokkos --x_size 2048 --y_size 2048 --steps 1000
+# Compare against Kokkos reference impl
+./bin/cellato \
+  --automaton game-of-life \
+  --reference_impl kokkos \
+  --x_size 2048 --y_size 2048 \
+  --steps 1000
 ```
 
-For analyzing and visualizing results, use the Python scripts in the `src/_scripts` directory:
+---
+## ⚙️ CLI Options
 
 ```bash
-# Generate CSV data comparing implementations
-./bin/cellib --automaton game-of-life --print_csv_header > results.csv
-./bin/cellib --automaton game-of-life --device CPU --traverser simple --evaluator standard --layout standard --x_size 1024 --y_size 1024 --steps 100 >> results.csv
-./bin/cellib --automaton game-of-life --device CPU --traverser simple --evaluator bit_array --layout bit_array --x_size 1024 --y_size 1024 --steps 100 >> results.csv
-
-# Create visualization from CSV
-cd src/_scripts
-python plot_comparison.py ../../results.csv
+Usage: ./cellato [options]
+Options:
+  --automaton <name>           Name of the automaton to run (game-of-life, forest-fire, wire, greenberg-hastings)
+  --device <CPU|CUDA>          Execution device
+  --traverser <name>           Traversal strategy (simple, spatial_blocking)
+  --evaluator <name>           Evaluator type (standard, bit_array, bit_plates)
+  --layout <name>              Memory layout (standard, bit_array, bit_plates)
+  --reference_impl <name>      Run reference implementation (standard, kokkos, halide)
+  --x_size <N>                 Grid width
+  --y_size <N>                 Grid height
+  --x_tile_size <N>            CUDA tile size in X (only with spatial_blocking)
+  --y_tile_size <N>            CUDA tile size in Y
+  --rounds <N>                 Number of benchmarking rounds
+  --warmup_rounds <N>          Number of warmup rounds
+  --steps <N>                  Number of CA time steps
+  --precision <32|64>          Word precision used by the `bit array` and `bit plates`
+  --seed <N>                   RNG seed for initialization
+  --print                      Print grid state after each step
+  --print_csv_header           Emit CSV header line
+  --cuda_block_size_x <N>      CUDA block X dimension (default: 32)
+  --cuda_block_size_y <N>      CUDA block Y dimension (default: 8)
+  --help                       Show this help message
 ```
 
-## Defining Your Own Cellular Automaton
+---
+
+## 📊 Scripts & Benchmarks
+
+Reproduce paper results via scripts in `src/_scripts/`:
+
+```bash
+# Generate raw CSV data
+python src/_scripts/baseline_vs_standard.py > results.csv
+
+# Plot comparison (requires pandas, matplotlib)
+python src/_scripts/plot_baseline_vs_standard.py results.csv
+```
+
+Outputs: `results/baseline_vs_standard_comparison.{png,pdf}`
+
+---
+
+## 🧩 Defining Your Own CA
 
 Cellato makes it easy to define new cellular automata using type-level expressions:
 
@@ -102,39 +193,31 @@ Cellato makes it easy to define new cellular automata using type-level expressio
 // Define states
 enum class my_cell_state { state_a, state_b, state_c };
 
-using state_a = state_constant<my_cell_state::state_a>;
-using state_b = state_constant<my_cell_state::state_b>;
-using state_c = state_constant<my_cell_state::state_c>;
+using state_a = state_constant< my_cell_state::state_a >;
+using state_b = state_constant< my_cell_state::state_b >;
+using state_c = state_constant< my_cell_state::state_c >;
 
 // Define predicates
-using is_state_a = p<current_state, equals, state_a>;
-using is_state_b = p<current_state, equals, state_b>;
-using is_state_c = p<current_state, equals, state_c>;
+using is_state_a = p< current_state, equals, state_a >;
+using is_state_b = p< current_state, equals, state_b >;
+using is_state_c = p< current_state, equals, state_c >;
 
 // Count neighbors in state_a using Moore neighborhood
-using state_a_cnt = count_neighbors<state_a, moore_8_neighbors>;
-using has_two_a_neighbors = p<state_a_cnt, equals, constant<2>>;
+using state_a_cnt = count_neighbors< state_a, moore_8_neighbors >;
+using has_two_a_neighbors = p< state_a_cnt, equals, constant<2> >;
 
 // Define transition rule
 using my_rule =
-  if_<is_state_a>::then_<
-    if_<has_two_a_neighbors>::then_<state_b>::else_<state_a>
-  >::elif_<is_state_b>::then_<
+  if_< is_state_a >::then_<
+    if_< has_two_a_neighbors >::then_< state_b >::else_< state_a >
+  >::elif_< is_state_b >::then_<
     state_c
   >::else_<
     state_a
   >;
-
-// Create configuration struct
-struct my_automaton_config {
-  using cell_state = my_cell_state;
-  using algorithm = my_rule;
-  using reference_implementation = my_reference_impl;
-  // ...other settings
-};
 ```
 
-## Results  
+## 📈 Results
 
 Our evaluations compared Cellato against four prominent stencil and DSL frameworks:
 
@@ -148,22 +231,25 @@ Our evaluations compared Cellato against four prominent stencil and DSL framewor
 
 Performance measurements on both CPU and GPU back-ends confirm that Cellato provides zero-overhead abstractions, matching handwritten kernels in throughput while offering significantly more flexibility in memory layout and evaluation strategies.
 
-Detailed benchmark results are available in the `results/` directory.
+Detailed benchmark results are available in the [~/results/](./results/) directory.
 
-## Future Work
+---
 
-We are actively working on:
-- Support for higher-dimensional grids (3D+)
-- Non-rectangular grid topologies (hexagonal, triangular)
-- Nondeterministic cellular automata with random transitions
-- Advanced stencil optimizations (temporal blocking, cache-aware scheduling)
-- MPI integration for distributed execution
-- Python frontend for improved usability
+## 🔭 Future Work
 
-## Contact us
+* **Higher-dimensional grids:** 3D+ support
+* **Non-rectangular topologies:** hexagonal, triangular
+* **Probabilistic CAs:** introduce random-node AST types
+* **Advanced traversors:** temporal blocking, NUMA-aware scheduling
+* **Distributed execution:** MPI-based traversor with halo exchange
+* **Framework integration:** embed Cellato evaluators into Kokkos/GridTools
 
-If you have any questions regarding the framework, our implementation, or if you have any suggestions, please feel free to contact us by raising [an issue](https://github.com/matyas-brabec/cellular-beauty/issues)!
+---
 
-## License
+## 📬 Contact
 
-This source code is licensed under the MIT license.
+If you have any questions regarding the framework, our implementation, or if you have any suggestions, please feel free to contact us by raising [an issue](https://github.com/matyas-brabec/cellato/issues)!
+
+## 📝 License
+
+This project is released under the [MIT License](./LICENSE).
