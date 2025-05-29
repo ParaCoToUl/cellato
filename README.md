@@ -127,6 +127,7 @@ ENABLE_GRIDTOOLS= OFF
   --traverser simple \
   --evaluator bit_plates \
   --layout bit_plates \
+  --precision 32
   --x_size 4096 --y_size 4096 \
   --steps 1000 \
   --cuda_block_size_x 32 --cuda_block_size_y 8
@@ -138,8 +139,8 @@ ENABLE_GRIDTOOLS= OFF
   --x_size 2048 --y_size 2048 \
   --steps 1000
 ```
-
 ---
+
 ## ⚙️ CLI Options
 
 ```bash
@@ -165,6 +166,36 @@ Options:
   --cuda_block_size_x <N>      CUDA block X dimension (default: 32)
   --cuda_block_size_y <N>      CUDA block Y dimension (default: 8)
   --help                       Show this help message
+```
+
+### ✨ Supported Evaluator / Layout / Traverser Combinations
+
+We support three memory layouts, each with its matching evaluator. All can be run with the simple traverser. For the bit_array and bit_plates options, you must specify `--precision`.
+
+```bash
+# ▶️ Standard layout + evaluator
+./bin/cellato \
+  --evaluator standard \
+  --layout standard \
+  --traverser simple \
+  [other options…]
+
+# ▶️ Bit-array layout + evaluator (32-bit)
+./bin/cellato \
+  --evaluator bit_array \
+  --layout bit_array \
+  --precision 32 \
+  --traverser simple \
+  [other options…]
+
+# ▶️ Bit-plates layout + evaluator (32-bit)
+./bin/cellato \
+  --evaluator bit_plates \
+  --layout bit_plates \
+  --precision 32 \
+  --traverser simple \
+  [other options…]
+
 ```
 
 ---
