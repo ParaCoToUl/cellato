@@ -171,7 +171,7 @@ def create_plot(df, output_path):
     # Add a single legend for both subplots
     fig.legend(
         [baseline_bars[0], standard_bars[0]], 
-        ['Baseline', 'Standard'], 
+        ['Baseline', 'Cellato (Standard)'], 
         loc='lower center', 
         bbox_to_anchor=(0.5, -0.12),
         ncol=2,
