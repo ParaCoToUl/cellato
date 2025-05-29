@@ -221,17 +221,15 @@ using my_rule =
 
 Our evaluations compared Cellato against four prominent stencil and DSL frameworks:
 
-| Framework     | Platform Independence | Memory Layout Flexibility | Explicit Vectorization | Optimization |
-|---------------|----------------------|---------------------------|------------------------|--------------|
-| **Cellato**   | ✅ CPU, CUDA         | ✅ Standard, bit-packed, bit-plates | ✅ Bit-level | ✅ User-defined |
-| **Kokkos**    | ✅ CPU, CUDA         | ⚠️ Major order only       | ❌ No                  | ⚠️ Only tiling |
-| **GridTools** | ✅ CPU, CUDA         | ⚠️ Major order only       | ❌ No                  | ⚠️ Only caching |
-| **Halide**    | ✅ CPU, CUDA         | ⚠️ Major order only       | ⚠️ SIMD only           | ✅ User-defined |
-| **AN5D**      | ✅ CPU, CUDA         | ❌ Fixed array layout      | ❌ No                  | ✅ User-defined |
+| Framework   | CPU & GPU | Bit-packed | Bit-plates | Vectorization | Native C++ |
+| ----------- | :-------: | :--------: | :--------: | :-----------: | :--------: |
+| **Cellato** |     ✅     |      ✅     |      ✅     |   Bit-level   |      ✅     |
+| Kokkos      |     ✅     |      ❌     |      ❌     |       ❌       |      ✅     |
+| GridTools   |     ✅     |      ❌     |      ❌     |       ❌       |      ✅     |
+| Halide      |     ✅     |      ❌     |      ❌     |      SIMD     |      ❌     |
+| AN5D        |     ❌     |      ❌     |      ❌     |       ❌       |      ❌     |
 
-Performance measurements on both CPU and GPU back-ends confirm that Cellato provides zero-overhead abstractions, matching handwritten kernels in throughput while offering significantly more flexibility in memory layout and evaluation strategies.
-
-Detailed benchmark results are available in the [~/results/](./results/) directory.
+Performance on standard layouts matches handwritten kernels, demonstrating zero-overhead abstraction.
 
 ---
 
