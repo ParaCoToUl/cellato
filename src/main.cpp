@@ -233,6 +233,12 @@ cellib::run::run_params get_params(int argc, char* argv[]) {
         "reference_impl", "cuda_block_size_x", "cuda_block_size_y"
     };
 
+    if (parser.exists("evaluator")) {
+        if (parser.get("evaluator") == "bit_plates" || parser.get("evaluator") == "bit_array") {
+            required.push_back("precision");
+        }
+    }
+
     if (parser.exists("reference_impl")) {
         for (const auto& no_longer_required : {
             "device", "traverser", "evaluator", "layout"
