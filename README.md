@@ -4,9 +4,9 @@
 
 This repository accompanies our paper:
 
-```
+```bibtex
 @article{
-    TODO
+  TODO
 }
 ```
 
@@ -17,15 +17,15 @@ Cellular automata (CA) are versatile models used across physics, biology, comput
 1. **Algorithm** (rule definition)
 2. **Evaluator** (how each cell is updated)
 3. **Layout** (memory representation)
-4. **Traversor** (iteration strategy)
+4. **Traverser** (iteration strategy)
 
-With zero-overhead abstractions powered by template metaprogramming, Cellato lets you swap in different layouts (standard arrays, bit-packed arrays, bit-plates) and execution back-ends (CPU, CUDA) without touching your rule code.
+With zero-overhead abstractions powered by template metaprogramming, Cellato lets you swap in different layouts (standard arrays, bit-packed arrays, bit-planes) and execution back-ends (CPU, CUDA) without touching your rule code.
 
 ---
 
 ## 📂 Repository Structure
 
-```
+```text
 .
 ├── LICENSE
 ├── README.md
@@ -46,7 +46,7 @@ With zero-overhead abstractions powered by template metaprogramming, Cellato let
 | ---------------------- | ----------------------------------------- | -------------------------------- |
 | **Game of Life**       | Conway’s binary grid (Moore neighborhood) | [`src/game_of_life/algorithm.hpp`](./src/game_of_life/algorithm.hpp) |
 | **Forest Fire**        | Tree ↔ Fire ↔ Ash ↔ Empty (von Neumann)   | [`src/fire/algorithm.hpp`](./src/fire/algorithm.hpp)            |
-| **Wireworld**          | Digital circuit simulator (4 states)      | [`src/wire/algorithm.hpp`](./src/wire/algorithm.hpp)            |
+| **WireWorld**          | Digital circuit simulator (4 states)      | [`src/wire/algorithm.hpp`](./src/wire/algorithm.hpp)            |
 | **Greenberg–Hastings** | Excitable medium with refractory states   | [`src/greenberg/algorithm.hpp`](./src/greenberg/algorithm.hpp)       |
 
 ### 🔗 Related Work
@@ -71,10 +71,9 @@ All core headers live in [`include/`](./include/). Key components:
 | Component                  | Header                                                                                                     |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | **AST nodes**              | [`include/core/ast.hpp`](./include/core/ast.hpp)                                                                                     |
-| **Evaluators**             | [`include/evaluators/standard.hpp`](./include/evaluators/standard.hpp) • [`bit_array.hpp`](./include/evaluators/bit_array.hpp) • [`bit_plates.hpp`](./include/evaluators/bit_plates.hpp)                                    |
-| **Memory layouts**         | [`include/memory/standard_grid.hpp`](./include/memory/standard_grid.hpp) • [`bit_array_grid.hpp`](include/memory/bit_array_grid.hpp) • [`bit_plates_grid.hpp`](./include/memory/bit_plates_grid.hpp)                          |
-| **Traversors (iteration)** | CPU: [`traversers/cpu/simple.hpp`](./traversers/cpu/simple.hpp)<br>CUDA: `traversers/cuda/simple.{hpp,cu}` [.hpp](./include/traversers/cuda/simple.hpp) [.cu](./include/traversers/cuda/simple.cu), `…/spatial_blocking.{hpp,cu}` [.hpp](./include/traversers/cuda/spatial_blocking.hpp) [.cu](./include/traversers/cuda/spatial_blocking.cu) |
-
+| **Evaluators**             | [`include/evaluators/standard.hpp`](./include/evaluators/standard.hpp) • [`bit_array.hpp`](./include/evaluators/bit_array.hpp) • [`bit_planes.hpp`](./include/evaluators/bit_planes.hpp)                                    |
+| **Memory layouts**         | [`include/memory/standard_grid.hpp`](./include/memory/standard_grid.hpp) • [`bit_array_grid.hpp`](include/memory/bit_array_grid.hpp) • [`bit_planes_grid.hpp`](./include/memory/bit_planes_grid.hpp)                          |
+| **Traversers (iteration)** | CPU: [`traversers/cpu/simple.hpp`](./traversers/cpu/simple.hpp)<br>CUDA: `traversers/cuda/simple.{hpp,cu}` [.hpp](./include/traversers/cuda/simple.hpp) [.cu](./include/traversers/cuda/simple.cu), `…/spatial_blocking.{hpp,cu}` [.hpp](./include/traversers/cuda/spatial_blocking.hpp) [.cu](./include/traversers/cuda/spatial_blocking.cu) |
 
 ## 📖 Tutorial
 
@@ -87,24 +86,44 @@ All core headers live in [`include/`](./include/). Key components:
 
 ```bash
 # Clone & enter
-git clone https://github.com/matyas-brabec/cellato.git
+git clone (REMOVED TO PRESERVE AUTHOR ANONYMITY REMOVED TO PRESERVE AUTHOR ANONYMITY DURING REVIEW)
 cd cellato
 
-# Build everything
-make
-./bin/cellato <options>
+# Build Cellato and the `baseline` reference implementation
+(cd src && make)
 
-# Or via Make:
-make run ARGS="<options>"
+
+# Run the CLI test harness
+./bin/cellato <options>
 ```
 
-To enable reference back-ends, toggle these `Makefile` flags (default OFF):
+(Optional) To enable more reference implementations, toggle these `Makefile` variables (default OFF):
 
 ```make
-ENABLE_KOKKOS   = OFF
-ENABLE_HALIDE   = OFF
-ENABLE_GRIDTOOLS= OFF
+ENABLE_KOKKOS=ON
+ENABLE_HALIDE=ON
+ENABLE_GRIDTOOLS=ON
 ```
+
+The implementations require their respective libraries installed. They can be installed into the `_deps` directory via the `src/Makefile` (note that this requires `git` and `cmake`; and it may take a significant amount of time to download and build them):
+
+```bash
+# Download submodules
+git submodule update --init
+
+make install_kokkos
+make install_halide
+make install_gridtools
+```
+
+Alternatively, you can install them system-wide and set the following make variables:
+
+```bash
+# Set paths to the Kokkos library (similarly for Halide and GridTools)
+KOKKOS_HOME_INCLUDE=/opt/kokkos/include
+KOKKOS_HOME_LIB="/opt/kokkos/lib /opt/kokkos/lib64"
+```
+
 ---
 
 ### ▶️ Running Examples
@@ -120,25 +139,26 @@ ENABLE_GRIDTOOLS= OFF
   --x_size 256 --y_size 256 \
   --steps 100
 
-# Game of Life on CUDA with bit-plates
+# Game of Life on CUDA with bit-planes
 ./bin/cellato \
   --automaton game-of-life \
   --device CUDA \
   --traverser simple \
-  --evaluator bit_plates \
-  --layout bit_plates \
+  --evaluator bit_planes \
+  --layout bit_planes \
   --precision 32
   --x_size 4096 --y_size 4096 \
   --steps 1000 \
   --cuda_block_size_x 32 --cuda_block_size_y 8
 
-# Compare against Kokkos reference impl
+# Compare against Kokkos reference impl if it is enabled
 ./bin/cellato \
   --automaton game-of-life \
   --reference_impl kokkos \
   --x_size 2048 --y_size 2048 \
   --steps 1000
 ```
+
 ---
 
 ## ⚙️ CLI Options
@@ -149,9 +169,9 @@ Options:
   --automaton <name>           Name of the automaton to run (game-of-life, forest-fire, wire, greenberg-hastings)
   --device <CPU|CUDA>          Execution device
   --traverser <name>           Traversal strategy (simple, spatial_blocking)
-  --evaluator <name>           Evaluator type (standard, bit_array, bit_plates)
-  --layout <name>              Memory layout (standard, bit_array, bit_plates)
-  --reference_impl <name>      Run reference implementation (standard, kokkos, halide)
+  --evaluator <name>           Evaluator type (standard, bit_array, bit_planes)
+  --layout <name>              Memory layout (standard, bit_array, bit_planes)
+  --reference_impl <name>      Run reference implementation (baseline, kokkos, halide, gridtools)
   --x_size <N>                 Grid width
   --y_size <N>                 Grid height
   --x_tile_size <N>            CUDA tile size in X (only with spatial_blocking)
@@ -159,7 +179,7 @@ Options:
   --rounds <N>                 Number of benchmarking rounds
   --warmup_rounds <N>          Number of warmup rounds
   --steps <N>                  Number of CA time steps
-  --precision <32|64>          Word precision used by the `bit array` and `bit plates`
+  --precision <32|64>          Word precision used by the `bit array` and `bit planes`
   --seed <N>                   RNG seed for initialization
   --print                      Print grid state after each step
   --print_csv_header           Emit CSV header line
@@ -170,7 +190,22 @@ Options:
 
 ### ✨ Supported Evaluator / Layout / Traverser Combinations
 
-We support three memory layouts, each with its matching evaluator. All can be run with the simple traverser. For the bit_array and bit_plates options, you must specify `--precision`.
+We support three memory layouts, each with its matching evaluator. All can be run with the simple traverser. For the bit_array and bit_planes options, you must specify `--precision`.
+
+Example:
+
+```bash
+./bin/cellato \
+  --automaton game-of-life \
+  --device CPU \
+  --traverser simple \
+  --evaluator standard \
+  --layout standard \
+  --x_size 256 --y_size 256 \
+  --steps 100
+```
+
+Examples for each combination:
 
 ```bash
 # ▶️ Standard layout + evaluator
@@ -188,10 +223,10 @@ We support three memory layouts, each with its matching evaluator. All can be ru
   --traverser simple \
   [other options…]
 
-# ▶️ Bit-plates layout + evaluator (32-bit)
+# ▶️ Bit-planes layout + evaluator (32-bit)
 ./bin/cellato \
-  --evaluator bit_plates \
-  --layout bit_plates \
+  --evaluator bit_planes \
+  --layout bit_planes \
   --precision 32 \
   --traverser simple \
   [other options…]
@@ -208,7 +243,7 @@ Reproduce paper results via scripts in `src/_scripts/`:
 # Generate raw CSV data
 python src/_scripts/baseline_vs_standard.py > results.csv
 
-# Plot comparison (requires pandas, matplotlib)
+# Plot comparison (requires pandas, matplotlib, numpy)
 python src/_scripts/plot_baseline_vs_standard.py results.csv
 ```
 
@@ -252,7 +287,7 @@ using my_rule =
 
 Our evaluations compared Cellato against four prominent stencil and DSL frameworks:
 
-| Framework   | CPU & GPU | Bit-packed | Bit-plates | Vectorization | Native C++ |
+| Framework   | CPU & GPU | Bit-packed | Bit-planes | Vectorization | Native C++ |
 | ----------- | :-------: | :--------: | :--------: | :-----------: | :--------: |
 | **Cellato** |     ✅     |      ✅     |      ✅     |   Bit-level   |      ✅     |
 | Kokkos      |     ✅     |      ❌     |      ❌     |       ❌       |      ✅     |
@@ -269,15 +304,11 @@ Performance on standard layouts matches handwritten kernels, demonstrating zero-
 * **Higher-dimensional grids:** 3D+ support
 * **Non-rectangular topologies:** hexagonal, triangular
 * **Probabilistic CAs:** introduce random-node AST types
-* **Advanced traversors:** temporal blocking, NUMA-aware scheduling
-* **Distributed execution:** MPI-based traversor with halo exchange
+* **Advanced traversers:** temporal blocking, NUMA-aware scheduling
+* **Distributed execution:** MPI-based traverser with halo exchange
 * **Framework integration:** embed Cellato evaluators into Kokkos/GridTools
 
 ---
-
-## 📬 Contact
-
-If you have any questions regarding the framework, our implementation, or if you have any suggestions, please feel free to contact us by raising [an issue](https://github.com/matyas-brabec/cellato/issues)!
 
 ## 📝 License
 
