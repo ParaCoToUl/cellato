@@ -5,9 +5,9 @@ script_dir=$(dirname "$0")
 # Uncomment one of these test configurations:
 
 # Game of Life with standard grid on CUDA
-args="--automaton game-of-life \
---device CUDA --layout standard --traverser simple --evaluator standard \
---warmup_rounds 3 --rounds 10 \
+args="--automaton wire --precision 64 \
+--device CPU --layout standard --traverser simple --evaluator standard \
+--warmup_rounds 0 --rounds 1 \
 --steps 100 --x_size 128 --y_size 128"
 
 # Fire automaton with bit_array grid on CUDA
@@ -33,4 +33,4 @@ if [ "$should_remove" == "clean" ]; then
 fi
 
 cd $script_dir
-srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make run ARGS="$args"
+srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make -j run ARGS="$args"

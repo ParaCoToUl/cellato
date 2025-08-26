@@ -29,38 +29,53 @@ using namespace cellato::ast;
 using namespace cellato::core::bitwise;
 using namespace cellato::memory::grids::utils;
 
-template <typename cell_row_type, typename state_dictionary_type, typename Expression>
-struct evaluator {};
+
+template <typename cell_row_type, typename state_dictionary_type, template <typename, typename> class recursive_evaluator>
+struct implementation_params {
+    using cell_row_t = cell_row_type;
+    using state_dict_t = state_dictionary_type;
+    
+    template <typename params, typename Expression>
+    using evaluator_t = recursive_evaluator<params, Expression>;
+};
+
+template <typename params, typename Expression>
+struct _evaluator_impl {};
+
+template <typename cell_row_type,  typename state_dictionary_type, typename Expression>
+using evaluator = _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
 
 template <typename cell_row_type, typename state_dictionary_type>
 using grid_cell_data_type = repeated_tuple_t<cell_row_type*, state_dictionary_type::needed_bits>;
 
-template <typename cell_row_type, typename state_dictionary_type>
+template <typename params>
 using state_t = cellato::memory::grids::point_in_grid<
-    grid_cell_data_type<cell_row_type, state_dictionary_type>>;
+    grid_cell_data_type<typename params::cell_row_t, typename params::state_dict_t>>;
 
-template <typename cell_row_type, typename state_dictionary_type, auto Value>
-struct evaluator<cell_row_type, state_dictionary_type, constant<Value>> {
-    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
-        return vector_int_factory::from_constant<cell_row_type, Value>();
+template <typename params, auto Value>
+struct _evaluator_impl<params, constant<Value>> {
+    CUDA_CALLABLE static auto evaluate(state_t<params> /* state */) {
+        return vector_int_factory::from_constant<typename params::cell_row_t, Value>();
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, auto Value>
-struct evaluator<cell_row_type, state_dictionary_type, state_constant<Value>> {
-    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> /* state */) {
-        constexpr auto index = state_dictionary_type::state_to_index(Value);
-        return vector_int_factory::from_constant<cell_row_type, index>();
+template <typename params, auto Value>
+struct _evaluator_impl<params, state_constant<Value>> {
+    using state_dict_type = typename params::state_dict_t;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> /* state */) {
+        constexpr auto index = state_dict_type::state_to_index(Value);
+        return vector_int_factory::from_constant<typename params::cell_row_t, index>();
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename Condition, typename Then, typename Else>
-struct evaluator<cell_row_type, state_dictionary_type, if_then_else<Condition, Then, Else>> {
+template <typename params, typename Condition, typename Then, typename Else>
+struct _evaluator_impl<params, if_then_else<Condition, Then, Else>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
         auto condition = evaluator_t<Condition>::evaluate(state);
         auto then_part = evaluator_t<Then>::evaluate(state);
         auto else_part = evaluator_t<Else>::evaluate(state);
@@ -72,41 +87,41 @@ struct evaluator<cell_row_type, state_dictionary_type, if_then_else<Condition, T
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
-struct evaluator<cell_row_type, state_dictionary_type, and_<Left, Right>> {
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, and_<Left, Right>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
-        cell_row_type left = evaluator_t<Left>::evaluate(state);
-        cell_row_type right = evaluator_t<Right>::evaluate(state);
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        typename params::cell_row_t left = evaluator_t<Left>::evaluate(state);
+        typename params::cell_row_t right = evaluator_t<Right>::evaluate(state);
 
         return left & right;
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
-struct evaluator<cell_row_type, state_dictionary_type, or_<Left, Right>> {
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, or_<Left, Right>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
-        cell_row_type left = evaluator_t<Left>::evaluate(state);
-        cell_row_type right = evaluator_t<Right>::evaluate(state);
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        typename params::cell_row_t left = evaluator_t<Left>::evaluate(state);
+        typename params::cell_row_t right = evaluator_t<Right>::evaluate(state);
 
         return left | right;
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
-struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, equals<Left, Right>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static auto evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
@@ -114,23 +129,27 @@ struct evaluator<cell_row_type, state_dictionary_type, equals<Left, Right>> {
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
-struct evaluator<cell_row_type, state_dictionary_type, greater_than<Left, Right>> {
-    CUDA_CALLABLE static cell_row_type evaluate(state_t<cell_row_type, state_dictionary_type> state) {
-        auto left = evaluator<cell_row_type, state_dictionary_type, Left>::evaluate(state);
-        auto right = evaluator<cell_row_type, state_dictionary_type, Right>::evaluate(state);
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, greater_than<Left, Right>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto left = evaluator_t<Left>::evaluate(state);
+        auto right = evaluator_t<Right>::evaluate(state);
 
         return left.greater_than(right);
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename Left, typename Right>
-struct evaluator<cell_row_type, state_dictionary_type, not_equals<Left, Right>> {
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, not_equals<Left, Right>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static bool evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    CUDA_CALLABLE static bool evaluate(state_t<params> state) {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
@@ -138,11 +157,13 @@ struct evaluator<cell_row_type, state_dictionary_type, not_equals<Left, Right>> 
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, int x_offset, int y_offset>
-struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_offset>> {
-    static constexpr int vector_width_bits = sizeof(cell_row_type) * 8;
+template <typename params, int x_offset, int y_offset>
+struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
+    static constexpr int vector_width_bits = sizeof(typename params::cell_row_t) * 8;
 
-    using eval_state_t = state_t<cell_row_type, state_dictionary_type>;
+    using eval_state_t = state_t<params>;
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
 
     constexpr static std::size_t x_offset_unsigned = static_cast<std::size_t>(x_offset);
     constexpr static std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
@@ -213,17 +234,20 @@ struct evaluator<cell_row_type, state_dictionary_type, neighbor_at<x_offset, y_o
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename cell_state_type, cell_state_type CellStateValue>
-struct evaluator<
-    cell_row_type, state_dictionary_type,
+template <typename params, typename cell_state_type, cell_state_type CellStateValue>
+struct _evaluator_impl<
+    params,
     count_neighbors<
         state_constant<CellStateValue>,
         moore_8_neighbors>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static vector_int<cell_row_type, 4> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    CUDA_CALLABLE static vector_int<typename params::cell_row_t, 4> evaluate(state_t<params> state) {
         constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
         auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
@@ -255,17 +279,20 @@ struct evaluator<
     }
 };
 
-template <typename cell_row_type, typename state_dictionary_type, typename cell_state_type, cell_state_type CellStateValue>
-struct evaluator<
-    cell_row_type, state_dictionary_type,
+template <typename params, typename cell_state_type, cell_state_type CellStateValue>
+struct _evaluator_impl<
+    params,
     count_neighbors<
         state_constant<CellStateValue>,
         von_neumann_4_neighbors>> {
 
     template <typename E>
-    using evaluator_t = evaluator<cell_row_type, state_dictionary_type, E>;
+    using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    CUDA_CALLABLE static vector_int<cell_row_type, 3> evaluate(state_t<cell_row_type, state_dictionary_type> state) {
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    CUDA_CALLABLE static vector_int<typename params::cell_row_t, 3> evaluate(state_t<params> state) {
         constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
         // Get the four neighbors (top, right, bottom, left)
@@ -280,10 +307,9 @@ struct evaluator<
         auto bottom         = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
         auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
 
-        // Add the counts using 3 bits (since max count is 4)
-        return top.template to_vector_with_bits<3>()
+        return top.template to_vector_with_bits<2>()
             .get_added(right)
-            .get_added(bottom)
+            .get_added(bottom).template to_vector_with_bits<3>()
             .get_added(left);
     }
 };
