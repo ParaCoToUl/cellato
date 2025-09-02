@@ -7,6 +7,7 @@ static_assert(false, "AUTOMATON_NAMESPACE must be defined");
 #include "traversers/cuda/simple.hpp"
 #include "evaluators/standard.hpp"
 #include "evaluators/bit_planes.hpp"
+#include "evaluators/tiled_bit_planes.hpp"
 #include "evaluators/bit_array.hpp"
 #include "memory/standard_grid.hpp"
 #include "memory/bit_planes_grid.hpp"
@@ -45,6 +46,32 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run
 #define TRAVERSER_TYPE \
     cellato::traversers::cuda::simple::traverser< \
         cellato::evaluators::bit_planes::evaluator<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
+        cellato::memory::grids::bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
+    >
+
+template class TRAVERSER_TYPE;
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::VERBOSE>(int);
+
+#undef TRAVERSER_TYPE
+
+// Tiled bit planes grid with bit planes evaluator (32-bit)
+#define TRAVERSER_TYPE \
+    cellato::traversers::cuda::simple::traverser< \
+        cellato::evaluators::tiled_bit_planes::evaluator<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
+        cellato::memory::grids::bit_planes::grid<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
+    >
+
+template class TRAVERSER_TYPE;
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::VERBOSE>(int);
+
+#undef TRAVERSER_TYPE
+
+// Tiled bit planes grid with bit planes evaluator (64-bit)
+#define TRAVERSER_TYPE \
+    cellato::traversers::cuda::simple::traverser< \
+        cellato::evaluators::tiled_bit_planes::evaluator<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
         cellato::memory::grids::bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
     >
 

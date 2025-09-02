@@ -352,6 +352,8 @@ int main(int argc, char* argv[]) {
         test::on_cpu::using_<std::uint64_t>::bit_planes<automaton>, \
         test::on_cpu::using_<std::uint32_t>::tiled_bit_planes<automaton>, \
         test::on_cpu::using_<std::uint64_t>::tiled_bit_planes<automaton>, \
+        test::on_cuda::using_<std::uint32_t>::tiled_bit_planes<automaton>, \
+        test::on_cuda::using_<std::uint64_t>::tiled_bit_planes<automaton>, \
         test::on_cuda::standard<automaton>, \
         test::on_cuda::standard<automaton>::with_spacial_blocking<1, 1>, \
         test::on_cuda::standard<automaton>::with_spacial_blocking<2, 1>, \

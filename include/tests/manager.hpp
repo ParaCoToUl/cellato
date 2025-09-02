@@ -138,15 +138,15 @@ private:
 // Helper for assert functions
 class test_case {
 public:
-    test_case(test_result& result, bool verbose = true) 
-        : result(result), verbose(verbose) {}
+    test_case(test_result& result, bool verbose = true, bool silent_if_passed_flag = false) 
+        : result(result), verbose(verbose), silent_if_passed_flag(silent_if_passed_flag) {}
 
     template<typename T, typename U>
     void assert_equal(T expected, U actual, const std::string& message) {
         result.total++;
         
         if (expected == static_cast<T>(actual)) {
-            if (verbose) {
+            if (verbose && !silent_if_passed_flag) {
                 std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;
             }
             result.passed++;
@@ -164,7 +164,7 @@ public:
         result.total++;
         
         if (condition) {
-            if (verbose) {
+            if (verbose && !silent_if_passed_flag) {
                 std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;
             }
             result.passed++;
@@ -176,9 +176,14 @@ public:
         }
     }
 
+    auto silent_if_passed() {
+        return test_case(result, verbose, true);
+    }
+
 private:
     test_result& result;
     bool verbose;
+    bool silent_if_passed_flag;
 
     // Helper to convert any type to string
     template<typename T>

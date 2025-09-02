@@ -138,6 +138,34 @@ namespace on_cuda {
                        params.precision == sizeof(grid_store_word_t) * 8;
             }
         };
+
+        template <typename cellular_automaton>
+        struct tiled_bit_planes {
+            using automaton = cellular_automaton;
+            
+            using original_cell_t = typename cellular_automaton::cell_state;
+            using grid_store_word_t = store_word_type;
+
+            using algorithm_t = typename cellular_automaton::algorithm;
+            using state_dictionary_t = typename cellular_automaton::state_dictionary;
+
+            using grid_t = grids::bit_planes::grid<grid_store_word_t, state_dictionary_t>;
+            using evaluator_t = evaluators::tiled_bit_planes::evaluator<grid_store_word_t, state_dictionary_t, algorithm_t>; 
+            
+            using traverser_t = traversers::simple::traverser<evaluator_t, grid_t>;
+
+            constexpr static int x_margin = sizeof(grid_store_word_t) * 8;
+            constexpr static int y_margin = 1;
+
+            static bool is_for(cellato::run::run_params& params) {
+                return params.automaton == cellular_automaton::name &&
+                       params.traverser == "simple" &&
+                       params.device == CUDA_OPT &&
+                       params.evaluator == "tiled_bit_planes" &&
+                       params.layout == "tiled_bit_planes" &&
+                       params.precision == sizeof(grid_store_word_t) * 8;
+            }
+        };
     };
 }
 

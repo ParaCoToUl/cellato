@@ -85,8 +85,6 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
         // this specialization is never called for some reason
-        std::cout << "Y";
-
         auto center = get_center_vector_int(state);
 
         if constexpr (x_offset == 0) {
@@ -154,4 +152,4 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
 
 } // namespace cellato::evaluators::tiled_bit_planes
 
-#endif // CELLATO_EVALUATORS_BIT_PLANES_HPP
+#endif // CELLATO_EVALUATORS_TILED_BIT_PLANES_HPP

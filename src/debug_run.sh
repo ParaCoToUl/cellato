@@ -6,9 +6,9 @@ script_dir=$(dirname "$0")
 
 # Game of Life with standard grid on CUDA
 args="--automaton wire --precision 64 \
---device CPU --layout standard --traverser simple --evaluator standard \
---warmup_rounds 0 --rounds 1 \
---steps 100 --x_size 128 --y_size 128"
+--device CUDA --layout tiled_bit_planes --traverser simple --evaluator tiled_bit_planes \
+--warmup_rounds 1 --rounds 3 \
+--steps 1000 --x_size 8192 --y_size 8192"
 
 # Fire automaton with bit_array grid on CUDA
 #args="--automaton fire --device CUDA --layout bit_array --steps 50 --x_size 2048 --y_size 2048"
