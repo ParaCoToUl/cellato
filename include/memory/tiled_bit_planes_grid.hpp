@@ -1,7 +1,7 @@
 #ifndef TILED_BIT_PLANES_GRID_HPP
 #define TILED_BIT_PLANES_GRID_HPP
 
-#include <tuple>
+#include <array>
 #include <vector>
 #include <cstddef>
 #include <stdexcept>
@@ -43,8 +43,8 @@ class grid {
     static constexpr int x_word_tile_size = 8;
     static constexpr int y_word_tile_size = word_store_bits / x_word_tile_size;
 
-    using storage_tuple_t = repeated_vector_tuple<store_word_type, needed_bits>;
-    using storage_tuple_of_pointers = repeated_tuple_t<store_word_type*, needed_bits>;
+    using storage_tuple_t = std::array<std::vector<store_word_type>, needed_bits>;
+    using storage_tuple_of_pointers = std::array<store_word_type*, needed_bits>;
     using cuda_params_t = cuda_params<store_word_type, needed_bits>;
 
     using original_state_t = typename states_dict_t::state_t;

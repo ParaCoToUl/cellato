@@ -1,7 +1,7 @@
 #ifndef CELLATO_EVALUATORS_BIT_PLANES_HPP
 #define CELLATO_EVALUATORS_BIT_PLANES_HPP
 
-#include <tuple>
+#include <array>
 #include <vector>
 #include <cstddef>
 #include <stdexcept>
@@ -46,7 +46,7 @@ template <typename cell_row_type,  typename state_dictionary_type, typename Expr
 using evaluator = _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
 
 template <typename cell_row_type, typename state_dictionary_type>
-using grid_cell_data_type = repeated_tuple_t<cell_row_type*, state_dictionary_type::needed_bits>;
+using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::needed_bits>;
 
 template <typename params>
 using state_t = cellato::memory::grids::point_in_grid<

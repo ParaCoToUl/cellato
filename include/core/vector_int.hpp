@@ -161,7 +161,7 @@ class vector_int {
 
     friend struct vector_int_factory;
 
-    using store_t = repeated_tuple_t<vector_store_type, bits>;
+    using store_t = std::array<vector_store_type, bits>;
     static constexpr int width_in_bits = sizeof(vector_store_type) * 8;
 
     template <int other_bits>

@@ -1,7 +1,7 @@
 #ifndef CELLATO_BIT_PLANES_GRID_HPP
 #define CELLATO_BIT_PLANES_GRID_HPP
 
-#include <tuple>
+#include <array>
 #include <vector>
 #include <cstddef>
 #include <stdexcept>
@@ -39,8 +39,8 @@ class grid {
     constexpr static int needed_bits = states_dict_t::needed_bits;
     static constexpr int word_store_bits = sizeof(store_word_type) * 8;
 
-    using storage_tuple_t = repeated_vector_tuple<store_word_type, needed_bits>;
-    using storage_tuple_of_pointers = repeated_tuple_t<store_word_type*, needed_bits>;
+    using storage_tuple_t = std::array<std::vector<store_word_type>, needed_bits>;
+    using storage_tuple_of_pointers = std::array<store_word_type*, needed_bits>;
     using cuda_params_t = cuda_params<store_word_type, needed_bits>;
 
     using original_state_t = typename states_dict_t::state_t;
