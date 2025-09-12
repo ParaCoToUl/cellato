@@ -673,8 +673,8 @@ struct vector_int_factory {
     template <typename vector_store_type>
     CUDA_CALLABLE static auto from_condition_result(vector_store_type condition_result) {
         vector_int<vector_store_type, 1> result;
-        // result.numbers = { condition_result }; // This one works
-        std::get<0>(result.numbers) = condition_result; // This does not work ¯\_(ツ)_/¯
+        result.numbers = { condition_result }; // This one works
+        // std::get<0>(result.numbers) = condition_result; // This does not work ¯\_(ツ)_/¯
         return result;
     }
 
