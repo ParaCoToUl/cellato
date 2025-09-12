@@ -93,7 +93,12 @@ struct evaluator<cell_type, not_equals<Left, Right>, cell_ptr_type> {
 template <typename cell_type, typename cell_ptr_type, int x_offset, int y_offset>
 struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
     static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
-        return state.grid[(state.position.x + x_offset) + (state.position.y + y_offset) * state.properties.x_size];
+        auto constexpr x_offset_unsigned = static_cast<std::size_t>(x_offset);
+        auto constexpr y_offset_unsigned = static_cast<std::size_t>(y_offset);
+
+        return state.grid[
+            (state.position.x + x_offset_unsigned) +
+            (state.position.y + y_offset_unsigned) * state.properties.x_size];
     }
 };
 

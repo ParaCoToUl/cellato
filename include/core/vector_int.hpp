@@ -232,11 +232,11 @@ class vector_int {
             constexpr auto next_bit_idx = i + 1;
 
             // Get bits from both vectors at the current position
-            auto a = std::get<next_bit_idx>(numbers);
-            auto b = std::get<next_bit_idx>(other.numbers);
+            vector_store_type a = std::get<next_bit_idx>(numbers);
+            vector_store_type b = std::get<next_bit_idx>(other.numbers);
 
             // XOR the bits and XOR with carry for the result
-            auto bit_xor = a ^ b;
+            vector_store_type bit_xor = a ^ b;
             std::get<next_bit_idx>(result.numbers) = bit_xor ^ carry;
 
             // Calculate new carry: (a & b) | (carry & (a ^ b))
@@ -518,8 +518,8 @@ class vector_int {
         return result;
     }
 
-  private:
     store_t numbers;
+  private:
 
     template <typename Callback, std::size_t... Is>
     CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
@@ -531,7 +531,7 @@ class vector_int {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<bits>{});
     }
 
-    template <int count, typename Callback>
+    template <std::size_t count, typename Callback>
     CUDA_CALLABLE static void for_each_in(Callback&& cb) {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});
     }
@@ -541,8 +541,8 @@ class vector_int {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<std::size_t i>() {
-            auto word = std::get<i>(numbers);
-            auto shifted_word = shift_op_t::apply(word, shift);
+            vector_store_type word = std::get<i>(numbers);
+            vector_store_type shifted_word = shift_op_t::apply(word, shift);
 
             std::get<i>(result.numbers) = shifted_word;
         });
@@ -672,8 +672,7 @@ struct vector_int_factory {
 
     template <typename vector_store_type>
     CUDA_CALLABLE static auto from_condition_result(vector_store_type condition_result) {
-        vector_int<vector_store_type, 1> result;
-        std::get<0>(result.numbers) = condition_result;
+        vector_int<vector_store_type, 1> result {.numbers = { condition_result }};
         return result;
     }
 

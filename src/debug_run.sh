@@ -4,11 +4,18 @@ script_dir=$(dirname "$0")
 
 # Uncomment one of these test configurations:
 
+# args="--automaton brian  --device CUDA --layout standard --evaluator standard --traverser simple --steps 100 --x_size 64 --y_size 64 --print"
+
+# args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 1024 --y_size 1024 --steps 2 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+# args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size 14336 --y_size 14336 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+args="--automaton brian --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 1024 --y_size 1024 --steps 10 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+# args="--automaton game-of-life --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size 2048 --y_size 2048 --steps 100 --rounds 1 --warmup_rounds 0"
+
 # Game of Life with standard grid on CUDA
-args="--automaton wire --precision 64 \
---device CUDA --layout tiled_bit_planes --traverser simple --evaluator tiled_bit_planes \
---warmup_rounds 1 --rounds 3 \
---steps 1000 --x_size 8192 --y_size 8192"
+# args="--automaton wire --precision 64 \
+# --device CUDA --layout tiled_bit_planes --traverser simple --evaluator tiled_bit_planes \
+# --warmup_rounds 1 --rounds 3 \
+# --steps 1000 --x_size 8192 --y_size 8192"
 
 # Fire automaton with bit_array grid on CUDA
 #args="--automaton fire --device CUDA --layout bit_array --steps 50 --x_size 2048 --y_size 2048"

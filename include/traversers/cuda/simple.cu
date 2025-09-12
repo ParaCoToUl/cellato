@@ -68,6 +68,8 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         }
 
         std::swap(current, next);
+
+        CUCH(cudaGetLastError());
     }
     
     CUCH(cudaDeviceSynchronize());
@@ -93,5 +95,6 @@ auto  traverser<evaluator_type, grid_type>::fetch_result() -> grid_t {
 #include "../../../src/fire/cuda_instantiations.cuh"
 #include "../../../src/wire/cuda_instantiations.cuh"
 #include "../../../src/greenberg/cuda_instantiations.cuh"
+#include "../../../src/brian/cuda_instantiations.cuh"
 
 #undef SIMPLE_CUDA_TRAVERSER_INSTANTIATIONS

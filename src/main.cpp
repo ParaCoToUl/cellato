@@ -18,6 +18,7 @@
 #include "fire/config.hpp"
 #include "greenberg/config.hpp"
 #include "wire/config.hpp"
+#include "brian/config.hpp"
 
 #include "args-parser.hpp"
 #include "_relwork/runner_wrapper.hpp"
@@ -343,6 +344,7 @@ int main(int argc, char* argv[]) {
     using _fire_ = fire::config;
     using _wire_ = wire::config;
     using _greenberg_ = greenberg::config;
+    using _brian_ = brian::config;
 
     #define cases_for(automaton) \
         test::on_cpu::standard<automaton>, \
@@ -367,7 +369,8 @@ int main(int argc, char* argv[]) {
         cases_for(_game_of_life_),
         cases_for(_fire_),
         cases_for(_wire_),
-        cases_for(_greenberg_)
+        cases_for(_greenberg_),
+        cases_for(_brian_)
     >::run(params);
 
     return 0;

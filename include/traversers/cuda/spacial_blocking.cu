@@ -115,5 +115,6 @@ auto traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::fetch_resul
 #include "../../../src/fire/cuda_instantiations.cuh"
 #include "../../../src/wire/cuda_instantiations.cuh"
 #include "../../../src/greenberg/cuda_instantiations.cuh"
+#include "../../../src/brian/cuda_instantiations.cuh"
 
 #undef SPACIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS

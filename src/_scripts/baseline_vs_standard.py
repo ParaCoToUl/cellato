@@ -5,21 +5,21 @@ import sys
 import re
 
 # Define automata to test
-AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings"]
+AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian"]
 
 GREY_COLOR = "\033[90m"
 RESET_COLOR = "\033[0m"
 
 # Set consistent parameters
 class CUDA:
-    GRID_SIZE = 8192  # Reasonably sized grid for performance comparison
-    STEPS = 1000       # Number of steps for each run
+    GRID_SIZE = 64*32*7   # Reasonably sized grid for performance comparison
+    STEPS = 100       # Number of steps for each run
 class CPU:
-    GRID_SIZE = 2048   # Reasonably sized grid for performance comparison
+    GRID_SIZE = 1920   # Reasonably sized grid for performance comparison
     STEPS = 30         # Number of steps for CPU runs
 
-ROUNDS = 5         # Number of measurement rounds
-WARMUP = 2         # Number of warmup rounds
+ROUNDS = 1         # Number of measurement rounds
+WARMUP = 0         # Number of warmup rounds
 
 def run_test(executable, args):
     """Run a single test and return its CSV output line"""
@@ -81,12 +81,23 @@ def main():
         
         # Test cases: baseline and standard on both CPU and CUDA
         test_cases_cpu = [
-            # Baseline CPU
-            f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # # Baseline CPU
+            # f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # Standard CPU
-            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # # Standard CPU
+            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
+            # # Bit-array CPU (32-bit)
+            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_array --layout bit_array --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+
+            # # Bit-array CPU (64-bit)
+            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_array --layout bit_array --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+
+            # # Linear Bit Planes CPU (32-bit)
+            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+
+            # # Linear Bit Planes CPU (64-bit)
+            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
         ]
 
         test_cases_gpu = [
@@ -96,12 +107,24 @@ def main():
 
                 # Standard CUDA
                 f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}"
+
+                # Bit-array CUDA (32-bit)
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator bit_array --layout bit_array --precision 32 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
+
+                # Bit-array CUDA (64-bit)
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator bit_array --layout bit_array --precision 64 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
+
+                # Linear Bit Planes CUDA (32-bit)
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
+
+                # Linear Bit Planes CUDA (64-bit)
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
             ) 
             # for block_y in [1, 2, 4, 8, 16, 32]
             for block_y in [4]  # has been shown to be the best for all automata
         ]
 
-        #flatten the list of test cases
+        # flatten the list of test cases
         test_cases = test_cases_cpu + [case for sublist in test_cases_gpu for case in sublist]
         
         for test_case in test_cases:

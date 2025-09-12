@@ -6,7 +6,7 @@ NVCC_CC_BIN = $(shell which $(CXX))
 NVCCFLAGS = -std=$(CXX_STD) -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -O3
 CMAKE = cmake
 
-CUDA_VERSION = 12.8
+CUDA_VERSION = 13.0
 
 CUDA_HOME = /usr/local/cuda
 
