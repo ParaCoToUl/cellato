@@ -26,7 +26,8 @@ public:
         test_constant_operations(tc);
         test_load_from(tc);
         test_equals_to(tc);
-        test_greater_than(tc);  // Add the new test to the run sequence
+        test_greater_than(tc);
+        test_less_than(tc); 
         test_random_operations(tc);
         test_factory_from_constant(tc);
         test_mask_out_columns(tc);
@@ -494,6 +495,162 @@ private:
                 tc.assert_equal(expected_medium_gt, actual_medium_gt, 
                             "Random test: medium " + std::to_string(medium_val) + 
                             " > small " + std::to_string(small_val));
+            }
+        }
+    }
+
+    void test_less_than(test_case& tc) {
+        std::cout << BLUE << "\n--- Testing vector_int less_than operation ---" << RESET << std::endl;
+        
+        // Test with same bit-width vectors
+        {
+            using vint3 = cellato::core::bitwise::vector_int<uint8_t, 3>;
+            vint3 v1, v2;
+            
+            // Simple case: v1 < v2
+            v1.set_at(0, 3);  // 011b = 3
+            v2.set_at(0, 5);  // 101b = 5
+            auto result1 = v1.less_than(v2);
+            tc.assert_true(result1 != 0, "3 should be less than 5");
+            
+            // Simple case: v1 > v2
+            v1.set_at(0, 7);  // 111b = 7
+            v2.set_at(0, 2);  // 010b = 2
+            auto result2 = v1.less_than(v2);
+            tc.assert_equal(static_cast<int>(0), static_cast<int>(result2), "7 should not be less than 2");
+            
+            // Equality case: v1 = v2
+            v1.set_at(0, 4);  // 100b = 4
+            v2.set_at(0, 4);  // 100b = 4
+            auto result3 = v1.less_than(v2);
+            tc.assert_equal(static_cast<int>(0), static_cast<int>(result3), "Equal values should return 0");
+            
+            // Edge cases
+            // All zeros vs all zeros
+            v1.set_at(0, 0);
+            v2.set_at(0, 0);
+            auto result4 = v1.less_than(v2);
+            tc.assert_equal(static_cast<int>(0), static_cast<int>(result4), "0 should not be less than 0");
+            
+            // All ones vs all ones
+            v1.set_at(0, 7);  // 111b = 7 (max for 3 bits)
+            v2.set_at(0, 7);  // 111b = 7
+            auto result5 = v1.less_than(v2);
+            tc.assert_equal(static_cast<int>(0), static_cast<int>(result5), "Max value should not be less than itself");
+        }
+        
+        // Test with different bit-width vectors
+        {
+            using vint_small = cellato::core::bitwise::vector_int<uint8_t, 2>;  // 2-bit precision (0-3)
+            using vint_medium = cellato::core::bitwise::vector_int<uint8_t, 3>; // 3-bit precision (0-7)
+            using vint_large = cellato::core::bitwise::vector_int<uint8_t, 4>;  // 4-bit precision (0-15)
+            
+            // Create instances
+            vint_small small;
+            vint_medium medium;
+            vint_large large;
+            
+            // Case 1: Small value < Medium value
+            small.set_at(0, 2);   // 10b = 2
+            medium.set_at(0, 5);  // 101b = 5
+            auto result1 = small.less_than(medium);
+            tc.assert_true(result1 != 0, "Small 2 should be less than medium 5");
+            
+            // Case 2: Medium value < Small value (Not the case)
+            medium.set_at(0, 4);  // 100b = 4
+            small.set_at(0, 1);   // 01b = 1
+            auto result2 = medium.less_than(small);
+            tc.assert_equal(static_cast<int>(0), static_cast<int>(result2), "Medium 4 should not be less than small 1");
+            
+            // Case 3: Large value < Medium value (Not the case)
+            large.set_at(0, 8);   // 1000b = 8
+            medium.set_at(0, 7);  // 111b = 7
+            auto result3 = large.less_than(medium);
+            tc.assert_equal(static_cast<int>(0), static_cast<int>(result3), "Large 8 should not be less than medium 7");
+            
+            // Case 4: Small value < Large value
+            small.set_at(0, 3);   // 11b = 3
+            large.set_at(0, 15);  // 1111b = 15 (max for 4 bits)
+            auto result4 = small.less_than(large);
+            tc.assert_true(result4 != 0, "Small 3 should be less than large 15");
+            
+            // Case 5: Comparison with highest bit set
+            medium.set_at(0, 2);  // 010b = 2
+            small.set_at(0, 3);   // 11b = 3
+            auto result5 = medium.less_than(small);
+            tc.assert_true(result5 != 0, "Medium 2 should be less than small 3 despite medium having more bits");
+        }
+        
+        // Test with multi-element vectors (multiple indices)
+        {
+            using vint = cellato::core::bitwise::vector_int<uint8_t, 3>;
+            vint v1, v2;
+            
+            // Set up different values at different indices
+            // v1: [3, 4, 7, 1]
+            v1.set_at(0, 3);  // 011b = 3
+            v1.set_at(1, 4);  // 100b = 4
+            v1.set_at(2, 7);  // 111b = 7
+            v1.set_at(3, 1);  // 001b = 1
+            
+            // v2: [5, 2, 7, 3]
+            v2.set_at(0, 5);  // 101b = 5
+            v2.set_at(1, 2);  // 010b = 2
+            v2.set_at(2, 7);  // 111b = 7
+            v2.set_at(3, 3);  // 011b = 3
+            
+            auto result = v1.less_than(v2);
+            
+            // Extract individual bits to check each comparison
+            bool compare0 = (result & (1 << 0)) != 0;  // v1[0] < v2[0] (3 < 5) -> true
+            bool compare1 = (result & (1 << 1)) != 0;  // v1[1] < v2[1] (4 < 2) -> false
+            bool compare2 = (result & (1 << 2)) != 0;  // v1[2] < v2[2] (7 = 7) -> false
+            bool compare3 = (result & (1 << 3)) != 0;  // v1[3] < v2[3] (1 < 3) -> true
+            
+            tc.assert_true(compare0, "v1[0]=3 should be less than v2[0]=5");
+            tc.assert_true(!compare1, "v1[1]=4 should not be less than v2[1]=2");
+            tc.assert_true(!compare2, "v1[2]=7 should not be less than v2[2]=7 (equality)");
+            tc.assert_true(compare3, "v1[3]=1 should be less than v2[3]=3");
+        }
+        
+        // Random tests to verify behavior with various inputs
+        {
+            std::cout << "  Running random less_than tests..." << std::endl;
+            std::srand(42);  // Set random seed for reproducibility
+            
+            using vint_small = cellato::core::bitwise::vector_int<uint8_t, 2>;
+            using vint_medium = cellato::core::bitwise::vector_int<uint8_t, 3>;
+            
+            const int num_tests = 20;
+            
+            for (int i = 0; i < num_tests; i++) {
+                vint_small small;
+                vint_medium medium;
+                
+                // Generate random values
+                int small_val = std::rand() % 4;   // 0-3
+                int medium_val = std::rand() % 8;  // 0-7
+                
+                small.set_at(0, small_val);
+                medium.set_at(0, medium_val);
+                
+                auto small_lt_medium = small.less_than(medium);
+                auto medium_lt_small = medium.less_than(small);
+                
+                // Verify results
+                bool expected_small_lt = small_val < medium_val;
+                bool expected_medium_lt = medium_val < small_val;
+                
+                bool actual_small_lt = small_lt_medium != 0;
+                bool actual_medium_lt = medium_lt_small != 0;
+                
+                tc.assert_equal(expected_small_lt, actual_small_lt, 
+                            "Random test: small " + std::to_string(small_val) + 
+                            " < medium " + std::to_string(medium_val));
+                
+                tc.assert_equal(expected_medium_lt, actual_medium_lt, 
+                            "Random test: medium " + std::to_string(medium_val) + 
+                            " < small " + std::to_string(small_val));
             }
         }
     }

@@ -19,6 +19,7 @@
 #include "greenberg/config.hpp"
 #include "wire/config.hpp"
 #include "brian/config.hpp"
+#include "maze/config.hpp"
 
 #include "args-parser.hpp"
 #include "_relwork/runner_wrapper.hpp"
@@ -81,6 +82,10 @@ private:
                 return run_reference_for_automaton<greenberg::config>(params);
             } else if (params.automaton == "wire") {
                 return run_reference_for_automaton<wire::config>(params);
+            } else if (params.automaton == "brian") {
+                return run_reference_for_automaton<brian::config>(params);
+            } else if (params.automaton == "maze") {
+                return run_reference_for_automaton<maze::config>(params);
             }
         }
 
@@ -345,6 +350,7 @@ int main(int argc, char* argv[]) {
     using _wire_ = wire::config;
     using _greenberg_ = greenberg::config;
     using _brian_ = brian::config;
+    using _maze_ = maze::config;
 
     #define cases_for(automaton) \
         test::on_cpu::standard<automaton>, \
@@ -370,7 +376,8 @@ int main(int argc, char* argv[]) {
         cases_for(_fire_),
         cases_for(_wire_),
         cases_for(_greenberg_),
-        cases_for(_brian_)
+        cases_for(_brian_),
+        cases_for(_maze_)
     >::run(params);
 
     return 0;

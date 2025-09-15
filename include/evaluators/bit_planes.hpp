@@ -144,6 +144,20 @@ struct _evaluator_impl<params, greater_than<Left, Right>> {
 };
 
 template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, less_than<Left, Right>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto left = evaluator_t<Left>::evaluate(state);
+        auto right = evaluator_t<Right>::evaluate(state);
+
+        return left.less_than(right);
+    }
+};
+
+template <typename params, typename Left, typename Right>
 struct _evaluator_impl<params, not_equals<Left, Right>> {
 
     template <typename E>

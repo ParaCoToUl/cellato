@@ -62,6 +62,12 @@ struct greater_than {
 };
 
 template <typename Left, typename Right>
+struct less_than {
+    using left = Left;
+    using right = Right;
+};
+
+template <typename Left, typename Right>
 struct not_equals {
     using left = Left;
     using right = Right;

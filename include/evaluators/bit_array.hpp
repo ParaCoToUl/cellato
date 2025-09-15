@@ -143,6 +143,14 @@ struct _impl_evaluator<grid_t, greater_than<Left, Right>, subcell_offset> {
     }
 };
 
+template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, less_than<Left, Right>, subcell_offset> {
+    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) < 
+               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+    }
+};
+
 // Neighborhood access
 template <typename grid_t, int x_offset, int y_offset, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> {

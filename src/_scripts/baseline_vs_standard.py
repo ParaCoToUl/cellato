@@ -5,7 +5,8 @@ import sys
 import re
 
 # Define automata to test
-AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian"]
+# AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian"]
+AUTOMATA = ["maze"]
 
 GREY_COLOR = "\033[90m"
 RESET_COLOR = "\033[0m"
@@ -81,23 +82,23 @@ def main():
         
         # Test cases: baseline and standard on both CPU and CUDA
         test_cases_cpu = [
-            # # Baseline CPU
-            # f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # Baseline CPU
+            f"--automaton {automaton} --seed 42 --device CPU --reference_impl baseline --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # # Standard CPU
-            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # Standard CPU
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # # Bit-array CPU (32-bit)
-            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_array --layout bit_array --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # Bit-array CPU (32-bit)
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_array --layout bit_array --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # # Bit-array CPU (64-bit)
-            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_array --layout bit_array --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # Bit-array CPU (64-bit)
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_array --layout bit_array --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # # Linear Bit Planes CPU (32-bit)
-            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # Linear Bit Planes CPU (32-bit)
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
 
-            # # Linear Bit Planes CPU (64-bit)
-            # f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+            # Linear Bit Planes CPU (64-bit)
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
         ]
 
         test_cases_gpu = [

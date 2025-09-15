@@ -6,7 +6,7 @@
 #include "../core/ast.hpp"
 #include "../core/vector_int.hpp"
 #include <vector>
-#include <tuple>
+#include <array>
 
 namespace cellato::tests {
 
@@ -85,7 +85,7 @@ private:
         };
 
         // Create grid configuration
-        std::tuple<uint8_t*, uint8_t*> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
+        std::array<uint8_t*, 2> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
         
         // Set up the state for evaluation
         cellato::memory::grids::point_in_grid<decltype(grid)> state;
@@ -142,7 +142,7 @@ private:
         };
 
         // Create grid configuration
-        std::tuple<uint8_t*, uint8_t*> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
+        std::array<uint8_t*, 2> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
         
         // Set up the state for evaluation
         cellato::memory::grids::point_in_grid<decltype(grid)> state;
@@ -196,7 +196,7 @@ private:
         };
 
         // Create grid configuration
-        std::tuple<uint8_t*, uint8_t*> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
+        std::array<uint8_t*, 2> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
         
         // Set up the state for evaluation
         cellato::memory::grids::point_in_grid<decltype(grid)> state;

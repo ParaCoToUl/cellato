@@ -83,6 +83,14 @@ struct evaluator<cell_type, greater_than<Left, Right>, cell_ptr_type> {
 };
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
+struct evaluator<cell_type, less_than<Left, Right>, cell_ptr_type> {
+    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+        return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) < 
+               evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
+    }
+};
+
+template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, not_equals<Left, Right>, cell_ptr_type> {
     static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) != 
