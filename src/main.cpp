@@ -20,6 +20,7 @@
 #include "wire/config.hpp"
 #include "brian/config.hpp"
 #include "maze/config.hpp"
+#include "hpp/config.hpp"
 
 #include "args-parser.hpp"
 #include "_relwork/runner_wrapper.hpp"
@@ -351,6 +352,7 @@ int main(int argc, char* argv[]) {
     using _greenberg_ = greenberg::config;
     using _brian_ = brian::config;
     using _maze_ = maze::config;
+    using _hpp_ = hpp::config;
 
     #define cases_for(automaton) \
         test::on_cpu::standard<automaton>, \
@@ -377,7 +379,8 @@ int main(int argc, char* argv[]) {
         cases_for(_wire_),
         cases_for(_greenberg_),
         cases_for(_brian_),
-        cases_for(_maze_)
+        cases_for(_maze_),
+        cases_for(_hpp_)
     >::run(params);
 
     return 0;
