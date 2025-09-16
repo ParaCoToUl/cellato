@@ -36,7 +36,7 @@ OBJ_DIR = ../bin
 BIN_DIR = ../bin
 DEP_DIR = ../_deps
 VENDOR_DIR = ../vendor
-CUDA_DIRS = ../include/evaluators ../include/traversers/cuda ./game_of_life ./greenberg ./wire ./fire ./brian ./maze ./hpp
+CUDA_DIRS = ../include/evaluators ../include/traversers/cuda ./game_of_life ./greenberg ./wire ./fire ./brian ./maze ./hpp ./critters ./traffic ./cyclic
 TEST_DIR = $(SRC_DIR)
 
 # Source and object files

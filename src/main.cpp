@@ -21,6 +21,9 @@
 #include "brian/config.hpp"
 #include "maze/config.hpp"
 #include "hpp/config.hpp"
+#include "critters/config.hpp"
+#include "cyclic/config.hpp"
+#include "traffic/config.hpp"
 
 #include "args-parser.hpp"
 #include "_relwork/runner_wrapper.hpp"
@@ -353,6 +356,9 @@ int main(int argc, char* argv[]) {
     using _brian_ = brian::config;
     using _maze_ = maze::config;
     using _hpp_ = hpp::config;
+    using _critters_ = critters::config;
+    using _cyclic_ = cyclic::config;
+    using _traffic_ = traffic::config;
 
     #define cases_for(automaton) \
         test::on_cpu::standard<automaton>, \
@@ -380,7 +386,10 @@ int main(int argc, char* argv[]) {
         cases_for(_greenberg_),
         cases_for(_brian_),
         cases_for(_maze_),
-        cases_for(_hpp_)
+        cases_for(_hpp_),
+        cases_for(_critters_),
+        cases_for(_cyclic_),
+        cases_for(_traffic_)
     >::run(params);
 
     return 0;
