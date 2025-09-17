@@ -11,13 +11,38 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
     int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
     
     const int idx = y * width + x;
-    
-    hpp_cell_state cell_state = current[idx];
-    hpp_cell_state next_state = cell_state;
 
-    // TODO
+    auto top_neighbor = current[(y - 1) * width + x];
+    auto bottom_neighbor = current[(y + 1) * width + x];
+    auto left_neighbor = current[y * width + (x - 1)];
+    auto right_neighbor = current[y * width + (x + 1)];
 
-    next[idx] = next_state;
+    auto incoming_from_top = (top_neighbor & 0b0001);
+    auto incoming_from_bottom = (bottom_neighbor & 0b0010);
+    auto incoming_from_left = (left_neighbor & 0b0100);
+    auto incoming_from_right = (right_neighbor & 0b1000);
+
+    auto vertical_collision_appears = (incoming_from_top != 0) && (incoming_from_bottom != 0);
+    auto horizontal_collision_appears = (incoming_from_left != 0) && (incoming_from_right != 0);
+
+    auto combined_vertical_incoming = incoming_from_top | incoming_from_bottom;
+    auto combined_horizontal_incoming = incoming_from_left | incoming_from_right;
+
+    hpp_cell_state result = 0;
+
+    if (vertical_collision_appears) {
+        result |= 0b1100; // horizontal outgoing
+    } else {
+        result |= combined_vertical_incoming; // pass vertical incoming
+    }
+
+    if (horizontal_collision_appears) {
+        result |= 0b0011; // vertical outgoing
+    } else {
+        result |= combined_horizontal_incoming; // pass horizontal incoming
+    }
+
+    next[idx] = result;
 }
 
 void runner::run_kernel(int steps) {

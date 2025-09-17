@@ -8,7 +8,8 @@ script_dir=$(dirname "$0")
 
 # args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 1024 --y_size 1024 --steps 2 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
 # args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size 14336 --y_size 14336 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
-args="--automaton critters --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 1024 --y_size 1024 --steps 10 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+args="--automaton hpp --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 64 --y_size 64 --steps 10 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+# args="--automaton hpp --seed 42 --device CPU --reference_impl baseline --precision 32 --x_size 64 --y_size 64 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4 --print"
 # args="--automaton game-of-life --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size 2048 --y_size 2048 --steps 100 --rounds 1 --warmup_rounds 0"
 
 # Game of Life with standard grid on CUDA

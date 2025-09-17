@@ -88,6 +88,34 @@ struct _evaluator_impl<params, if_then_else<Condition, Then, Else>> {
 };
 
 template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, bit_and_<Left, Right>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto left = evaluator_t<Left>::evaluate(state);
+        auto right = evaluator_t<Right>::evaluate(state);
+
+        return left.get_anded(right);
+    }
+};
+
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, bit_or_<Left, Right>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto left = evaluator_t<Left>::evaluate(state);
+        auto right = evaluator_t<Right>::evaluate(state);
+
+        return left.get_ored(right);
+    }
+};
+
+template <typename params, typename Left, typename Right>
 struct _evaluator_impl<params, and_<Left, Right>> {
 
     template <typename E>
@@ -170,6 +198,19 @@ struct _evaluator_impl<params, not_equals<Left, Right>> {
         return left.not_equal_to(right);
     }
 };
+
+template <typename params, typename Value, int bit_idx>
+struct _evaluator_impl<params, has_bit_set<Value, bit_idx>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto val = evaluator_t<Value>::evaluate(state);
+        return val.template get_bit<bit_idx>();
+    }
+};
+
 
 template <typename params, int x_offset, int y_offset>
 struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {

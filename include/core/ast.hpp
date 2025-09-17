@@ -30,6 +30,12 @@ struct count_neighbors {
     using neighborhood = Neighborhood;
 };
 
+template <typename Value, int bit>
+struct has_bit_set {
+    using value = Value;
+    static constexpr int bit_position = bit;
+};
+
 template <typename Condition, typename Then, typename Else>
 struct if_then_else {
     using condition = Condition;
@@ -45,6 +51,18 @@ struct and_ {
 
 template <typename Left, typename Right>
 struct or_ {
+    using left = Left;
+    using right = Right;
+};
+
+template <typename Left, typename Right>
+struct bit_and_ {
+    using left = Left;
+    using right = Right;
+};
+
+template <typename Left, typename Right>
+struct bit_or_ {
     using left = Left;
     using right = Right;
 };

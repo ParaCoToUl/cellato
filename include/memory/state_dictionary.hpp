@@ -45,6 +45,29 @@ private:
     }
 };
 
+template <int bits>
+class int_based_state_dictionary {
+public:
+    using index_t = int;
+    using state_t = int;
+
+    static constexpr index_t number_of_values = 1 << bits;
+    static constexpr index_t needed_bits = bits;
+
+    static constexpr index_t state_to_index(state_t state) {
+        if (state >= 0 && state < number_of_values) {
+            return state;
+        }
+        throw std::out_of_range("State not found in dictionary");
+    }
+
+    static constexpr state_t index_to_state(index_t index) {
+        if (index >= 0 && index < number_of_values) {
+            return index;
+        }
+        throw std::out_of_range("Index out of range");
+    }
+};
 }
 
 #endif // CELLATO_MEMORY_STATE_DICTIONARY_HPP

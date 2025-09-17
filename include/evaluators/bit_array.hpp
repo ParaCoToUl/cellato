@@ -54,7 +54,7 @@ struct evaluator {
             // #endif
             
             // Position this subcell in the result word
-            result_word |= cell_result << (subcell_idx * bit_array_grid_t::bits_per_cell);
+            result_word |= static_cast<store_word_type>(cell_result) << (subcell_idx * bit_array_grid_t::bits_per_cell);
         });
 
         // #ifndef __CUDACC__
@@ -100,6 +100,24 @@ struct _impl_evaluator<grid_t, if_then_else<Condition, Then, Else>, subcell_offs
         }
     }
 };
+
+// Arithmetic operators
+template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, bit_and_<Left, Right>, subcell_offset> {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
+        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) &
+               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+    }
+};
+
+template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, bit_or_<Left, Right>, subcell_offset> {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
+        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) |
+               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+    }
+};
+
 
 // Logical operators
 template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
@@ -148,6 +166,14 @@ struct _impl_evaluator<grid_t, less_than<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) < 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+    }
+};
+
+template <typename grid_t, typename Value, int bit_idx, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
+    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+        auto val = _impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
+        return ((val >> bit_idx) & 1) != 0;
     }
 };
 

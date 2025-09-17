@@ -14,10 +14,22 @@ struct hpp_random_init {
         
         // Probabilities for each cell state
         std::vector<std::tuple<hpp_cell_state, double>> probabilities = {
-            {hpp_cell_state::empty, 0.20},   // 20% empty cells
-            {hpp_cell_state::tree, 0.79},    // 79% trees
-            {hpp_cell_state::hpp, 0.01},    // 1% hpp (ignition points)
-            {hpp_cell_state::ash, 0.00}      // 0% ash initially
+            { 0, 1.0 / 16.0 },
+            { 1, 1.0 / 16.0 },
+            { 2, 1.0 / 16.0 },
+            { 3, 1.0 / 16.0 },
+            { 4, 1.0 / 16.0 },
+            { 5, 1.0 / 16.0 },
+            { 6, 1.0 / 16.0 },
+            { 7, 1.0 / 16.0 },
+            { 8, 1.0 / 16.0 },
+            { 9, 1.0 / 16.0 },
+            {10, 1.0 / 16.0 },
+            {11, 1.0 / 16.0 },
+            {12, 1.0 / 16.0 },
+            {13, 1.0 / 16.0 },
+            {14, 1.0 / 16.0 },
+            {15, 1.0 / 16.0 }
         };
         
         // Generate random grid using utility

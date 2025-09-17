@@ -90,6 +90,14 @@ private:
                 return run_reference_for_automaton<brian::config>(params);
             } else if (params.automaton == "maze") {
                 return run_reference_for_automaton<maze::config>(params);
+            } else if (params.automaton == "hpp") {
+                return run_reference_for_automaton<hpp::config>(params);
+            } else if (params.automaton == "critters") {
+                return run_reference_for_automaton<critters::config>(params);
+            } else if (params.automaton == "cyclic") {
+                return run_reference_for_automaton<cyclic::config>(params);
+            } else if (params.automaton == "traffic") {
+                return run_reference_for_automaton<traffic::config>(params);
             }
         }
 

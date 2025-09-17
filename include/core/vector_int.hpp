@@ -363,6 +363,11 @@ class vector_int {
         return get_shifted_vector<op_shift_right, constant>();
     }
 
+    template <int bit>
+    CUDA_CALLABLE vector_store_type get_bit() {
+        return std::get<bit>(numbers);
+    }
+
     template <typename tuple_of_pointers_storage_t>
     CUDA_CALLABLE static vector_int<vector_store_type, bits> load_from(
         tuple_of_pointers_storage_t storage, std::size_t offset) {

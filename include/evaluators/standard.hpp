@@ -51,6 +51,22 @@ struct evaluator<cell_type, if_then_else<Condition, Then, Else>, cell_ptr_type> 
 };
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
+struct evaluator<cell_type, bit_and_<Left, Right>, cell_ptr_type> {
+    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+        return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) &
+               evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
+    }
+};
+
+template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
+struct evaluator<cell_type, bit_or_<Left, Right>, cell_ptr_type> {
+    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+        return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) |
+               evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
+    }
+};
+
+template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, and_<Left, Right>, cell_ptr_type> {
     static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) && 
@@ -107,6 +123,14 @@ struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
         return state.grid[
             (state.position.x + x_offset_unsigned) +
             (state.position.y + y_offset_unsigned) * state.properties.x_size];
+    }
+};
+
+template <typename cell_type, typename cell_ptr_type, typename Value, int bit_idx>
+struct evaluator<cell_type, has_bit_set<Value, bit_idx>, cell_ptr_type> {
+    CUDA_CALLABLE static bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+        auto val = evaluator<cell_type, Value, cell_ptr_type>::evaluate(state);
+        return  ((val >> bit_idx) & 1) != 0;
     }
 };
 

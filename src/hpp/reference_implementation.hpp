@@ -54,13 +54,38 @@ struct runner {
             // Process each cell
             for (std::size_t y = 1; y < _y_size - 1; ++y) {
                 for (std::size_t x = 1; x < _x_size - 1; ++x) {
-                    // Forest hpp rules
-                    hpp_cell_state current = _current_grid[y * _x_size + x];
-                    hpp_cell_state next = current;
-                    
-                    // TODO
-                    
-                    _next_grid[y * _x_size + x] = next;
+
+                    auto top_neighbor = _current_grid[(y - 1) * _x_size + x];
+                    auto bottom_neighbor = _current_grid[(y + 1) * _x_size + x];
+                    auto left_neighbor = _current_grid[y * _x_size + (x - 1)];
+                    auto right_neighbor = _current_grid[y * _x_size + (x + 1)];
+
+                    auto incoming_from_top = (top_neighbor & 0b0001);
+                    auto incoming_from_bottom = (bottom_neighbor & 0b0010);
+                    auto incoming_from_left = (left_neighbor & 0b0100);
+                    auto incoming_from_right = (right_neighbor & 0b1000);
+
+                    auto vertical_collision_appears = (incoming_from_top != 0) && (incoming_from_bottom != 0);
+                    auto horizontal_collision_appears = (incoming_from_left != 0) && (incoming_from_right != 0);
+
+                    auto combined_vertical_incoming = incoming_from_top | incoming_from_bottom;
+                    auto combined_horizontal_incoming = incoming_from_left | incoming_from_right;
+
+                    hpp_cell_state result = 0;
+
+                    if (vertical_collision_appears) {
+                        result |= 0b1100; // horizontal outgoing
+                    } else {
+                        result |= combined_vertical_incoming; // pass vertical incoming
+                    }
+
+                    if (horizontal_collision_appears) {
+                        result |= 0b0011; // vertical outgoing
+                    } else {
+                        result |= combined_horizontal_incoming; // pass horizontal incoming
+                    }
+
+                    _next_grid[y * _x_size + x] = result;
                 }
             }
             

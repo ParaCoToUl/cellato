@@ -6,14 +6,46 @@
 namespace hpp {
 using namespace cellato::ast;
 
-enum class hpp_cell_state {
-    empty,
-    tree,
-    ash,
-    hpp
-};
+using hpp_cell_state = int;
 
-using hpp_algorithm = current_state; // Placeholder for actual HPP algorithm
+constexpr int TOP_bit = 0, TOP = 1 << TOP_bit;
+constexpr int BOTTOM_bit = 1, BOTTOM = 1 << BOTTOM_bit;
+constexpr int LEFT_bit = 2, LEFT = 1 << LEFT_bit;
+constexpr int RIGHT_bit = 3, RIGHT = 1 << RIGHT_bit;
+
+using incoming_from_top = has_bit_set<neighbor_at<0, -1>, TOP_bit>;
+using incoming_from_bottom = has_bit_set<neighbor_at<0, 1>, BOTTOM_bit>;
+using incoming_from_left = has_bit_set<neighbor_at<-1, 0>, LEFT_bit>;
+using incoming_from_right = has_bit_set<neighbor_at<1, 0>, RIGHT_bit>;
+
+using vertical_collision = p<incoming_from_top, and_, incoming_from_bottom>;
+using horizontal_collision = p<incoming_from_left, and_, incoming_from_right>;
+
+using combined_vertical_incoming = p<
+        p<neighbor_at<0, -1>, bit_and_, constant<TOP>>,
+        bit_or_,
+        p<neighbor_at<0, 1>, bit_and_, constant<BOTTOM>>
+    >;
+
+using vertical_result = if_< vertical_collision >::then_<
+        state_constant<LEFT | RIGHT>
+    >::else_<
+        combined_vertical_incoming
+    >;
+
+using combined_horizontal_incoming = p<
+        p<neighbor_at<-1, 0>, bit_and_, constant<LEFT>>,
+        bit_or_,
+        p<neighbor_at<1, 0>, bit_and_, constant<RIGHT>>
+    >;
+
+using horizontal_result = if_< horizontal_collision >::then_<
+        state_constant<TOP | BOTTOM>
+    >::else_<
+        combined_horizontal_incoming
+    >;
+
+using hpp_algorithm = p< vertical_result, bit_or_, horizontal_result >;
 
 }
 
