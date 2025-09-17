@@ -426,6 +426,38 @@ struct _evaluator_impl<
     }
 };
 
+template <typename params, typename CellStateValue>
+struct _evaluator_impl<
+    params,
+    greater_than<
+        count_neighbors<
+            CellStateValue,
+            moore_8_neighbors>,
+        constant<0>
+    >> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto cell_state = evaluator_t<CellStateValue>::evaluate(state);
+
+        auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_right_c    = evaluator_t<neighbor_at< 1, -1>>::evaluate(state).equals_to(cell_state);
+        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).equals_to(cell_state);
+        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).equals_to(cell_state);
+        auto bottom_left_c  = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_right_c = evaluator_t<neighbor_at< 1,  1>>::evaluate(state).equals_to(cell_state);
+
+        return top_left_c | top_c | top_right_c | left_c | right_c | bottom_left_c | bottom_c | bottom_right_c;
+    }
+};
+
 template <typename params, typename cell_state_type, cell_state_type CellStateValue>
 struct _evaluator_impl<
     params,
