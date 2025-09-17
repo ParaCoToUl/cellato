@@ -17,10 +17,15 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
     auto left_neighbor = current[y * width + (x - 1)];
     auto right_neighbor = current[y * width + (x + 1)];
 
-    auto incoming_from_top = (top_neighbor & 0b0001);
-    auto incoming_from_bottom = (bottom_neighbor & 0b0010);
-    auto incoming_from_left = (left_neighbor & 0b0100);
-    auto incoming_from_right = (right_neighbor & 0b1000);
+    constexpr hpp_cell_state TOP = 0b0001;
+    constexpr hpp_cell_state BOTTOM = 0b0010;
+    constexpr hpp_cell_state LEFT = 0b0100;
+    constexpr hpp_cell_state RIGHT = 0b1000;
+
+    auto incoming_from_top = (top_neighbor & TOP);
+    auto incoming_from_bottom = (bottom_neighbor & BOTTOM);
+    auto incoming_from_left = (left_neighbor & LEFT);
+    auto incoming_from_right = (right_neighbor & RIGHT);
 
     auto vertical_collision_appears = (incoming_from_top != 0) && (incoming_from_bottom != 0);
     auto horizontal_collision_appears = (incoming_from_left != 0) && (incoming_from_right != 0);
@@ -30,14 +35,17 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
 
     hpp_cell_state result = 0;
 
-    if (vertical_collision_appears) {
-        result |= 0b1100; // horizontal outgoing
+    auto just_vertical_collision = vertical_collision_appears && !((incoming_from_left != 0) || (incoming_from_right != 0));
+    auto just_horizontal_collision = horizontal_collision_appears && !((incoming_from_top != 0) || (incoming_from_bottom != 0));
+
+    if (just_vertical_collision) {
+        result |= (LEFT | RIGHT); // horizontal outgoing
     } else {
         result |= combined_vertical_incoming; // pass vertical incoming
     }
 
-    if (horizontal_collision_appears) {
-        result |= 0b0011; // vertical outgoing
+    if (just_horizontal_collision) {
+        result |= (TOP | BOTTOM); // vertical outgoing
     } else {
         result |= combined_horizontal_incoming; // pass horizontal incoming
     }

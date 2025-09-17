@@ -27,7 +27,13 @@ using combined_vertical_incoming = p<
         p<neighbor_at<0, 1>, bit_and_, constant<BOTTOM>>
     >;
 
-using vertical_result = if_< vertical_collision >::then_<
+using just_vertical_collision = p<
+        vertical_collision,
+        and_,
+        not_<p<incoming_from_left, or_, incoming_from_right>>
+    >;
+
+using vertical_result = if_< just_vertical_collision >::then_<
         state_constant<LEFT | RIGHT>
     >::else_<
         combined_vertical_incoming
@@ -39,7 +45,13 @@ using combined_horizontal_incoming = p<
         p<neighbor_at<1, 0>, bit_and_, constant<RIGHT>>
     >;
 
-using horizontal_result = if_< horizontal_collision >::then_<
+using just_horizontal_collision = p<
+        horizontal_collision,
+        and_,
+        not_<p<incoming_from_top, or_, incoming_from_bottom>>
+    >;
+
+using horizontal_result = if_< just_horizontal_collision >::then_<
         state_constant<TOP | BOTTOM>
     >::else_<
         combined_horizontal_incoming
@@ -47,6 +59,24 @@ using horizontal_result = if_< horizontal_collision >::then_<
 
 using hpp_algorithm = p< vertical_result, bit_or_, horizontal_result >;
 
-}
+// using _3_incoming_top = p< p< p<incoming_from_top, and_, incoming_from_left>, and_, incoming_from_right>, and_, not_<incoming_from_bottom>>;
+// using _3_incoming_bottom = p< p< p<incoming_from_bottom, and_, incoming_from_left>, and_, incoming_from_right>, and_, not_<incoming_from_top>>;
+// using _3_incoming_left = p< p< p<incoming_from_left, and_, incoming_from_top>, and_, incoming_from_bottom>, and_, not_<incoming_from_right>>;
+// using _3_incoming_right = p< p< p<incoming_from_right, and_, incoming_from_top>, and_, incoming_from_bottom>, and_, not_<incoming_from_left>>;
+
+// using hpp_algorithm =
+//     if_<_3_incoming_top>::then_<
+//         state_constant<TOP | LEFT | RIGHT>
+//     >::elif_<_3_incoming_bottom>::then_<
+//         state_constant<BOTTOM | LEFT | RIGHT>
+//     >::elif_<_3_incoming_left>::then_<
+//         state_constant<TOP | BOTTOM | LEFT>
+//     >::elif_<_3_incoming_right>::then_<
+//         state_constant<TOP | BOTTOM | RIGHT>
+//     >::else_<
+//         collision_result
+//     >;
+
+} // namespace hpp
 
 #endif // HPP_ALGORITHM_HPP

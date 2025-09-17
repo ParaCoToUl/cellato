@@ -66,6 +66,15 @@ struct evaluator<cell_type, bit_or_<Left, Right>, cell_ptr_type> {
     }
 };
 
+
+template <typename cell_type, typename cell_ptr_type, typename Value>
+struct evaluator<cell_type, not_<Value>, cell_ptr_type> {
+    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+        return !evaluator<cell_type, Value, cell_ptr_type>::evaluate(state);
+    }
+};
+
+
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, and_<Left, Right>, cell_ptr_type> {
     static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {

@@ -120,6 +120,14 @@ struct _impl_evaluator<grid_t, bit_or_<Left, Right>, subcell_offset> {
 
 
 // Logical operators
+
+template <typename grid_t, typename Value, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, not_<Value>, subcell_offset> {
+    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+        return !_impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
+    }
+};
+
 template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, and_<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {

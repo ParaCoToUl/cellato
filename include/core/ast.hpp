@@ -55,6 +55,11 @@ struct or_ {
     using right = Right;
 };
 
+template <typename Value>
+struct not_ {
+    using value = Value;
+};
+
 template <typename Left, typename Right>
 struct bit_and_ {
     using left = Left;

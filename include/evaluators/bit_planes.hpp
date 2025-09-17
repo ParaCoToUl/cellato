@@ -115,6 +115,18 @@ struct _evaluator_impl<params, bit_or_<Left, Right>> {
     }
 };
 
+template <typename params, typename Value>
+struct _evaluator_impl<params, not_<Value>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        typename params::cell_row_t value = evaluator_t<Value>::evaluate(state);
+        return ~value;
+    }
+};
+
 template <typename params, typename Left, typename Right>
 struct _evaluator_impl<params, and_<Left, Right>> {
 
