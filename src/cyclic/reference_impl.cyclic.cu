@@ -2,6 +2,8 @@
 #include <cuda_runtime.h>
 #include "traversers/cuda_utils.cuh"
 
+#include "./algorithm.hpp"
+
 namespace cyclic::reference {
 
 // CUDA kernel for Forest cyclic (single step)
@@ -15,7 +17,30 @@ __global__ void cyclic_kernel(const cyclic_cell_state* current, cyclic_cell_stat
     cyclic_cell_state cell_state = current[idx];
     cyclic_cell_state next_state = cell_state;
 
-    // TODO
+    constexpr int states = STATES;
+
+    int target_state = (cell_state + 1) % states;
+    int count = 0;
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+
+            int neighbor_x = x + dx;
+            int neighbor_y = y + dy;
+            int neighbor_idx = neighbor_y * width + neighbor_x;
+
+            if (current[neighbor_idx] == target_state) {
+                count++;
+            }
+        }
+    }
+
+    if (count >= 1) {
+        next_state = target_state;
+    } else {
+        next_state = cell_state;
+    }
 
     next[idx] = next_state;
 }

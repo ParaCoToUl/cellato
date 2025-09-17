@@ -56,11 +56,34 @@ struct runner {
                 for (std::size_t x = 1; x < _x_size - 1; ++x) {
                     // Forest cyclic rules
                     cyclic_cell_state current = _current_grid[y * _x_size + x];
-                    cyclic_cell_state next = current;
+                    cyclic_cell_state next_state = current;
                     
-                    // TODO
-                    
-                    _next_grid[y * _x_size + x] = next;
+                    constexpr int states = cyclic::STATES;
+
+                    int target_state = (current + 1) % states;
+                    int count = 0;
+
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dx = -1; dx <= 1; dx++) {
+                            if (dx == 0 && dy == 0) continue;
+
+                            int neighbor_x = x + dx;
+                            int neighbor_y = y + dy;
+                            int neighbor_idx = neighbor_y * _x_size + neighbor_x;
+
+                            if (_current_grid[neighbor_idx] == target_state) {
+                                count++;
+                            }
+                        }
+                    }
+
+                    if (count >= 1) {
+                        next_state = target_state;
+                    } else {
+                        next_state = current;
+                    }
+
+                    _next_grid[y * _x_size + x] = next_state;
                 }
             }
             

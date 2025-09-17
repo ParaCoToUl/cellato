@@ -111,6 +111,22 @@ struct _impl_evaluator<grid_t, bit_and_<Left, Right>, subcell_offset> {
 };
 
 template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, plus<Left, Right>, subcell_offset> {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
+        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) +
+               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+    }
+};
+
+template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, modulo<Left, Right>, subcell_offset> {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
+        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) %
+               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+    }
+};
+
+template <typename grid_t, typename Left, typename Right, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, bit_or_<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) |

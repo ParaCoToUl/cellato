@@ -73,6 +73,18 @@ struct bit_or_ {
 };
 
 template <typename Left, typename Right>
+struct plus {
+    using left = Left;
+    using right = Right;
+};
+
+template <typename Left, typename Right>
+struct modulo {
+    using left = Left;
+    using right = Right;
+};
+
+template <typename Left, typename Right>
 struct equals {
     using left = Left;
     using right = Right;

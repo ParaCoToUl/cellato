@@ -16,9 +16,7 @@ struct config {
     using algorithm = cyclic_algorithm;
     
     using cell_state = cyclic_cell_state;
-    using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::empty, cell_state::tree,
-        cell_state::cyclic, cell_state::ash>;
+    using state_dictionary = cellato::memory::grids::int_based_state_dictionary<BITS>;
 
     using pretty_print = cyclic_pretty_print;
 

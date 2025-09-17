@@ -6,14 +6,21 @@
 namespace cyclic {
 using namespace cellato::ast;
 
-enum class cyclic_cell_state {
-    empty,
-    tree,
-    ash,
-    cyclic
-};
+using cyclic_cell_state = int;
 
-using cyclic_algorithm = current_state; // Placeholder for actual cyclic algorithm
+constexpr int BITS = 5;
+constexpr int STATES = 1 << BITS;
+
+using one_bigger_then_current_absolute = p<current_state, plus, constant<1>>;
+using one_bigger_then_current = p<one_bigger_then_current_absolute, modulo, constant<STATES>>;
+
+using one_bigger_count = count_neighbors<one_bigger_then_current, moore_8_neighbors>;
+
+using cyclic_algorithm = if_< p<one_bigger_count, greater_than, constant<0>> >::then_<
+        one_bigger_then_current
+    >::else_<
+        current_state
+    >;
 
 }
 

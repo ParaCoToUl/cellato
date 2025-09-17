@@ -13,12 +13,11 @@ struct cyclic_random_init {
         std::vector<cyclic_cell_state> initial_state(params.x_size * params.y_size);
         
         // Probabilities for each cell state
-        std::vector<std::tuple<cyclic_cell_state, double>> probabilities = {
-            {cyclic_cell_state::empty, 0.20},   // 20% empty cells
-            {cyclic_cell_state::tree, 0.79},    // 79% trees
-            {cyclic_cell_state::cyclic, 0.01},    // 1% cyclic (ignition points)
-            {cyclic_cell_state::ash, 0.00}      // 0% ash initially
-        };
+        std::vector<std::tuple<cyclic_cell_state, double>> probabilities;
+
+        for (int state = 0; state < STATES; ++state) {
+            probabilities.emplace_back(state, 1.0 / STATES);
+        }
         
         // Generate random grid using utility
         cellato::memory::grids::utils::generate_random_grid(

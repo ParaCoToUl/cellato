@@ -16,7 +16,7 @@ struct config {
     using algorithm = hpp_algorithm;
     
     using cell_state = hpp_cell_state;
-    using state_dictionary = cellato::memory::grids::int_based_state_dictionary<4>; // 4 bit int
+    using state_dictionary = cellato::memory::grids::int_based_state_dictionary<4>;
 
     using pretty_print = hpp_pretty_print;
 

@@ -115,6 +115,41 @@ struct _evaluator_impl<params, bit_or_<Left, Right>> {
     }
 };
 
+template <typename params, typename Left, typename Right>
+struct _evaluator_impl<params, plus<Left, Right>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto left = evaluator_t<Left>::evaluate(state);
+        auto right = evaluator_t<Right>::evaluate(state);
+
+        return left.get_added(right);
+    }
+};
+
+// Only modulo by constant is supported for now (and it has to be a power of two)
+template <typename params, typename Left, int ConstValue>
+struct _evaluator_impl<params, modulo<Left, constant<ConstValue>>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    static_assert((ConstValue & (ConstValue - 1)) == 0, "Only modulo by power of two is supported");
+
+    static constexpr int log2(int n) {
+        return (n < 2) ? 0 : 1 + log2(n / 2);
+    }
+
+    static constexpr int number_of_bits = log2(ConstValue);
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto left = evaluator_t<Left>::evaluate(state);
+        return left.template to_vector_with_bits<number_of_bits>();
+    }
+};
+
 template <typename params, typename Value>
 struct _evaluator_impl<params, not_<Value>> {
 
@@ -325,6 +360,51 @@ struct _evaluator_impl<
         auto bottom_left_c  = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).template equals_to<cell_state>();
         auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).template equals_to<cell_state>();
         auto bottom_right_c = evaluator_t<neighbor_at< 1,  1>>::evaluate(state).template equals_to<cell_state>();
+
+        auto top_left       = vector_int_factory::from_condition_result<cell_row_type>(top_left_c);
+        auto top            = vector_int_factory::from_condition_result<cell_row_type>(top_c);
+        auto top_right      = vector_int_factory::from_condition_result<cell_row_type>(top_right_c);
+        auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
+        auto right          = vector_int_factory::from_condition_result<cell_row_type>(right_c);
+        auto bottom_left    = vector_int_factory::from_condition_result<cell_row_type>(bottom_left_c);
+        auto bottom         = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
+        auto bottom_right   = vector_int_factory::from_condition_result<cell_row_type>(bottom_right_c);
+
+        return top_left.template to_vector_with_bits<2>()
+            .get_added(top)
+            .get_added(top_right).template to_vector_with_bits<3>()
+            .get_added(left)
+            .get_added(right)
+            .get_added(bottom_left)
+            .get_added(bottom).template to_vector_with_bits<4>()
+            .get_added(bottom_right);
+    }
+};
+
+template <typename params, typename CellStateValue>
+struct _evaluator_impl<
+    params,
+    count_neighbors<
+        CellStateValue,
+        moore_8_neighbors>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    CUDA_CALLABLE static vector_int<typename params::cell_row_t, 4> evaluate(state_t<params> state) {
+        auto cell_state = evaluator_t<CellStateValue>::evaluate(state);
+
+        auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_right_c    = evaluator_t<neighbor_at< 1, -1>>::evaluate(state).equals_to(cell_state);
+        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).equals_to(cell_state);
+        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).equals_to(cell_state);
+        auto bottom_left_c  = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_right_c = evaluator_t<neighbor_at< 1,  1>>::evaluate(state).equals_to(cell_state);
 
         auto top_left       = vector_int_factory::from_condition_result<cell_row_type>(top_left_c);
         auto top            = vector_int_factory::from_condition_result<cell_row_type>(top_c);
