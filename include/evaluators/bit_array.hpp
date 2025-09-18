@@ -201,6 +201,20 @@ struct _impl_evaluator<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
     }
 };
 
+// MISC
+
+template <typename grid_t, std::size_t subcell_offset, typename Even, typename Odd>
+struct _impl_evaluator<grid_t, alternate_algorithms<Even, Odd>, subcell_offset> {
+
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
+        if ((state.time_step % 2) == 0) {
+            return _impl_evaluator<grid_t, Even, subcell_offset>::evaluate(state);
+        } else {
+            return _impl_evaluator<grid_t, Odd, subcell_offset>::evaluate(state);
+        }
+    }
+};
+
 // Neighborhood access
 template <typename grid_t, int x_offset, int y_offset, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> {

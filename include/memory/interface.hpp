@@ -43,6 +43,8 @@ struct point_in_grid {
 
     grids::point position;
 
+    int time_step = 0;
+
     CUDA_CALLABLE std::size_t idx() const {
         return properties.idx(position.x, position.y);
     }

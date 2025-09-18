@@ -59,6 +59,8 @@ class traverser {
         for (int step = 0; step < steps; ++step) {
 
             state.grid = current->data();
+            state.time_step = step;
+            
             auto next_data = next->data();
 
             // Process cells (skip border)

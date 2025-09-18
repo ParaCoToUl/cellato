@@ -17,8 +17,7 @@ struct config {
     
     using cell_state = traffic_cell_state;
     using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::empty, cell_state::tree,
-        cell_state::traffic, cell_state::ash>;
+        cell_state::empty, cell_state::red_car, cell_state::blue_car>;
 
     using pretty_print = traffic_pretty_print;
 

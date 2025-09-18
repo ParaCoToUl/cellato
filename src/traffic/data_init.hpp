@@ -14,10 +14,9 @@ struct traffic_random_init {
         
         // Probabilities for each cell state
         std::vector<std::tuple<traffic_cell_state, double>> probabilities = {
-            {traffic_cell_state::empty, 0.20},   // 20% empty cells
-            {traffic_cell_state::tree, 0.79},    // 79% trees
-            {traffic_cell_state::traffic, 0.01},    // 1% traffic (ignition points)
-            {traffic_cell_state::ash, 0.00}      // 0% ash initially
+            {traffic_cell_state::empty, 0.50},
+            {traffic_cell_state::red_car, 0.25},
+            {traffic_cell_state::blue_car, 0.25}
         };
         
         // Generate random grid using utility

@@ -69,6 +69,18 @@ struct _evaluator_impl<params, state_constant<Value>> {
     }
 };
 
+template <typename params, typename Even, typename Odd>
+struct _evaluator_impl<params, alternate_algorithms<Even, Odd>> {
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        if (state.time_step % 2 == 0) {
+            return _evaluator_impl<params, Even>::evaluate(state);
+        } else {
+            return _evaluator_impl<params, Odd>::evaluate(state);
+        }
+    }
+};
+
 template <typename params, typename Condition, typename Then, typename Else>
 struct _evaluator_impl<params, if_then_else<Condition, Then, Else>> {
 

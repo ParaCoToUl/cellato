@@ -78,6 +78,10 @@ struct plus {
     using right = Right;
 };
 
+template <typename ...Algs>
+struct alternate_algorithms {
+};
+
 template <typename Left, typename Right>
 struct modulo {
     using left = Left;

@@ -49,18 +49,46 @@ struct runner {
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
     
+    template <traffic_cell_state movable, traffic_cell_state stationary>
+    traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
+        if (current_state == movable) {
+            if (outgoing_neighbor == traffic_cell_state::empty) {
+                return traffic_cell_state::empty;
+            } else {
+                return movable; // Car stays if it can't move out
+            }
+        } 
+        else if (current_state == traffic_cell_state::empty) {
+            if (incoming_neighbor == movable) {
+                return movable;
+            } else {
+                return traffic_cell_state::empty; // Stays empty if no car moves in
+            }
+        } 
+        // Must be stationary car
+        else {
+            return stationary; // Stationary cars don't move
+        }
+    };
+
     void run(int steps) {
         for (int step = 0; step < steps; ++step) {
             // Process each cell
             for (std::size_t y = 1; y < _y_size - 1; ++y) {
                 for (std::size_t x = 1; x < _x_size - 1; ++x) {
                     // Forest traffic rules
-                    traffic_cell_state current = _current_grid[y * _x_size + x];
-                    traffic_cell_state next = current;
-                    
-                    // TODO
-                    
-                    _next_grid[y * _x_size + x] = next;
+
+                    traffic_cell_state cell_state = _current_grid[y * _x_size + x];
+                    traffic_cell_state left_neighbor = _current_grid[y * _x_size + (x - 1)];
+                    traffic_cell_state right_neighbor = _current_grid[y * _x_size + (x + 1)];
+                    traffic_cell_state up_neighbor = _current_grid[(y - 1) * _x_size + x];
+                    traffic_cell_state down_neighbor = _current_grid[(y + 1) * _x_size + x];
+
+                    if (step % 2 == 0) {
+                        _next_grid[y * _x_size + x] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
+                    } else {
+                        _next_grid[y * _x_size + x] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
+                    }
                 }
             }
             

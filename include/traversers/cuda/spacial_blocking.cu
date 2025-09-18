@@ -17,7 +17,8 @@ __global__ void process_grid_kernel(
     grid_data_t input_data,
     output_data_t output_data,
     size_t width,
-    size_t height
+    size_t height,
+    int time_step
 ) {
     // Calculate base coordinates for this thread's tile
     int base_x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -76,7 +77,8 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
             input_data,
             output_data,
             width,
-            height
+            height,
+            step
         );
         
         if constexpr (mode == _run_mode::VERBOSE) {

@@ -159,6 +159,17 @@ struct evaluator<cell_type, has_bit_set<Value, bit_idx>, cell_ptr_type> {
     }
 };
 
+template <typename cell_type, typename cell_ptr_type, typename Even, typename Odd>
+struct evaluator<cell_type, alternate_algorithms<Even, Odd>, cell_ptr_type> {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
+        if (state.time_step % 2 == 0) {
+            return evaluator<cell_type, Even, cell_ptr_type>::evaluate(state);
+        } else {
+            return evaluator<cell_type, Odd, cell_ptr_type>::evaluate(state);
+        }
+    }
+};
+
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
 struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, cell_ptr_type> {
     static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {

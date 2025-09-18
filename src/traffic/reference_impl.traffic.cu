@@ -4,20 +4,47 @@
 
 namespace traffic::reference {
 
+template <traffic_cell_state movable, traffic_cell_state stationary>
+__device__ traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
+    if (current_state == movable) {
+        if (outgoing_neighbor == traffic_cell_state::empty) {
+            return traffic_cell_state::empty;
+        } else {
+            return movable; // Car stays if it can't move out
+        }
+    } 
+    else if (current_state == traffic_cell_state::empty) {
+        if (incoming_neighbor == movable) {
+            return movable;
+        } else {
+            return traffic_cell_state::empty; // Stays empty if no car moves in
+        }
+    } 
+    // Must be stationary car
+    else {
+        return stationary; // Stationary cars don't move
+    }
+};
+
 // CUDA kernel for Forest traffic (single step)
 __global__ void traffic_kernel(const traffic_cell_state* current, traffic_cell_state* next, 
-                            int width, int height) {
+                            int width, int height, int step) {
     int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
     
     const int idx = y * width + x;
     
     traffic_cell_state cell_state = current[idx];
-    traffic_cell_state next_state = cell_state;
+    traffic_cell_state left_neighbor = current[y * width + (x - 1)];
+    traffic_cell_state right_neighbor = current[y * width + (x + 1)];
+    traffic_cell_state up_neighbor = current[(y - 1) * width + x];
+    traffic_cell_state down_neighbor = current[(y + 1) * width + x];
 
-    // TODO
-
-    next[idx] = next_state;
+    if (step % 2 == 0) {
+        next[idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
+    } else {
+        next[idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
+    }
 }
 
 void runner::run_kernel(int steps) {
@@ -38,7 +65,7 @@ void runner::run_kernel(int steps) {
     // Run steps iterations
     for (int i = 0; i < steps; i++) {
         // Launch kernel for one step
-        traffic_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
+        traffic_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size, i);
         
         // Swap pointers for next iteration
         traffic_cell_state* temp = d_current;

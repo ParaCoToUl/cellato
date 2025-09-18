@@ -17,7 +17,8 @@ __global__ void process_grid_kernel(
     grid_data_t input_data,
     output_data_t output_data,
     size_t width,
-    size_t height
+    size_t height,
+    int time_step
 ) {
     int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
@@ -28,6 +29,7 @@ __global__ void process_grid_kernel(
     state.properties.y_size = height;
     state.position.x = x;
     state.position.y = y;
+    state.time_step = time_step;
 
     auto result = evaluator_t::evaluate(state);
     save_to(output_data, state.idx(), result);
@@ -60,7 +62,8 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
             input_data,
             output_data,
             width,
-            height
+            height,
+            step
         );
         
         if constexpr (mode == _run_mode::VERBOSE) {
