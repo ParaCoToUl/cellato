@@ -32,10 +32,9 @@ struct point {
 
 template <typename grid_data_type>
 struct point_in_grid {
-
-    point_in_grid() = default;
+    constexpr point_in_grid() = default;
     CUDA_CALLABLE point_in_grid(grid_data_type grid_data)
-        : grid(grid_data) {} 
+        : grid(grid_data) {}
 
     grid_data_type grid{};
 
