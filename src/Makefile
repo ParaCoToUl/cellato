@@ -95,7 +95,7 @@ endif
 all: directories $(TARGET) $(TEST_TARGET)
 
 directories:
-	mkdir -p $(OBJ_DIR) $(BIN_DIR)
+	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 install_deps: install_kokkos install_halide install_gridtools
 
