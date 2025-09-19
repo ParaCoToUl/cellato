@@ -75,6 +75,11 @@ public:
             .to_standard()
             .template with_removed_margins<test_suite::x_margin, test_suite::y_margin>();
 
+        if (params.print) {
+            LOG << "\nFinal result:\n";
+            result_as_standard.print(LOG, _print_config);
+        }
+
         return { execution_time, result_as_standard.get_checksum() };
     }
 

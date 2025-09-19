@@ -14,10 +14,8 @@ struct critters_random_init {
         
         // Probabilities for each cell state
         std::vector<std::tuple<critters_cell_state, double>> probabilities = {
-            {critters_cell_state::empty, 0.20},   // 20% empty cells
-            {critters_cell_state::tree, 0.79},    // 79% trees
-            {critters_cell_state::critters, 0.01},    // 1% critters (ignition points)
-            {critters_cell_state::ash, 0.00}      // 0% ash initially
+            {critters_cell_state::dead, 0.50},
+            {critters_cell_state::alive, 0.50}
         };
         
         // Generate random grid using utility

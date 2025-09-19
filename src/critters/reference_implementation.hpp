@@ -56,11 +56,66 @@ struct runner {
                 for (std::size_t x = 1; x < _x_size - 1; ++x) {
                     // Forest critters rules
                     critters_cell_state current = _current_grid[y * _x_size + x];
-                    critters_cell_state next = current;
                     
-                    // TODO
+                    int x_parity = x % 2;
+                    int y_parity = y % 2;
+                    int step_parity = step % 2;
                     
-                    _next_grid[y * _x_size + x] = next;
+                    int x_coords[2];
+                    int y_coords[2];
+                    
+                    if (step_parity == 0) {
+                        if (x_parity == 0) {
+                            x_coords[0] = 0;
+                            x_coords[1] = 1;
+                        } else {
+                            x_coords[0] = -1;
+                            x_coords[1] = 0;
+                        }
+                        
+                        if (y_parity == 0) {
+                            y_coords[0] = 0;
+                            y_coords[1] = 1;
+                        } else {
+                            y_coords[0] = -1;
+                            y_coords[1] = 0;
+                        }
+                    } else { // step_parity == 1
+                        if (x_parity == 0) {
+                            x_coords[0] = -1;
+                            x_coords[1] = 0;
+                        } else {
+                            x_coords[0] = 0;
+                            x_coords[1] = 1;
+                        }
+                        
+                        if (y_parity == 0) {
+                            y_coords[0] = -1;
+                            y_coords[1] = 0;
+                        } else {
+                            y_coords[0] = 0;
+                            y_coords[1] = 1;
+                        }
+                    }
+                    
+                    int neighbors_count = 0;
+                    for (int dx_idx = 0; dx_idx < 2; dx_idx++) {
+                        int dx = x_coords[dx_idx];
+                        for (int dy_idx = 0; dy_idx < 2; dy_idx++) {
+                            int dy = y_coords[dy_idx];
+                            int neighbor_idx = (y + dy) * _x_size + (x + dx);
+                            neighbors_count += (_current_grid[neighbor_idx] == critters_cell_state::alive) ? 1 : 0;
+                        }
+                    }
+                    
+                    critters_cell_state next_state;
+                    if (neighbors_count == 2) {
+                        next_state = current; // Remain the same
+                    } else {
+                        next_state = (current == critters_cell_state::alive) ? critters_cell_state::dead : critters_cell_state::alive;
+                    }
+
+                    _next_grid[y * _x_size + x] = next_state;
                 }
             }
             

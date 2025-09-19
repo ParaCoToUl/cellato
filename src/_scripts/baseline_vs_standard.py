@@ -6,7 +6,7 @@ import re
 
 # Define automata to test
 # AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian", "cyclic", "traffic", "hpp", "maze", "critters"]
-AUTOMATA = ["traffic"]
+AUTOMATA = ["critters"]
 
 GREY_COLOR = "\033[90m"
 RESET_COLOR = "\033[0m"
@@ -19,8 +19,8 @@ class CPU:
     GRID_SIZE = 1920   # Reasonably sized grid for performance comparison
     STEPS = 30         # Number of steps for CPU runs
 
-ROUNDS = 3         # Number of measurement rounds
-WARMUP = 1         # Number of warmup rounds
+ROUNDS = 2         # Number of measurement rounds
+WARMUP = 0         # Number of warmup rounds
 
 def run_test(executable, args):
     """Run a single test and return its CSV output line"""

@@ -17,8 +17,7 @@ struct config {
     
     using cell_state = critters_cell_state;
     using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::empty, cell_state::tree,
-        cell_state::critters, cell_state::ash>;
+        cell_state::dead, cell_state::alive>;
 
     using pretty_print = critters_pretty_print;
 

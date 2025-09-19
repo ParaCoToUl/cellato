@@ -353,6 +353,55 @@ struct _evaluator_impl<
     params,
     count_neighbors<
         state_constant<CellStateValue>,
+        margolus_alternating_neighborhood>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    constexpr static auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
+    
+    CUDA_CALLABLE static vector_int<typename params::cell_row_t, 3> evaluate(state_t<params> state) {
+        (void)state;
+        return {};
+        // auto parity = state.time_step % 2;
+        // auto y_parity = state.position.y % 2;
+
+        // if (parity == 0) {
+        //     return even_parity(state);
+        // } else {
+        //     return odd_parity(state);
+        // }
+    }
+
+// private:
+//     CUDA_CALLABLE static vector_int<cell_row_type, 3> even_parity(state_t<params> state) {
+//         auto current_state_c = evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>();
+//         auto vertical_neighbor_c = (state.position.y % 2 == 0) ?
+//             evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>() :
+//             evaluator_t<neighbor_at< 0,  1>>::evaluate(state).template equals_to<cell_state>();
+
+//         auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
+//         auto vertical_neighbor = vector_int_factory::from_condition_result<cell_row_type>(vertical_neighbor_c);
+
+//         auto columns_sum = current_state.template to_vector_with_bits<2>().get_added(vertical_neighbor);
+
+//         auto shifted = columns_sum.template get_right_shifted_vector(1);
+
+//     }
+
+//     CUDA_CALLABLE static vector_int<cell_row_type, 3> odd_parity(state_t<params> state) {
+        
+//     }
+};
+
+template <typename params, typename cell_state_type, cell_state_type CellStateValue>
+struct _evaluator_impl<
+    params,
+    count_neighbors<
+        state_constant<CellStateValue>,
         moore_8_neighbors>> {
 
     template <typename E>

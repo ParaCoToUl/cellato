@@ -185,6 +185,64 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, 
 };
 
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
+struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating_neighborhood>, cell_ptr_type> {
+    static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
+        auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
+
+        auto parity = state.time_step % 2;
+        auto x_parity = state.position.x % 2;
+        auto y_parity = state.position.y % 2;
+
+        int x_coords[2], y_coords[2];
+
+        if (parity == 0) {
+            if (x_parity == 0) {
+                x_coords[0] = 0;
+                x_coords[1] = 1;
+            } else {
+                x_coords[0] = -1;
+                x_coords[1] = 0;
+            }
+            
+            if (y_parity == 0) {
+                y_coords[0] = 0;
+                y_coords[1] = 1;
+            } else {
+                y_coords[0] = -1;
+                y_coords[1] = 0;
+            }
+        } else {  // step_parity == 1
+            if (x_parity == 0) {
+                x_coords[0] = -1;
+                x_coords[1] = 0;
+            } else {
+                x_coords[0] = 0;
+                x_coords[1] = 1;
+            }
+            
+            if (y_parity == 0) {
+                y_coords[0] = -1;
+                y_coords[1] = 0;
+            } else {
+                y_coords[0] = 0;
+                y_coords[1] = 1;
+            }
+        }
+
+        auto get_cell = [](state_t<cell_type, cell_ptr_type> state, int x_offset, int y_offset) {
+            return state.grid[(state.position.x + x_offset) + (state.position.y + y_offset) * state.properties.x_size];
+        };
+
+        return (
+            (get_cell(state, x_coords[0], y_coords[0]) == target_value) +
+            (get_cell(state, x_coords[0], y_coords[1]) == target_value) +
+            (get_cell(state, x_coords[1], y_coords[0]) == target_value) +
+            (get_cell(state, x_coords[1], y_coords[1]) == target_value)
+        );
+    }
+};
+
+template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
 struct evaluator<cell_type, count_neighbors<CellStateValue, von_neumann_4_neighbors>, cell_ptr_type> {
     static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
         auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);

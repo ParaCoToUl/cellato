@@ -54,6 +54,10 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         height_threads / blockDim.y
     );
 
+    if constexpr (mode == _run_mode::VERBOSE) {
+        call_callback(0, current);
+    }
+
     for (int step = 0; step < steps; ++step) {
         auto input_data = current->data();
         auto output_data = next->data();
@@ -67,7 +71,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         );
         
         if constexpr (mode == _run_mode::VERBOSE) {
-            call_callback(step, current);
+            call_callback(step + 1, next);
         }
 
         std::swap(current, next);

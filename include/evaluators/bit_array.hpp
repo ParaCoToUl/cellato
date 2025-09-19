@@ -257,6 +257,109 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, moore_8_neighbors
 };
 
 template <typename grid_t, typename CellStateValue, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternating_neighborhood>, subcell_offset> {
+
+    CUDA_CALLABLE static int evaluate(state_t<grid_t> state) {
+        auto target_value = _impl_evaluator<grid_t, CellStateValue, subcell_offset>::evaluate(state);
+
+        constexpr auto cells_per_word = grid_t::cells_per_word;
+        std::size_t x_original = state.position.x * cells_per_word + subcell_offset;
+        std::size_t y_original = state.position.y;
+
+        auto parity = state.time_step % 2;
+        // auto parity = 0; // same results ¯\_(ツ)_/¯
+        auto x_parity = (x_original + 1) % 2;
+        auto y_parity = y_original % 2;
+
+        int x_coords_0, x_coords_1, y_coords_0, y_coords_1;
+
+        if (parity == 0) {
+            if (x_parity == 0) {
+                x_coords_0 = 0;
+                x_coords_1 = 1;
+            } else {
+                x_coords_0 = -1;
+                x_coords_1 = 0;
+            }
+            
+            if (y_parity == 0) {
+                y_coords_0 = 0;
+                y_coords_1 = 1;
+            } else {
+                y_coords_0 = -1;
+                y_coords_1 = 0;
+            }
+        } else {  // step_parity == 1
+            if (x_parity == 0) {
+                x_coords_0 = -1;
+                x_coords_1 = 0;
+            } else {
+                x_coords_0 = 0;
+                x_coords_1 = 1;
+            }
+            
+            if (y_parity == 0) {
+                y_coords_0 = -1;
+                y_coords_1 = 0;
+            } else {
+                y_coords_0 = 0;
+                y_coords_1 = 1;
+            }
+        }
+
+        // Count cells with the target value in the Margolus neighborhood
+        return (
+            (get_cell_at(state, x_coords_0, y_coords_0) == target_value) +
+            (get_cell_at(state, x_coords_0, y_coords_1) == target_value) +
+            (get_cell_at(state, x_coords_1, y_coords_0) == target_value) +
+            (get_cell_at(state, x_coords_1, y_coords_1) == target_value)
+        );
+    }
+
+    
+    template <int x_offset, int y_offset>
+    using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
+
+    using store_type = typename grid_t::store_type;
+    CUDA_CALLABLE static store_type get_cell_at(state_t<grid_t> state, int x_offset, int y_offset) {
+        if (x_offset == 0) {
+            if (y_offset == 0) {
+                return cell_at< 0,  0>::evaluate(state);
+            } else if (y_offset == 1) {
+                return cell_at< 0,  1>::evaluate(state);
+            } else { // y_offset == -1
+                return cell_at< 0, -1>::evaluate(state);
+            }
+        } else if (x_offset == 1) {
+            if (y_offset == 0) {
+                return cell_at< 1,  0>::evaluate(state);
+            } else if (y_offset == 1) {
+                return cell_at< 1,  1>::evaluate(state);
+            } else { // y_offset == -1
+                return cell_at< 1, -1>::evaluate(state);
+            }
+        } else { // x_offset == -1
+            if (y_offset == 0) {
+                return cell_at<-1,  0>::evaluate(state);
+            } else if (y_offset == 1) {
+                return cell_at<-1,  1>::evaluate(state);
+            } else { // y_offset == -1
+                return cell_at<-1, -1>::evaluate(state);
+            }
+        }
+
+
+        // constexpr auto cells_per_word = grid_t::cells_per_word;
+        // std::size_t x_size_original = state.properties.x_size * cells_per_word;
+
+        // std::size_t x_original = state.position.x * cells_per_word + subcell_offset + static_cast<std::size_t>(x_offset);
+        // std::size_t y_original = state.position.y + static_cast<std::size_t>(y_offset);
+
+        // return state.grid.get_individual_cell_at(y_original * x_size_original + x_original);
+    }
+};
+
+template <typename grid_t, typename CellStateValue, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, von_neumann_4_neighbors>, subcell_offset> {
     
     template <int x_offset, int y_offset>

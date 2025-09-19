@@ -6,16 +6,71 @@ namespace critters::reference {
 
 // CUDA kernel for Forest critters (single step)
 __global__ void critters_kernel(const critters_cell_state* current, critters_cell_state* next, 
-                            int width, int height) {
+                            int width, int height, int step) {
     int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
     
     const int idx = y * width + x;
     
     critters_cell_state cell_state = current[idx];
-    critters_cell_state next_state = cell_state;
 
-    // TODO
+    int x_parity = x % 2;
+    int y_parity = y % 2;
+    int step_parity = step % 2;
+    
+    int x_coords[2];
+    int y_coords[2];
+    
+    if (step_parity == 0) {
+        if (x_parity == 0) {
+            x_coords[0] = 0;
+            x_coords[1] = 1;
+        } else {
+            x_coords[0] = -1;
+            x_coords[1] = 0;
+        }
+        
+        if (y_parity == 0) {
+            y_coords[0] = 0;
+            y_coords[1] = 1;
+        } else {
+            y_coords[0] = -1;
+            y_coords[1] = 0;
+        }
+    } else { // step_parity == 1
+        if (x_parity == 0) {
+            x_coords[0] = -1;
+            x_coords[1] = 0;
+        } else {
+            x_coords[0] = 0;
+            x_coords[1] = 1;
+        }
+        
+        if (y_parity == 0) {
+            y_coords[0] = -1;
+            y_coords[1] = 0;
+        } else {
+            y_coords[0] = 0;
+            y_coords[1] = 1;
+        }
+    }
+    
+    int neighbors_count = 0;
+    for (int dx_idx = 0; dx_idx < 2; dx_idx++) {
+        int dx = x_coords[dx_idx];
+        for (int dy_idx = 0; dy_idx < 2; dy_idx++) {
+            int dy = y_coords[dy_idx];
+            int neighbor_idx = (y + dy) * width + (x + dx);
+            neighbors_count += (current[neighbor_idx] == critters_cell_state::alive) ? 1 : 0;
+        }
+    }
+    
+    critters_cell_state next_state;
+    if (neighbors_count == 2) {
+        next_state = cell_state; // Remain the same
+    } else {
+        next_state = (cell_state == critters_cell_state::alive) ? critters_cell_state::dead : critters_cell_state::alive;
+    }
 
     next[idx] = next_state;
 }
@@ -38,7 +93,7 @@ void runner::run_kernel(int steps) {
     // Run steps iterations
     for (int i = 0; i < steps; i++) {
         // Launch kernel for one step
-        critters_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
+        critters_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size, i);
         
         // Swap pointers for next iteration
         critters_cell_state* temp = d_current;
