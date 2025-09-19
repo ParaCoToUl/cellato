@@ -266,10 +266,9 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
         std::size_t x_original = state.position.x * cells_per_word + subcell_offset;
         std::size_t y_original = state.position.y;
 
-        auto parity = state.time_step % 2;
-        // auto parity = 0; // same results ¯\_(ツ)_/¯
-        auto x_parity = (x_original + 1) % 2;
-        auto y_parity = y_original % 2;
+        int parity = state.time_step % 2;
+        int x_parity = (x_original + 1) % 2;
+        int y_parity = y_original % 2;
 
         int x_coords_0, x_coords_1, y_coords_0, y_coords_1;
 
@@ -347,15 +346,6 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
                 return cell_at<-1, -1>::evaluate(state);
             }
         }
-
-
-        // constexpr auto cells_per_word = grid_t::cells_per_word;
-        // std::size_t x_size_original = state.properties.x_size * cells_per_word;
-
-        // std::size_t x_original = state.position.x * cells_per_word + subcell_offset + static_cast<std::size_t>(x_offset);
-        // std::size_t y_original = state.position.y + static_cast<std::size_t>(y_offset);
-
-        // return state.grid.get_individual_cell_at(y_original * x_size_original + x_original);
     }
 };
 

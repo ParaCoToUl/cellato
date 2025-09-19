@@ -29,6 +29,49 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run
 
 #undef TRAVERSER_TYPE
 
+// Bit array grid with simple evaluator (32-bit)
+
+#define GRID_TYPE \
+    cellato::memory::grids::bit_array::grid< \
+        AUTOMATON_NAMESPACE::config::state_dictionary, \
+        std::uint32_t, \
+        cellato::memory::grids::device::CPU \
+    >
+
+#define TRAVERSER_TYPE \
+    cellato::traversers::cuda::simple::traverser< \
+        cellato::evaluators::bit_array::evaluator<GRID_TYPE, AUTOMATON_NAMESPACE::config::algorithm>, \
+        GRID_TYPE \
+    >
+
+template class TRAVERSER_TYPE;
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::VERBOSE>(int);
+
+#undef TRAVERSER_TYPE
+#undef GRID_TYPE
+
+// Bit array grid with simple evaluator (64-bit)
+#define GRID_TYPE \
+    cellato::memory::grids::bit_array::grid< \
+        AUTOMATON_NAMESPACE::config::state_dictionary, \
+        std::uint64_t, \
+        cellato::memory::grids::device::CPU \
+    >
+
+#define TRAVERSER_TYPE \
+    cellato::traversers::cuda::simple::traverser< \
+        cellato::evaluators::bit_array::evaluator<GRID_TYPE, AUTOMATON_NAMESPACE::config::algorithm>, \
+        GRID_TYPE \
+    >
+
+template class TRAVERSER_TYPE;
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run_mode::VERBOSE>(int);
+
+#undef TRAVERSER_TYPE
+#undef GRID_TYPE
+
 // Bit planes grid with bit planes evaluator (32-bit)
 #define TRAVERSER_TYPE \
     cellato::traversers::cuda::simple::traverser< \

@@ -13,7 +13,7 @@
 namespace cellato::traversers::cuda::spacial_blocking {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t, int Y_TILE_SIZE, int X_TILE_SIZE>
-__global__ void process_grid_kernel(
+__global__ void process_grid_kernel_blocked(
     grid_data_t input_data,
     output_data_t output_data,
     size_t width,
@@ -23,7 +23,7 @@ __global__ void process_grid_kernel(
     // Calculate base coordinates for this thread's tile
     int base_x = blockIdx.x * blockDim.x + threadIdx.x;
     int base_y = blockIdx.y * blockDim.y + threadIdx.y;
-    
+
     // Each thread handles a Y_TILE_SIZE x X_TILE_SIZE tile of cells
     // Process each cell in the tile
     for (int tile_y = 0; tile_y < Y_TILE_SIZE; tile_y++) {
@@ -44,6 +44,7 @@ __global__ void process_grid_kernel(
             state.properties.y_size = height;
             state.position.x = x;
             state.position.y = y;
+            state.time_step = time_step;
             
             auto result = evaluator_t::evaluate(state);
             save_to(output_data, state.idx(), result);
@@ -73,7 +74,7 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
         auto input_data = current->data();
         auto output_data = next->data();
         
-        process_grid_kernel<evaluator_t, decltype(input_data), decltype(output_data), Y_TILE_SIZE, X_TILE_SIZE><<<gridDim, blockDim>>>(
+        process_grid_kernel_blocked<evaluator_t, decltype(input_data), decltype(output_data), Y_TILE_SIZE, X_TILE_SIZE><<<gridDim, blockDim>>>(
             input_data,
             output_data,
             width,

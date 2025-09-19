@@ -13,7 +13,7 @@
 namespace cellato::traversers::cuda::simple {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t>
-__global__ void process_grid_kernel(
+__global__ void process_grid_kernel_simple(
     grid_data_t input_data,
     output_data_t output_data,
     size_t width,
@@ -62,7 +62,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         auto input_data = current->data();
         auto output_data = next->data();
         
-        process_grid_kernel<evaluator_t><<<gridDim, blockDim>>>(
+        process_grid_kernel_simple<evaluator_t><<<gridDim, blockDim>>>(
             input_data,
             output_data,
             width,

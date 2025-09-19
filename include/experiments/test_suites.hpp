@@ -95,8 +95,7 @@ namespace on_cuda {
             using grid_t = grids::bit_array::grid<state_dictionary_t, grid_store_word_t>;
             using evaluator_t = evaluators::bit_array::evaluator<grid_t, algorithm_t>;
 
-            using traverser_t = traversers::spacial_blocking::traverser<
-                evaluator_t, grid_t, 1, grid_t::cells_per_word>;
+            using traverser_t = traversers::simple::traverser<evaluator_t, grid_t>;
             
             constexpr static int x_margin = grid_t::cells_per_word;
             constexpr static int y_margin = 1;

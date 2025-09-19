@@ -37,11 +37,11 @@ struct point_in_grid {
     CUDA_CALLABLE point_in_grid(grid_data_type grid_data)
         : grid(grid_data) {} 
 
-    grid_data_type grid;
+    grid_data_type grid{};
 
-    grids::properties properties;
+    grids::properties properties{};
 
-    grids::point position;
+    grids::point position{};
 
     int time_step = 0;
 
