@@ -124,12 +124,10 @@ public:
     }
 
     // Constructor for populating grid from existing data
-    grid(std::size_t y_size, std::size_t x_size, const original_state_t* grid_input) 
+    grid(std::size_t y_size, std::size_t x_size, const original_state_t* grid_input) requires (device_type == device::CPU)
         : _x_size(x_size), _y_size(y_size) {
 
         assert_valid_dimensions(x_size, y_size);
-
-        static_assert(device_type == device::CPU, "This constructor is only for CPU device");
         
         std::size_t total_cells = x_size * y_size;
         std::size_t words_needed = (total_cells + cells_per_word - 1) / cells_per_word;
@@ -142,12 +140,10 @@ public:
     }
 
     // Constructor from standard grid
-    grid(const cellato::memory::grids::standard::grid<original_state_t>& standard_grid) {
+    grid(const cellato::memory::grids::standard::grid<original_state_t>& standard_grid) requires (device_type == device::CPU) {
 
         assert_valid_dimensions(standard_grid.x_size_physical(), standard_grid.y_size_physical());
 
-        static_assert(device_type == device::CPU, "This constructor is only for CPU device");
-        
         _x_size = standard_grid.x_size_physical();
         _y_size = standard_grid.y_size_physical();
         
@@ -163,12 +159,10 @@ public:
     }
 
     // CUDA-specific constructor
-    grid(cuda_params_t params)
+    grid(cuda_params_t params) requires (device_type == device::CUDA)
         : _x_size(params.x_size), _y_size(params.y_size) {
         
         assert_valid_dimensions(params.x_size, params.y_size);
-
-        static_assert(device_type == device::CUDA, "This constructor is only for CUDA device");
         
         _cuda_data = params.cuda_data;
     }
@@ -184,9 +178,7 @@ public:
     }
 
     // Get cell state at specific coordinates
-    original_state_t get_cell(std::size_t x, std::size_t y) const {
-        static_assert(device_type == device::CPU, "get_cell is only supported on CPU");
-        
+    original_state_t get_cell(std::size_t x, std::size_t y) const requires (device_type == device::CPU) {
         if (x >= x_size_logical() || y >= y_size_logical()) {
             throw std::out_of_range("Cell coordinates out of range");
         }
@@ -196,9 +188,7 @@ public:
     }
 
     // Convert to vector of original states
-    std::vector<original_state_t> to_original_representation() const {
-        static_assert(device_type == device::CPU, "to_original_representation is only supported on CPU");
-        
+    std::vector<original_state_t> to_original_representation() const requires (device_type == device::CPU) {
         std::vector<original_state_t> result(_x_size * _y_size);
         
         for (std::size_t i = 0; i < _x_size * _y_size; ++i) {
@@ -209,18 +199,14 @@ public:
     }
 
     // Convert to standard grid
-    cellato::memory::grids::standard::grid<original_state_t> to_standard() const {
-        static_assert(device_type == device::CPU, "to_standard is only supported on CPU");
-        
+    cellato::memory::grids::standard::grid<original_state_t> to_standard() const requires (device_type == device::CPU) {
         auto grid_data = to_original_representation();
         return cellato::memory::grids::standard::grid<original_state_t>(
             std::move(grid_data), _x_size, _y_size);
     }
 
     // Move to CUDA device
-    grid<states_dict_t, store_word_type, device::CUDA> to_cuda() const {
-        static_assert(device_type == device::CPU, "to_cuda is only supported on CPU");
-        
+    grid<states_dict_t, store_word_type, device::CUDA> to_cuda() const requires (device_type == device::CPU) {
         store_word_type* device_data;
         std::size_t data_size = _data.size() * sizeof(store_word_type);
         
@@ -238,9 +224,7 @@ public:
     }
     
     // Move from CUDA to CPU
-    grid<states_dict_t, store_word_type, device::CPU> to_cpu() const {
-        static_assert(device_type == device::CUDA, "to_cpu is only supported on CUDA");
-        
+    grid<states_dict_t, store_word_type, device::CPU> to_cpu() const requires (device_type == device::CUDA) {
         std::size_t total_cells = _x_size * _y_size;
         std::size_t words_needed = (total_cells + cells_per_word - 1) / cells_per_word;
         

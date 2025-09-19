@@ -47,10 +47,8 @@ public:
         }
     }
 
-    grid(cuda_params<cell_type> params)
+    grid(cuda_params<cell_type> params) requires (device_type == device::CUDA)
         : _properties{params.x_size, params.y_size}, _data() {
-
-        static_assert(device_type == device::CUDA, "This constructor is only for CUDA device");
 
         _cuda_data = params.cuda_data;
     }
@@ -91,9 +89,7 @@ public:
     }
 
     template <int x_margin, int y_margin>
-    grid<cell_type> with_empty_margins() const {
-        static_assert(device_type == device::CPU, "This function is only for CPU device");
-
+    grid<cell_type> with_empty_margins() const requires (device_type == device::CPU) {
         grids::properties new_properties {
             _properties.x_size + 2 * x_margin,
             _properties.y_size + 2 * y_margin
@@ -111,9 +107,7 @@ public:
     }
 
     template <int x_margin, int y_margin>
-    grid<cell_type> with_removed_margins() const {
-        static_assert(device_type == device::CPU, "This function is only for CPU device");
-
+    grid<cell_type> with_removed_margins() const requires (device_type == device::CPU) {
         grids::properties new_properties {
             _properties.x_size - 2 * x_margin,
             _properties.y_size - 2 * y_margin
@@ -134,9 +128,7 @@ public:
         return *this;
     }
 
-    void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const {
-        static_assert(device_type == device::CPU, "This function is only for CPU device");
-
+    void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const requires (device_type == device::CPU) {
         for (std::size_t y = 0; y < _properties.y_size; ++y) {
             for (std::size_t x = 0; x < _properties.x_size; ++x) {
                 os << config.get_str(_data[_properties.idx(x, y)]) << " ";
@@ -145,9 +137,7 @@ public:
         }
     }
 
-    grid<cell_type, device::CPU> to_cpu() const {
-        static_assert(device_type == device::CUDA, "This function is only for CUDA device");
-
+    grid<cell_type, device::CPU> to_cpu() const requires (device_type == device::CUDA) {
         std::vector<cell_type> host_data(_properties.x_size * _properties.y_size);
         cudaMemcpy(host_data.data(), _cuda_data, host_data.size() * sizeof(cell_type), cudaMemcpyDeviceToHost);
 
@@ -155,9 +145,7 @@ public:
 
     }
 
-    grid<cell_type, device::CUDA> to_cuda() const {
-        static_assert(device_type == device::CPU, "This function is only for CPU device");
-
+    grid<cell_type, device::CUDA> to_cuda() const requires (device_type == device::CPU) {
         cell_type* device_data;
         cudaMalloc((void**)&device_data, _data.size() * sizeof(cell_type));
         cudaMemcpy(device_data, _data.data(), _data.size() * sizeof(cell_type), cudaMemcpyHostToDevice);
@@ -180,9 +168,7 @@ public:
         }
     }
 
-    std::string get_checksum() const {
-        static_assert(device_type == device::CPU, "This function is only for CPU device");
-
+    std::string get_checksum() const requires (device_type == device::CPU) {
         constexpr int dims = 4;
         std::stringstream result;
         

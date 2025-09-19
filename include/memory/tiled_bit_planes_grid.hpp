@@ -65,23 +65,19 @@ class grid {
         }
     }
 
-    grid(std::size_t y_size, std::size_t x_size, const original_state_t* grid_input) {
-        static_assert(device_type == device::CPU, "This constructor is only for CPU device");
+    grid(std::size_t y_size, std::size_t x_size, const original_state_t* grid_input) requires (device_type == device::CPU) {
         initialize_grid(y_size, x_size, grid_input);        
     }
 
     // CUDA-specific constructor
-    grid(cuda_params_t params)
+    grid(cuda_params_t params) requires (device_type == device::CUDA)
         : _x_size(params.x_size), _y_size(params.y_size) {
-        static_assert(device_type == device::CUDA, "This constructor is only for CUDA device");
-        
         for_each_bit([&]<std::size_t bit_idx>() {
             _cuda_data[bit_idx] = params.cuda_data[bit_idx];
         });
     }
 
-    grid(const cellato::memory::grids::standard::grid<original_state_t>& standard_grid) {
-        static_assert(device_type == device::CPU, "This constructor is only for CPU device");
+    grid(const cellato::memory::grids::standard::grid<original_state_t>& standard_grid) requires (device_type == device::CPU) {
         initialize_grid(
             standard_grid.y_size_physical(), standard_grid.x_size_physical(),
             standard_grid.data());
@@ -98,9 +94,7 @@ class grid {
         }
     }
 
-    original_state_t get_cell(std::size_t x, std::size_t y) const {
-        static_assert(device_type == device::CPU, "get_cell is only supported on CPU");
-        
+    original_state_t get_cell(std::size_t x, std::size_t y) const requires (device_type == device::CPU) {
         if (x >= x_size_original() || y >= y_size_original()) {
             throw std::out_of_range("Cell coordinates out of range");
         }
@@ -126,9 +120,7 @@ class grid {
         return states_dict_t::index_to_state(state_idx);
     }
 
-    std::vector<original_state_t> to_original_representation() const {
-        static_assert(device_type == device::CPU, "to_original_representation is only supported on CPU");
-        
+    std::vector<original_state_t> to_original_representation() const requires (device_type == device::CPU) {
         std::vector<original_state_t> result(x_size_original() * y_size_original());
 
         for (std::size_t y = 0; y < y_size_original(); ++y) {
@@ -140,17 +132,13 @@ class grid {
         return result;
     }
 
-    cellato::memory::grids::standard::grid<original_state_t> to_standard() const {
-        static_assert(device_type == device::CPU, "to_standard is only supported on CPU");
-        
+    cellato::memory::grids::standard::grid<original_state_t> to_standard() const requires (device_type == device::CPU) {
         auto grid_data = to_original_representation();
         return cellato::memory::grids::standard::grid<original_state_t>(
             std::move(grid_data), x_size_original(), y_size_original()); 
     }
 
-    grid<store_word_type, states_dict_t, device::CUDA> to_cuda() const {
-        static_assert(device_type == device::CPU, "to_cuda is only supported on CPU");
-        
+    grid<store_word_type, states_dict_t, device::CUDA> to_cuda() const requires (device_type == device::CPU) {
         std::array<store_word_type*, needed_bits> device_data;
         size_t data_size = y_size_physical() * x_size_physical() * sizeof(store_word_type);
         
@@ -172,9 +160,7 @@ class grid {
         return grid<store_word_type, states_dict_t, device::CUDA>(params);
     }
     
-    grid<store_word_type, states_dict_t, device::CPU> to_cpu() const {
-        static_assert(device_type == device::CUDA, "to_cpu is only supported on CUDA");
-        
+    grid<store_word_type, states_dict_t, device::CPU> to_cpu() const requires (device_type == device::CUDA) {
         // Create a CPU grid
         grid<store_word_type, states_dict_t, device::CPU> cpu_grid(_y_size, _x_size * word_store_bits);
         size_t data_size = y_size_physical() * x_size_physical() * sizeof(store_word_type);
