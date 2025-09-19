@@ -1,9 +1,9 @@
 CXX = g++
 CXX_STD = c++20
 NVCC = nvcc
-CXXFLAGS = -std=$(CXX_STD) -Wall -Wextra -Wpedantic -O3 -I../include
+CXXFLAGS = -std=$(CXX_STD) -DNDEBUG -Wall -Wextra -Wpedantic -O3 -march=native -I../include
 NVCC_CC_BIN = $(shell which $(CXX))
-NVCCFLAGS = -std=$(CXX_STD) -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -O3
+NVCCFLAGS = -std=$(CXX_STD) -DNDEBUG -Wreorder -Wext-lambda-captures-this -O3 -arch=native -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD),-Wall,-Wextra,-march=native
 CMAKE = cmake
 
 CUDA_VERSION = 13.0
