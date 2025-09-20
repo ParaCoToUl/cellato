@@ -1,5 +1,5 @@
 #ifndef AUTOMATON_NAMESPACE
-static_assert(false, "AUTOMATON_NAMESPACE must be defined");
+#error "AUTOMATON_NAMESPACE must be defined"
 #endif
 
 #include <cstdint>
