@@ -182,8 +182,8 @@ install_halide: $(VENDOR_DIR)/Halide install_llvm
 	@mkdir -p $(DEP_DIR)/halide $(DEP_DIR)/halide-install
 	@$(CMAKE) -B $(DEP_DIR)/halide -S $(VENDOR_DIR)/Halide \
 		-D CMAKE_BUILD_TYPE=Release \
-		-D Halide_LLVM_ROOT=$(shell realpath $(DEP_DIR)/llvm-install)
-	@$(CMAKE) --build $(DEP_DIR)/halide --parallel $(shell nproc) --config Release
+		-D Halide_LLVM_ROOT=$(shell realpath $(DEP_DIR)/llvm-install) \
+		-D LLVM_DIR=$(shell realpath $(DEP_DIR)/llvm-install/lib/cmake/llvm)
 	@$(CMAKE) --install $(DEP_DIR)/halide --prefix=$(shell realpath $(DEP_DIR)/halide-install)
 	@echo "Halide dependencies installed."
 
