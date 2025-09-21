@@ -31,9 +31,9 @@ struct fire_runner_impl : public real_runner {
         grid_ = view_type("fire_grid", x_size, y_size);
         next_grid_ = view_type("fire_next_grid", x_size, y_size);
 
-        for (std::size_t i = 0; i < x_size; ++i) {
-            for (std::size_t j = 0; j < y_size; ++j) {
-                grid_(i, j) = static_cast<value_type>(grid[i * y_size + j]);
+        for (std::size_t j = 0; j < y_size; ++j) {
+            for (std::size_t i = 0; i < x_size; ++i) {
+                grid_(i, j) = static_cast<value_type>(grid[j * x_size + i]);
             }
         }
     }
@@ -52,8 +52,8 @@ struct fire_runner_impl : public real_runner {
         std::vector<int> result;
         result.reserve(grid_.extent(0) * grid_.extent(1));
 
-        for (std::size_t i = 0; i < grid_.extent(0); ++i) {
-            for (std::size_t j = 0; j < grid_.extent(1); ++j) {
+        for (std::size_t j = 0; j < grid_.extent(1); ++j) {
+            for (std::size_t i = 0; i < grid_.extent(0); ++i) {
                 result.push_back(static_cast<int>(grid_(i, j)));
             }
         }
