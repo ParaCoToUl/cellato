@@ -53,9 +53,15 @@
 
 #ifdef ENABLE_HALIDE
 #include "_relwork/halide/game_of_life/runner.hpp"
-// #include "_relwork/halide/fire/runner.hpp"
-// #include "_relwork/halide/greenberg/runner.hpp"
-// #include "_relwork/halide/wire/runner.hpp"
+#include "_relwork/halide/fire/runner.hpp"
+#include "_relwork/halide/greenberg/runner.hpp"
+#include "_relwork/halide/wire/runner.hpp"
+#include "_relwork/halide/brian/runner.hpp"
+#include "_relwork/halide/maze/runner.hpp"
+#include "_relwork/halide/hpp/runner.hpp"
+#include "_relwork/halide/critters/runner.hpp"
+#include "_relwork/halide/cyclic/runner.hpp"
+#include "_relwork/halide/traffic/runner.hpp"
 #endif // ENABLE_HALIDE
 
 
@@ -164,19 +170,32 @@ private:
             std::cerr << "Kokkos reference implementation is not enabled in this build." << std::endl;
             return false;
         }
-#endif // ENABLE_HALIDE
+#endif // ENABLE_KOKKOS
 
 #ifdef ENABLE_HALIDE
         else if (params.reference_impl == "halide") {
             if (params.automaton == "game-of-life") {
                 return run_relwork<game_of_life::config, halide::game_of_life::runner>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                // return run_relwork<fire::config, halide::fire::runner>(params);
+                return run_relwork<fire::config, halide::fire::runner>(params);
             } else if (params.automaton == "greenberg-hastings") {
-                // return run_relwork<greenberg::config, halide::greenberg::runner>(params);
+                return run_relwork<greenberg::config, halide::greenberg::runner>(params);
             } else if (params.automaton == "wire") {
-                // return run_relwork<wire::config, halide::wire::runner>(params);
+                return run_relwork<wire::config, halide::wire::runner>(params);
+            } else if (params.automaton == "brian") {
+                return run_relwork<brian::config, halide::brian::runner>(params);
+            } else if (params.automaton == "maze") {
+                return run_relwork<maze::config, halide::maze::runner>(params);
+            } else if (params.automaton == "hpp") {
+                return run_relwork<hpp::config, halide::hpp::runner>(params);
+            } else if (params.automaton == "critters") {
+                return run_relwork<critters::config, halide::critters::runner>(params);
+            } else if (params.automaton == "cyclic") {
+                return run_relwork<cyclic::config, halide::cyclic::runner>(params);
+            } else if (params.automaton == "traffic") {
+                return run_relwork<traffic::config, halide::traffic::runner>(params);
             }
+
         }
 #else
         else if (params.reference_impl == "halide") {

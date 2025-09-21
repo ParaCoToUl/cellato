@@ -7,6 +7,7 @@ NVCCFLAGS = -std=$(CXX_STD) -DNDEBUG -Wreorder -Wext-lambda-captures-this -O3 -a
 CMAKE = cmake
 
 CUDA_VERSION = 13.0
+HALIDE_VERSION = 19
 
 CUDA_HOME = /usr/local/cuda
 
@@ -14,12 +15,23 @@ INCLUDE_DIRS = -I../include -I$(CUDA_HOME)/include
 LIB_DIRS = -L$(CUDA_HOME)/lib64
 LIBS = -lcudart
 
+ENABLE_KOKKOS = OFF
+ENABLE_HALIDE = OFF
+ENABLE_GRIDTOOLS = OFF
+HALIDE_SYSTEMWIDE = OFF
+
 KOKKOS_HOME_INCLUDE = $(DEP_DIR)/kokkos-install/include
 KOKKOS_HOME_LIB = $(DEP_DIR)/kokkos-install/lib ${DEP_DIR}/kokkos-install/lib64
 
-HALIDE_HOME_INCLUDE = $(DEP_DIR)/halide-install/include
-HALIDE_HOME_LIB = $(DEP_DIR)/halide-install/lib ${DEP_DIR}/halide-install/lib64
-HALIDE_LIBS = -lHalide
+ifneq ($(HALIDE_SYSTEMWIDE), ON)
+	HALIDE_HOME_INCLUDE = $(DEP_DIR)/halide-install/include
+	HALIDE_HOME_LIB = $(DEP_DIR)/halide-install/lib ${DEP_DIR}/halide-install/lib64
+	HALIDE_LIBS = -lHalide
+else
+	HALIDE_HOME_INCLUDE = /usr/include/halide$(HALIDE_VERSION)
+	HALIDE_HOME_LIB = 
+	HALIDE_LIBS = -lHalide$(HALIDE_VERSION)
+endif
 
 GRIDTOOLS_HOME_INCLUDE = $(DEP_DIR)/gridtools/include
 GRIDTOOLS_HOME_LIB = $(DEP_DIR)/gridtools/lib ${DEP_DIR}/gridtools/lib64
@@ -27,9 +39,6 @@ GRIDTOOLS_HOME_LIB = $(DEP_DIR)/gridtools/lib ${DEP_DIR}/gridtools/lib64
 # CUDA_DRIVER_LIB = $(shell pkg-config --libs cuda-$(CUDA_VERSION))
 CUDA_DRIVER_LIB = $(shell ldconfig -p | grep libcuda.so | head -n 1 | awk '{print "-L" $$4}' | sed 's/libcuda.so.*//') -lcuda
 
-ENABLE_KOKKOS = OFF
-ENABLE_HALIDE = OFF
-ENABLE_GRIDTOOLS = OFF
 
 # Directories
 SRC_DIR = .
@@ -85,7 +94,17 @@ DEPENDENCIES += install_halide
 INCLUDE_DIRS += $(HALIDE_HOME_INCLUDE:%=-I%)
 LIB_DIRS += $(HALIDE_HOME_LIB:%=-L%)
 LIBS += $(HALIDE_LIBS)
-EXTRA_OBJS += $(OBJ_DIR)/halide_game_of_life_runner.o # $(OBJ_DIR)/halide_fire_runner.o $(OBJ_DIR)/halide_greenberg_runner.o $(OBJ_DIR)/halide_wire_runner.o
+EXTRA_OBJS += $(addprefix $(OBJ_DIR)/halide_, \
+	game_of_life_runner.o \
+	brian_runner.o \
+	critters_runner.o \
+	cyclic_runner.o \
+	fire_runner.o \
+	greenberg_runner.o \
+	hpp_runner.o \
+	maze_runner.o \
+	traffic_runner.o \
+	wire_runner.o)
 
 $(OBJ_DIR)/halide_%_runner.o: $(SRC_DIR)/_relwork/halide/halide_%_runner.cpp | directories
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(DEFINES) $(INCLUDE_DIRS)

@@ -1,5 +1,5 @@
-#ifndef HALIDE_GAME_OF_LIFE_RUNNER_HPP
-#define HALIDE_GAME_OF_LIFE_RUNNER_HPP
+#ifndef HALIDE_MAZE_RUNNER_HPP
+#define HALIDE_MAZE_RUNNER_HPP
 
 #include <memory>
 #include <stdexcept>
@@ -13,7 +13,7 @@
 #error "Halide is not enabled, this source file should not be compiled."
 #endif // ENABLE_HALIDE
 
-namespace halide::game_of_life {
+namespace halide::maze {
 
 using real_runner = common::real_runner_interface;
 
@@ -47,6 +47,6 @@ private:
     std::unique_ptr<real_runner> real_runner_;
 };
 
-} // namespace halide::game_of_life
+} // namespace halide::maze
 
-#endif // HALIDE_GAME_OF_LIFE_RUNNER_HPP
+#endif // HALIDE_MAZE_RUNNER_HPP
