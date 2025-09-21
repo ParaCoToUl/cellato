@@ -6,8 +6,8 @@ USE_SLURM=${USE_SLURM:-0}
 
 INSTALL_DEPS=${INSTALL_DEPS:-1}
 ENABLE_KOKKOS=${ENABLE_KOKKOS:-1}
-ENABLE_HALIDE=${ENABLE_HALIDE:-1}
-ENABLE_GRIDTOOLS=${ENABLE_GRIDTOOLS:-1}
+ENABLE_HALIDE=${ENABLE_HALIDE:-0}
+ENABLE_GRIDTOOLS=${ENABLE_GRIDTOOLS:-0}
 
 script_dir=$(dirname "$0")
 
@@ -18,20 +18,105 @@ SRUN="srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --g
 size_and_stuff="--precision 32 --x_size 1024 --y_size 1024 --steps 100 --rounds 7 --warmup_rounds 4 --cuda_block_size_y 4"
 
 args=(
+    "--automaton brian --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton brian --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton brian --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton brian --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton brian --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton brian --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton brian --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton brian --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton critters --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton critters --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton critters --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton critters --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton critters --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton critters --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton critters --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton critters --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton cyclic --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton cyclic --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton cyclic --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton cyclic --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton cyclic --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton cyclic --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton cyclic --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton cyclic --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton fire --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton fire --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton fire --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton fire --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton fire --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton fire --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton fire --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton fire --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
     "--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
     "--automaton game-of-life --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
-    "--automaton game-of-life --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
-    "--automaton game-of-life --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+    # "--automaton game-of-life --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton game-of-life --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
 
     "--automaton game-of-life --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
     "--automaton game-of-life --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
-    "--automaton game-of-life --seed 42 --device CPU --reference_impl halide $size_and_stuff"
-    "--automaton game-of-life --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+    # "--automaton game-of-life --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton game-of-life --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
 
-    # "--automaton critters --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
-    # "--automaton critters --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
-    # "--automaton critters --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
-    # "--automaton critters --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+    "--automaton greenberg --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton greenberg --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton greenberg --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton greenberg --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton greenberg --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton greenberg --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton greenberg --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton greenberg --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton hpp --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton hpp --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton hpp --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton hpp --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton hpp --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton hpp --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton hpp --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton hpp --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton maze --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton maze --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton maze --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton maze --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton maze --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton maze --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton maze --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton maze --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton traffic --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton traffic --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton traffic --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton traffic --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton traffic --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton traffic --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton traffic --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton traffic --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+
+    "--automaton wire --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton wire --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    # "--automaton wire --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton wire --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+
+    "--automaton wire --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton wire --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    # "--automaton wire --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton wire --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
 )
 
 if [ "$should_remove" == "clean-deps" ]; then
