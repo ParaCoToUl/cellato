@@ -35,6 +35,12 @@
 #include "_relwork/kokkos/game_of_life/runner.hpp"
 #include "_relwork/kokkos/fire/runner.hpp"
 #include "_relwork/kokkos/greenberg/runner.hpp"
+#include "_relwork/kokkos/brian/runner.hpp"
+#include "_relwork/kokkos/maze/runner.hpp"
+#include "_relwork/kokkos/hpp/runner.hpp"
+#include "_relwork/kokkos/critters/runner.hpp"
+#include "_relwork/kokkos/cyclic/runner.hpp"
+#include "_relwork/kokkos/traffic/runner.hpp"
 #include "_relwork/kokkos/wire/runner.hpp"
 #endif // ENABLE_KOKKOS
 
@@ -139,6 +145,18 @@ private:
                 return run_relwork<greenberg::config, kokkos::greenberg::runner>(params);
             } else if (params.automaton == "wire") {
                 return run_relwork<wire::config, kokkos::wire::runner>(params);
+            } else if (params.automaton == "brian") {
+                return run_relwork<brian::config, kokkos::brian::runner>(params);
+            } else if (params.automaton == "maze") {
+                return run_relwork<maze::config, kokkos::maze::runner>(params);
+            } else if (params.automaton == "hpp") {
+                return run_relwork<hpp::config, kokkos::hpp::runner>(params);
+            } else if (params.automaton == "critters") {
+                return run_relwork<critters::config, kokkos::critters::runner>(params);
+            } else if (params.automaton == "cyclic") {
+                return run_relwork<cyclic::config, kokkos::cyclic::runner>(params);
+            } else if (params.automaton == "traffic") {
+                return run_relwork<traffic::config, kokkos::traffic::runner>(params);
             }
         }
 #else

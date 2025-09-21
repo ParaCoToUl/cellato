@@ -1,18 +1,21 @@
-#include "game_of_life/runner.hpp"
+#include "brian/runner.hpp"
 
 #include "Kokkos_Core.hpp"
+
+#include "../../brian/algorithm.hpp"
 
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
-namespace kokkos::game_of_life {
+namespace kokkos::brian {
 
 namespace {
 
-struct game_of_life_runner : public real_runner {
+struct brian_runner_impl : public real_runner {
     using value_type = std::uint8_t;
+    using cell_state = ::brian::brian_cell_state;
 
     enum class space {
         cpu,
@@ -25,8 +28,8 @@ struct game_of_life_runner : public real_runner {
         const std::size_t x_size = params.x_size;
         const std::size_t y_size = params.y_size;
 
-        grid_ = view_type("gol_grid", x_size, y_size);
-        next_grid_ = view_type("gol_next_grid", x_size, y_size);
+        grid_ = view_type("brian_grid", x_size, y_size);
+        next_grid_ = view_type("brian_next_grid", x_size, y_size);
 
         for (std::size_t i = 0; i < x_size; ++i) {
             for (std::size_t j = 0; j < y_size; ++j) {
@@ -67,16 +70,23 @@ public:
         }
 
         Kokkos::parallel_for(
-            "GoLStepCPU",
+            "BrianStepCPU",
             Kokkos::MDRangePolicy<Kokkos::Serial, Kokkos::Rank<2>>({1, 1}, {grid_.extent_int(0) - 1, grid_.extent_int(1) - 1}),
             KOKKOS_CLASS_LAMBDA(const int i, const int j) {
-                const auto neighbors = grid_(i - 1, j - 1) + grid_(i - 1, j) + grid_(i - 1, j + 1) +
-                                       grid_(i, j - 1) + grid_(i, j + 1) +
-                                       grid_(i + 1, j - 1) + grid_(i + 1, j) + grid_(i + 1, j + 1);
+                const auto current = static_cast<cell_state>(grid_(i, j));
+                auto next = current;
 
-                const bool alive = grid_(i, j);
-                const bool survives = neighbors == 2 || neighbors == 3;
-                next_grid_(i, j) = alive ? (survives ? 1 : 0) : (neighbors == 3 ? 1 : 0);
+                const int neighbors = alive_neighbors(grid_, i, j);
+
+                if (current == cell_state::dead) {
+                    next = (neighbors == 2) ? cell_state::alive : cell_state::dead;
+                } else if (current == cell_state::alive) {
+                    next = cell_state::dying;
+                } else { // dying
+                    next = cell_state::dead;
+                }
+
+                next_grid_(i, j) = static_cast<value_type>(next);
             });
 
         using std::swap;
@@ -89,22 +99,46 @@ public:
         }
 
         Kokkos::parallel_for(
-            "GoLStepCUDA",
+            "BrianStepCUDA",
             Kokkos::MDRangePolicy<Kokkos::Cuda, Kokkos::Rank<2>>({1, 1}, {grid_.extent_int(0) - 1, grid_.extent_int(1) - 1}, {tile_dim_, tile_dim_}),
             KOKKOS_CLASS_LAMBDA(const int i, const int j) {
-                const auto neighbors = grid_(i - 1, j - 1) + grid_(i - 1, j) + grid_(i - 1, j + 1) +
-                                       grid_(i, j - 1) + grid_(i, j + 1) +
-                                       grid_(i + 1, j - 1) + grid_(i + 1, j) + grid_(i + 1, j + 1);
+                const auto current = static_cast<cell_state>(grid_(i, j));
+                auto next = current;
 
-                const bool alive = grid_(i, j);
-                const bool survives = neighbors == 2 || neighbors == 3;
-                next_grid_(i, j) = alive ? (survives ? 1 : 0) : (neighbors == 3 ? 1 : 0);
+                const int neighbors = alive_neighbors(grid_, i, j);
+
+                if (current == cell_state::dead) {
+                    next = (neighbors == 2) ? cell_state::alive : cell_state::dead;
+                } else if (current == cell_state::alive) {
+                    next = cell_state::dying;
+                } else {
+                    next = cell_state::dead;
+                }
+
+                next_grid_(i, j) = static_cast<value_type>(next);
             });
 
         Kokkos::fence();
 
         using std::swap;
         swap(grid_, next_grid_);
+    }
+
+private:
+    KOKKOS_INLINE_FUNCTION
+    static int alive_neighbors(const view_type& grid, int i, int j) {
+        int count = 0;
+        for (int di = -1; di <= 1; ++di) {
+            for (int dj = -1; dj <= 1; ++dj) {
+                if (di == 0 && dj == 0) {
+                    continue;
+                }
+                if (static_cast<cell_state>(grid(i + di, j + dj)) == cell_state::alive) {
+                    ++count;
+                }
+            }
+        }
+        return count;
     }
 
     void kokkos_initialize(const cellato::run::run_params& params) {
@@ -134,7 +168,6 @@ public:
         } guard(params, &execution_space_, &tile_dim_);
     }
 
-private:
     view_type grid_;
     view_type next_grid_;
     static inline space execution_space_ = space::cpu;
@@ -144,7 +177,7 @@ private:
 } // namespace
 
 std::unique_ptr<real_runner> create_runner() {
-    return std::make_unique<game_of_life_runner>();
+    return std::make_unique<brian_runner_impl>();
 }
 
-} // namespace kokkos::game_of_life
+} // namespace kokkos::brian

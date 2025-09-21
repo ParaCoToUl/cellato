@@ -1,5 +1,5 @@
-#ifndef KOKKOS_GREENBERG_RUNNER_HPP
-#define KOKKOS_GREENBERG_RUNNER_HPP
+#ifndef KOKKOS_BRIAN_RUNNER_HPP
+#define KOKKOS_BRIAN_RUNNER_HPP
 
 #include <cstddef>
 #include <cstdint>
@@ -14,7 +14,7 @@
 #error "Kokkos is not enabled, this source file should not be compiled."
 #endif // ENABLE_KOKKOS
 
-namespace kokkos::greenberg {
+namespace kokkos::brian {
 
 struct real_runner {
     using value_type = std::uint8_t;
@@ -57,6 +57,6 @@ private:
     std::unique_ptr<real_runner> real_runner_;
 };
 
-} // namespace kokkos::greenberg
+} // namespace kokkos::brian
 
-#endif // KOKKOS_GREENBERG_RUNNER_HPP
+#endif // KOKKOS_BRIAN_RUNNER_HPP

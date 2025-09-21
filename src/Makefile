@@ -60,7 +60,19 @@ DEPENDENCIES += install_kokkos
 INCLUDE_DIRS += $(KOKKOS_HOME_INCLUDE:%=-I%)
 LIB_DIRS += $(KOKKOS_HOME_LIB:%=-L%)
 LIBS += -lkokkoscore $(CUDA_DRIVER_LIB)
-EXTRA_OBJS += $(OBJ_DIR)/kokkos_game_of_life_runner.o $(OBJ_DIR)/kokkos_fire_runner.o # $(OBJ_DIR)/kokkos_greenberg_runner.o $(OBJ_DIR)/kokkos_wire_runner.o
+KOKKOS_RUNNERS := \
+	game_of_life \
+	fire \
+	greenberg \
+	wire \
+	brian \
+	maze \
+	hpp \
+	critters \
+	cyclic \
+	traffic
+
+EXTRA_OBJS += $(addprefix $(OBJ_DIR)/kokkos_, $(addsuffix _runner.o, $(KOKKOS_RUNNERS)))
 
 $(OBJ_DIR)/kokkos_%_runner.o: $(SRC_DIR)/_relwork/kokkos/kokkos_%_runner.cu | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) $(KOKKOS_HOME_INCLUDE:%=-I%) -extended-lambda

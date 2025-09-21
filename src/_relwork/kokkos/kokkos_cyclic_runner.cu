@@ -1,17 +1,19 @@
-#include "game_of_life/runner.hpp"
+#include "cyclic/runner.hpp"
 
 #include "Kokkos_Core.hpp"
+
+#include "../../cyclic/algorithm.hpp"
 
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
-namespace kokkos::game_of_life {
+namespace kokkos::cyclic {
 
 namespace {
 
-struct game_of_life_runner : public real_runner {
+struct cyclic_runner_impl : public real_runner {
     using value_type = std::uint8_t;
 
     enum class space {
@@ -25,8 +27,8 @@ struct game_of_life_runner : public real_runner {
         const std::size_t x_size = params.x_size;
         const std::size_t y_size = params.y_size;
 
-        grid_ = view_type("gol_grid", x_size, y_size);
-        next_grid_ = view_type("gol_next_grid", x_size, y_size);
+        grid_ = view_type("cyclic_grid", x_size, y_size);
+        next_grid_ = view_type("cyclic_next_grid", x_size, y_size);
 
         for (std::size_t i = 0; i < x_size; ++i) {
             for (std::size_t j = 0; j < y_size; ++j) {
@@ -61,52 +63,52 @@ struct game_of_life_runner : public real_runner {
 public:
     using view_type = Kokkos::View<value_type**, Kokkos::SharedSpace>;
 
-    void run_step_cpu() {
+    template <typename ExecPolicy>
+    void run_step(ExecPolicy policy) {
         if (grid_.extent(0) < 3 || grid_.extent(1) < 3) {
             return;
         }
 
-        Kokkos::parallel_for(
-            "GoLStepCPU",
-            Kokkos::MDRangePolicy<Kokkos::Serial, Kokkos::Rank<2>>({1, 1}, {grid_.extent_int(0) - 1, grid_.extent_int(1) - 1}),
-            KOKKOS_CLASS_LAMBDA(const int i, const int j) {
-                const auto neighbors = grid_(i - 1, j - 1) + grid_(i - 1, j) + grid_(i - 1, j + 1) +
-                                       grid_(i, j - 1) + grid_(i, j + 1) +
-                                       grid_(i + 1, j - 1) + grid_(i + 1, j) + grid_(i + 1, j + 1);
+        constexpr int states = ::cyclic::STATES;
 
-                const bool alive = grid_(i, j);
-                const bool survives = neighbors == 2 || neighbors == 3;
-                next_grid_(i, j) = alive ? (survives ? 1 : 0) : (neighbors == 3 ? 1 : 0);
+        Kokkos::parallel_for(
+            "CyclicStep",
+            policy,
+            KOKKOS_CLASS_LAMBDA(const int i, const int j) {
+                const int current = static_cast<int>(grid_(i, j));
+                const int target = (current + 1) % states;
+
+                bool has_target_neighbor = false;
+
+                for (int di = -1; di <= 1 && !has_target_neighbor; ++di) {
+                    for (int dj = -1; dj <= 1; ++dj) {
+                        if (di == 0 && dj == 0) {
+                            continue;
+                        }
+                        if (static_cast<int>(grid_(i + di, j + dj)) == target) {
+                            has_target_neighbor = true;
+                            break;
+                        }
+                    }
+                }
+
+                next_grid_(i, j) = static_cast<value_type>(has_target_neighbor ? target : current);
             });
 
         using std::swap;
         swap(grid_, next_grid_);
+    }
+
+    void run_step_cpu() {
+        run_step(Kokkos::MDRangePolicy<Kokkos::Serial, Kokkos::Rank<2>>({1, 1}, {grid_.extent_int(0) - 1, grid_.extent_int(1) - 1}));
     }
 
     void run_step_cuda() {
-        if (grid_.extent(0) < 3 || grid_.extent(1) < 3) {
-            return;
-        }
-
-        Kokkos::parallel_for(
-            "GoLStepCUDA",
-            Kokkos::MDRangePolicy<Kokkos::Cuda, Kokkos::Rank<2>>({1, 1}, {grid_.extent_int(0) - 1, grid_.extent_int(1) - 1}, {tile_dim_, tile_dim_}),
-            KOKKOS_CLASS_LAMBDA(const int i, const int j) {
-                const auto neighbors = grid_(i - 1, j - 1) + grid_(i - 1, j) + grid_(i - 1, j + 1) +
-                                       grid_(i, j - 1) + grid_(i, j + 1) +
-                                       grid_(i + 1, j - 1) + grid_(i + 1, j) + grid_(i + 1, j + 1);
-
-                const bool alive = grid_(i, j);
-                const bool survives = neighbors == 2 || neighbors == 3;
-                next_grid_(i, j) = alive ? (survives ? 1 : 0) : (neighbors == 3 ? 1 : 0);
-            });
-
+        run_step(Kokkos::MDRangePolicy<Kokkos::Cuda, Kokkos::Rank<2>>({1, 1}, {grid_.extent_int(0) - 1, grid_.extent_int(1) - 1}, {tile_dim_, tile_dim_}));
         Kokkos::fence();
-
-        using std::swap;
-        swap(grid_, next_grid_);
     }
 
+private:
     void kokkos_initialize(const cellato::run::run_params& params) {
         static struct kokkos_init_guard {
             kokkos_init_guard(const cellato::run::run_params& params, space* execution_space, int* tile_dim) {
@@ -134,7 +136,6 @@ public:
         } guard(params, &execution_space_, &tile_dim_);
     }
 
-private:
     view_type grid_;
     view_type next_grid_;
     static inline space execution_space_ = space::cpu;
@@ -144,7 +145,7 @@ private:
 } // namespace
 
 std::unique_ptr<real_runner> create_runner() {
-    return std::make_unique<game_of_life_runner>();
+    return std::make_unique<cyclic_runner_impl>();
 }
 
-} // namespace kokkos::game_of_life
+} // namespace kokkos::cyclic

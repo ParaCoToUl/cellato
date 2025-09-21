@@ -22,7 +22,7 @@ struct real_runner {
     virtual ~real_runner() = default;
 
     virtual void init(int* grid,
-                  const cellato::run::run_params& params) = 0;
+                      const cellato::run::run_params& params) = 0;
     virtual void run(int steps) = 0;
     virtual std::vector<int> fetch_result() = 0;
 };
