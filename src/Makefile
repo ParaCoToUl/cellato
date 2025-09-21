@@ -24,7 +24,8 @@ HALIDE_LIBS = -lHalide
 GRIDTOOLS_HOME_INCLUDE = $(DEP_DIR)/gridtools/include
 GRIDTOOLS_HOME_LIB = $(DEP_DIR)/gridtools/lib ${DEP_DIR}/gridtools/lib64
 
-CUDA_DRIVER_LIB = $(shell pkg-config --libs cuda-$(CUDA_VERSION))
+# CUDA_DRIVER_LIB = $(shell pkg-config --libs cuda-$(CUDA_VERSION))
+CUDA_DRIVER_LIB = $(shell ldconfig -p | grep libcuda.so | head -n 1 | awk '{print "-L" $$4}' | sed 's/libcuda.so.*//') -lcuda
 
 ENABLE_KOKKOS = OFF
 ENABLE_HALIDE = OFF
@@ -55,6 +56,7 @@ TEST_TARGET = $(BIN_DIR)/cellato_tests
 
 ifeq ($(ENABLE_KOKKOS), ON)
 DEFINES += -DENABLE_KOKKOS
+DEPENDENCIES += install_kokkos
 INCLUDE_DIRS += $(KOKKOS_HOME_INCLUDE:%=-I%)
 LIB_DIRS += $(KOKKOS_HOME_LIB:%=-L%)
 LIBS += -lkokkoscore $(CUDA_DRIVER_LIB)
@@ -67,6 +69,7 @@ endif
 
 ifeq ($(ENABLE_HALIDE), ON)
 DEFINES += -DENABLE_HALIDE
+DEPENDENCIES += install_halide
 INCLUDE_DIRS += $(HALIDE_HOME_INCLUDE:%=-I%)
 LIB_DIRS += $(HALIDE_HOME_LIB:%=-L%)
 LIBS += $(HALIDE_LIBS)
@@ -78,6 +81,7 @@ endif
 
 ifeq ($(ENABLE_GRIDTOOLS), ON)
 DEFINES += -DENABLE_GRIDTOOLS
+DEPENDENCIES += install_gridtools
 INCLUDE_DIRS += $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
 # LIB_DIRS += $(GRIDTOOLS_HOME_LIB:%=-L%)
 # LIBS += -lgridtools
@@ -97,7 +101,7 @@ all: directories $(TARGET) $(TEST_TARGET)
 directories:
 	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
-install_deps: install_kokkos install_halide install_gridtools
+install_deps: $(DEPENDENCIES)
 
 install_kokkos: $(VENDOR_DIR)/kokkos
 	@echo "Installing Kokkos dependencies..."
@@ -142,7 +146,7 @@ install_llvm: $(VENDOR_DIR)/llvm-project
 	@$(CMAKE) --install $(DEP_DIR)/llvm-build --prefix=$(shell realpath $(DEP_DIR)/llvm-install)
 	@echo "LLVM dependencies installed."
 
-install_halide: $(VENDOR_DIR)/Halide
+install_halide: $(VENDOR_DIR)/Halide install_llvm
 	@echo "Installing Halide dependencies..."
 	@mkdir -p $(DEP_DIR)/halide $(DEP_DIR)/halide-install
 	@$(CMAKE) -B $(DEP_DIR)/halide -S $(VENDOR_DIR)/Halide \
@@ -157,6 +161,7 @@ install_gridtools: $(VENDOR_DIR)/gridtools
 	@mkdir -p $(DEP_DIR)/gridtools
 	@$(CMAKE) -B $(DEP_DIR)/gridtools -S $(VENDOR_DIR)/gridtools \
 		-D CMAKE_BUILD_TYPE=Release \
+		-D BUILD_TESTING=OFF \
 		-D CMAKE_INSTALL_PREFIX=$(shell realpath $(DEP_DIR)/gridtools)
 	@$(CMAKE) --build $(DEP_DIR)/gridtools --parallel $(shell nproc) --config Release
 	@$(CMAKE) --install $(DEP_DIR)/gridtools --prefix=$(shell realpath $(DEP_DIR)/gridtools)
