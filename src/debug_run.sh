@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 script_dir=$(dirname "$0")
 
 # Uncomment one of these test configurations:
@@ -40,12 +42,11 @@ args="--automaton critters --seed 42 --device CUDA --traverser simple --evaluato
 # Visualize output with print option
 #args="--automaton game_of_life --device CUDA --layout bit_array --steps 20 --x_size 32 --y_size 32 --print"
 
-should_remove=$1
+should_remove="${1:-}"
 
 if [ "$should_remove" == "clean" ]; then
     echo "Removing old build..."
-    rm -r $script_dir/../bin
+    rm -rf "$script_dir/../bin"
 fi
 
-cd $script_dir
-srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make -j run ARGS="$args"
+cd "$script_dir"
