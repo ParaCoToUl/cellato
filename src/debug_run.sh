@@ -21,7 +21,7 @@ script_dir=$(dirname "$0")
 # args="--automaton critters --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 32 --y_size 4 --steps 3 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4 --print"
 
 args="--automaton critters --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard --precision 32 --x_size 1024 --y_size 8 --steps 3 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
-# args="--automaton critters --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 1024 --y_size 8 --steps 3 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+args="--automaton critters --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 32 --x_size 1024 --y_size 8 --steps 3 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
 
 # args="--automaton critters --seed 42 --device CPU --traverser simple --evaluator standard --layout standard --precision 32 --x_size 64 --y_size 64 --steps 99 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
 # args="--automaton hpp --seed 42 --device CPU --reference_impl baseline --precision 32 --x_size 64 --y_size 64 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4 --print"
@@ -56,3 +56,5 @@ if [ "$should_remove" == "clean" ]; then
 fi
 
 cd "$script_dir"
+srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make -j run ARGS="$args"
+# srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:H100 make -j run ARGS="$args"

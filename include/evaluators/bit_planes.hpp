@@ -364,10 +364,10 @@ struct _evaluator_impl<
     constexpr static auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
     
     CUDA_CALLABLE static vector_int<typename params::cell_row_t, 3> evaluate(state_t<params> state) {
-        // (void)state;
-        // return {};
-        auto parity = state.time_step % 2;
-        // auto y_parity = state.position.y % 2;
+        // The choice of starting offset is arbitrary, as long as it is consistent.
+        // Using (t + 1) ensures the results match those from the other evaluators 
+        // (bit-array and standard implementations).
+        auto parity = (state.time_step + 1) % 2;
 
         if (parity == 0) {
             return even_parity(state);
@@ -378,12 +378,9 @@ struct _evaluator_impl<
 
 private:
     CUDA_CALLABLE static vector_int<cell_row_type, 3> even_parity(state_t<params> state) {
-        // TODO: FIX THIS
         auto current_state_c = evaluator_t<neighbor_at< 0,  0>>::evaluate(state).template equals_to<cell_state>();
 
-        auto y_parity = (state.position.y - 1) % 2;
-
-        auto vertical_neighbor_c = (y_parity == 0) ?
+        auto vertical_neighbor_c = (y_parity(state) == 0) ?
             evaluator_t<neighbor_at< 0,   1>>::evaluate(state).template equals_to<cell_state>() :
             evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>();
 
@@ -402,9 +399,7 @@ private:
         cell_row_type current_state_c = evaluator_t<neighbor_at<1,  0>>::evaluate(state).template equals_to<cell_state>();
         cell_row_type vertical_neighbor_c;
 
-        auto y_parity = (state.position.y - 1) % 2;
-
-        if (y_parity == 0) {
+        if (y_parity(state) == 0) {
             vertical_neighbor_c = evaluator_t<neighbor_at<1, -1>>::evaluate(state).template equals_to<cell_state>();
         } else {
             vertical_neighbor_c = evaluator_t<neighbor_at<1,  1>>::evaluate(state).template equals_to<cell_state>();
@@ -430,9 +425,8 @@ private:
         cell_row_type current_state_c = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).template equals_to<cell_state>();
         cell_row_type vertical_neighbor_c;
 
-        auto y_parity = (state.position.y - 1) % 2;
 
-        if (y_parity == 0) {
+        if (y_parity(state) == 0) {
             vertical_neighbor_c = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
         } else {
             vertical_neighbor_c = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).template equals_to<cell_state>();
@@ -440,6 +434,11 @@ private:
 
         constexpr int counts[4] = {0, 1, 1, 2};
         return counts[vertical_neighbor_c & 0b11] + counts[current_state_c & 0b11];
+    }
+
+    CUDA_CALLABLE static int y_parity(state_t<params> state) {
+        // Offset by +1 to keep parity consistent with the other evaluators.
+        return (state.position.y + 1) % 2;
     }
 };
 

@@ -69,7 +69,7 @@ struct runner {
         else {
             return stationary; // Stationary cars don't move
         }
-    };
+    }
 
     void run(int steps) {
         for (int step = 0; step < steps; ++step) {
