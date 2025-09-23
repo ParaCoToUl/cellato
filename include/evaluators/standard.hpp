@@ -190,8 +190,8 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
         auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
         auto parity = state.time_step % 2;
-        auto x_parity = state.position.x % 2;
-        auto y_parity = state.position.y % 2;
+        auto x_parity = (state.position.x - 1) % 2;
+        auto y_parity = (state.position.y - 1) % 2;
 
         int x_coords[2], y_coords[2];
 

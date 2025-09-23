@@ -175,9 +175,11 @@ class vector_int {
 
     template <typename val_t>
     CUDA_CALLABLE void set_at(int index, val_t value) {
+        #ifndef __CUDA_ARCH__
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
+        #endif
 
         for_each_bit([&]<std::size_t bit_idx>() {
             auto ith_bit = static_cast<vector_store_type>((value >> bit_idx) & 1);
@@ -563,6 +565,23 @@ class vector_int {
             result = result | (~decided & ((b ^ a) & b));
 
             decided = decided | (b ^ a);
+        });
+
+        return result;
+    }
+
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_with_switched_pairs_of_numbers() const {
+        constexpr vector_store_type mask = static_cast<vector_store_type>(0x5555555555555555); // binary: 0101...
+        
+        vector_int<vector_store_type, bits> result;
+
+        for_each_in<bits>([&]<std::size_t i>() {
+            auto word = std::get<i>(numbers);
+
+            auto left_part = (word & mask);
+            auto right_part = (word & ~mask);
+
+            std::get<i>(result.numbers) = (left_part << 1) | (right_part >> 1);
         });
 
         return result;

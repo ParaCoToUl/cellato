@@ -25,6 +25,15 @@ struct critters_random_init {
             probabilities
         );
         
+        // auto idx = [=](int x, int y) {
+        //     return y * params.x_size + x;
+        // };
+
+        // initial_state[idx(0,0)] = critters_cell_state::alive;
+        // initial_state[idx(1,0)] = critters_cell_state::alive;
+        // initial_state[idx(0,1)] = critters_cell_state::alive;
+        // initial_state[idx(1,1)] = critters_cell_state::alive;
+
         return initial_state;
     }
 };

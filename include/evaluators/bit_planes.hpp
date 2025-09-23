@@ -364,37 +364,83 @@ struct _evaluator_impl<
     constexpr static auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
     
     CUDA_CALLABLE static vector_int<typename params::cell_row_t, 3> evaluate(state_t<params> state) {
-        (void)state;
-        return {};
-        // auto parity = state.time_step % 2;
+        // (void)state;
+        // return {};
+        auto parity = state.time_step % 2;
         // auto y_parity = state.position.y % 2;
 
-        // if (parity == 0) {
-        //     return even_parity(state);
-        // } else {
-        //     return odd_parity(state);
-        // }
+        if (parity == 0) {
+            return even_parity(state);
+        } else {
+            return odd_parity(state);
+        }
     }
 
-// private:
-//     CUDA_CALLABLE static vector_int<cell_row_type, 3> even_parity(state_t<params> state) {
-//         auto current_state_c = evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>();
-//         auto vertical_neighbor_c = (state.position.y % 2 == 0) ?
-//             evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>() :
-//             evaluator_t<neighbor_at< 0,  1>>::evaluate(state).template equals_to<cell_state>();
+private:
+    CUDA_CALLABLE static vector_int<cell_row_type, 3> even_parity(state_t<params> state) {
+        // TODO: FIX THIS
+        auto current_state_c = evaluator_t<neighbor_at< 0,  0>>::evaluate(state).template equals_to<cell_state>();
 
-//         auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
-//         auto vertical_neighbor = vector_int_factory::from_condition_result<cell_row_type>(vertical_neighbor_c);
+        auto y_parity = (state.position.y - 1) % 2;
 
-//         auto columns_sum = current_state.template to_vector_with_bits<2>().get_added(vertical_neighbor);
+        auto vertical_neighbor_c = (y_parity == 0) ?
+            evaluator_t<neighbor_at< 0,   1>>::evaluate(state).template equals_to<cell_state>() :
+            evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>();
 
-//         auto shifted = columns_sum.template get_right_shifted_vector(1);
+        auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
+        auto vertical_neighbor = vector_int_factory::from_condition_result<cell_row_type>(vertical_neighbor_c);
 
-//     }
+        auto columns_sum = current_state.template to_vector_with_bits<2>().get_added(vertical_neighbor);
 
-//     CUDA_CALLABLE static vector_int<cell_row_type, 3> odd_parity(state_t<params> state) {
-        
-//     }
+        auto switched_pairs = columns_sum.get_with_switched_pairs_of_numbers();
+
+        return columns_sum.template to_vector_with_bits<3>()
+            .get_added(switched_pairs);
+    }
+
+    CUDA_CALLABLE static vector_int<cell_row_type, 3> odd_parity(state_t<params> state) {
+        cell_row_type current_state_c = evaluator_t<neighbor_at<1,  0>>::evaluate(state).template equals_to<cell_state>();
+        cell_row_type vertical_neighbor_c;
+
+        auto y_parity = (state.position.y - 1) % 2;
+
+        if (y_parity == 0) {
+            vertical_neighbor_c = evaluator_t<neighbor_at<1, -1>>::evaluate(state).template equals_to<cell_state>();
+        } else {
+            vertical_neighbor_c = evaluator_t<neighbor_at<1,  1>>::evaluate(state).template equals_to<cell_state>();
+        }
+
+        auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
+        auto vertical_neighbor = vector_int_factory::from_condition_result<cell_row_type>(vertical_neighbor_c);
+
+        auto columns_sum = current_state.template to_vector_with_bits<2>().get_added(vertical_neighbor);
+
+        auto switched_pairs = columns_sum.get_with_switched_pairs_of_numbers();
+
+        auto result = columns_sum.template to_vector_with_bits<3>()
+            .get_added(switched_pairs).template get_left_shifted_vector<1>();
+
+        int last_bit_result = solve_for_last_bit(state);
+        result.set_at(0, last_bit_result);
+
+        return result;
+    }
+
+    CUDA_CALLABLE static int solve_for_last_bit(state_t<params> state) {
+        cell_row_type current_state_c = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).template equals_to<cell_state>();
+        cell_row_type vertical_neighbor_c;
+
+        auto y_parity = (state.position.y - 1) % 2;
+
+        if (y_parity == 0) {
+            vertical_neighbor_c = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
+        } else {
+            vertical_neighbor_c = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).template equals_to<cell_state>();
+        }
+
+        constexpr int counts[4] = {0, 1, 1, 2};
+        return counts[vertical_neighbor_c & 0b11] + counts[current_state_c & 0b11];
+    }
 };
 
 template <typename params, typename cell_state_type, cell_state_type CellStateValue>
