@@ -132,8 +132,16 @@ public:
         for (std::size_t y = 0; y < _properties.y_size; ++y) {
             for (std::size_t x = 0; x < _properties.x_size; ++x) {
                 os << config.get_str(_data[_properties.idx(x, y)]) << " ";
+
+                if ((x + 1) % 8 == 0) {
+                    os << " ";
+                }
             }
             os << "\n";
+
+            if ((y + 1) % 8 == 0) {
+                os << "\n";
+            }
         }
     }
 
