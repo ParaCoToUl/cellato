@@ -345,6 +345,20 @@ class vector_int {
         return get_oped<op_and, constant>();
     }
 
+    template <vector_store_type constant>
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_ANDed_each_plane_with() const {
+        vector_int<vector_store_type, bits> result;
+
+        for_each_in<bits>([&]<std::size_t i>() {
+            auto word = std::get<i>(numbers);
+            auto masked_word = word & constant;
+
+            std::get<i>(result.numbers) = masked_word;
+        });
+
+        return result;
+    }
+
     template <int constant>
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_ored() const {
         return get_oped<op_or, constant>();

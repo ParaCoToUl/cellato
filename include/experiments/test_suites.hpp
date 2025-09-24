@@ -8,6 +8,7 @@
 #include "../memory/standard_grid.hpp"
 #include "../traversers/cpu/simple.hpp"
 #include "../memory/bit_planes_grid.hpp"
+#include "../memory/tiled_bit_planes_grid.hpp"
 #include "../memory/bit_array_grid.hpp"
 #include "../traversers/cuda/simple.hpp"
 #include "../traversers/cuda/spacial_blocking.hpp"
@@ -148,13 +149,13 @@ namespace on_cuda {
             using algorithm_t = typename cellular_automaton::algorithm;
             using state_dictionary_t = typename cellular_automaton::state_dictionary;
 
-            using grid_t = grids::bit_planes::grid<grid_store_word_t, state_dictionary_t>;
+            using grid_t = grids::tiled_bit_planes::grid<grid_store_word_t, state_dictionary_t>;
             using evaluator_t = evaluators::tiled_bit_planes::evaluator<grid_store_word_t, state_dictionary_t, algorithm_t>; 
             
             using traverser_t = traversers::simple::traverser<evaluator_t, grid_t>;
 
-            constexpr static int x_margin = sizeof(grid_store_word_t) * 8;
-            constexpr static int y_margin = 1;
+            constexpr static int x_margin = grid_t::x_word_tile_size;
+            constexpr static int y_margin = grid_t::y_word_tile_size;
 
             static bool is_for(cellato::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&
@@ -267,13 +268,13 @@ namespace on_cpu {
             using algorithm_t = typename cellular_automaton::algorithm;
             using state_dictionary_t = typename cellular_automaton::state_dictionary;
 
-            using grid_t = grids::bit_planes::grid<grid_store_word_t, state_dictionary_t>;
+            using grid_t = grids::tiled_bit_planes::grid<grid_store_word_t, state_dictionary_t>;
             using evaluator_t = evaluators::tiled_bit_planes::evaluator<grid_store_word_t, state_dictionary_t, algorithm_t>; 
             
             using traverser_t = traversers::simple::traverser<evaluator_t, grid_t>;
 
-            constexpr static int x_margin = sizeof(grid_store_word_t) * 8;
-            constexpr static int y_margin = 1;
+            constexpr static int x_margin = grid_t::x_word_tile_size;
+            constexpr static int y_margin = grid_t::y_word_tile_size;
 
             static bool is_for(cellato::run::run_params& params) {
                 return params.automaton == cellular_automaton::name &&

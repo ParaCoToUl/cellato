@@ -60,6 +60,11 @@ struct _evaluator_impl {
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
         // all but the 'neighbor_at' part is same as bit_planes
+
+        // printf("Evaluating generic evaluator_impl, step=%d, position=(%d, %d)\n",
+        //     state.time_step,
+        //     static_cast<int>(state.position.x), static_cast<int>(state.position.y));
+
         return _simple_bit_planes_evaluator_implementation<typename params::cell_row_t, typename params::state_dict_t, Expression>::evaluate(state);
     }
 };
@@ -84,72 +89,80 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     constexpr static std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
-        // this specialization is never called for some reason
-        auto center = get_center_vector_int(state);
-
-        if constexpr (x_offset == 0) {
-            return center;
-        }
-
-        auto neighbor = get_neighbor_vector_int(state);
-
-        auto shifted_center = shift_center(center);
-        auto shifted_neighbor = shift_neighbor(neighbor);
-
-        return shifted_center.get_ored(shifted_neighbor);
+        
+        // printf("Evaluating neighbor_at<%d, %d>, step=%d, position=(%d, %d)\n", x_offset, y_offset,
+        //     state.time_step,
+        //     static_cast<int>(state.position.x), static_cast<int>(state.position.y));
+        
+        auto center = get_center_offsetted(state);
+        
+        return center;
     }
 
   private:
     using vint = vector_int<cell_row_type, state_dictionary_type::needed_bits>;
 
-    CUDA_CALLABLE static vint shift_center(vint center) {
-        if constexpr (x_offset > 0) {
-            return center.template get_right_shifted_vector<x_offset>();
-        } else if constexpr (x_offset < 0) {
-            return center.template get_left_shifted_vector<-x_offset>();
-        } else {
-            #ifndef __CUDA_ARCH__
-            throw std::logic_error("Invalid x_offset value");
-            #else
-            // In CUDA device code, we can't throw exceptions
-            // Just return the unshifted center as a fallback
-            return center;
-            #endif
-        }
-    }
+    constexpr static int bits_per_cell = sizeof(cell_row_type) * 8;
+    constexpr static int x_tile_size = 8;
+    constexpr static int y_tile_size = bits_per_cell / x_tile_size;
 
-    CUDA_CALLABLE static vint shift_neighbor(vint neighbor) {
-        if constexpr (x_offset > 0) {
-            return neighbor.template get_left_shifted_vector<vector_width_bits - x_offset>();
-        } else if constexpr (x_offset < 0) {
-            return neighbor.template get_right_shifted_vector<vector_width_bits + x_offset>();
-        } else {
-            #ifndef __CUDA_ARCH__
-            throw std::logic_error("Invalid x_offset value");
-            #else
-            // In CUDA device code, we can't throw exceptions
-            return neighbor;
-            #endif
-        }
-    }
+    static constexpr auto TOP_LINE = static_cast<cell_row_type>(0b1111'1111);
+    static constexpr auto BOTTOM_LINE = TOP_LINE << (bits_per_cell - x_tile_size);
+    static constexpr auto RIGHT_BORDER = static_cast<cell_row_type>(0x80'80'80'80'80'80'80'80LLU); 
+    static constexpr auto LEFT_BORDER = static_cast<cell_row_type>(0x01'01'01'01'01'01'01'01LLU);
 
-    CUDA_CALLABLE static vint get_center_vector_int(eval_state_t state) {
+    CUDA_CALLABLE static vint get_center_offsetted(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto idx = state.properties.idx(x, y + y_offset_unsigned);
+        auto idx = state.properties.idx(x, y);
 
-        return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
-    }
+        auto center = vector_int_factory::load_from<cell_row_type>(state.grid, idx);
+        
+        if constexpr (y_offset > 0) {
+            center = center.template get_right_shifted_vector<y_offset_unsigned * x_tile_size>();
+        } else if constexpr (y_offset < 0) {
+            center = center.template get_left_shifted_vector<-y_offset_unsigned * x_tile_size>();
+        }
 
-    CUDA_CALLABLE static vint get_neighbor_vector_int(eval_state_t state) {
-        auto x = state.position.x;
-        auto y = state.position.y;
-        auto idx = state.properties.idx(x + x_offset_unsigned, y + y_offset_unsigned);
+        if constexpr (x_offset > 0) {
+            center = center
+                .template get_right_shifted_vector<x_offset_unsigned>()
+                .template get_ANDed_each_plane_with<~RIGHT_BORDER>();
+        } else if constexpr (x_offset < 0) {
+            center = center
+                .template get_left_shifted_vector<-x_offset_unsigned>()
+                .template get_ANDed_each_plane_with<~LEFT_BORDER>(); 
+        }
 
-        return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
+        return center;
     }
 };
 
 } // namespace cellato::evaluators::tiled_bit_planes
 
 #endif // CELLATO_EVALUATORS_TILED_BIT_PLANES_HPP
+
+
+
+// . # . . . # . .    # . # . . # . .    . # # . . # . . 
+// # . . . . . . .    # . . . # . . .    . . # . # . . . 
+// . # . . . . . .    . . . . . . . .    . . . # # . . . 
+// # # . . . . . .    . . # . . . . .    . . . . . . . # 
+// . # . . . . . .    # . . . . . . .    . . # . . . . . 
+// # . . . . # . .    # . . . . . # .    . . # . . . . # 
+// . . . . # . . .    . . . . # . . .    . . . . . # . . 
+// . . . . . . # .    . . . . . . . .    . # . . . . . .
+
+
+
+
+
+// . . . . . . . .    . . . # . . . .    . # . # . . . . 
+// # . . . . . . .    . . . . . . . .    . . # # . . . . 
+// # . . . . . . .    . # . . . . . .    . . . . . . # . 
+// # . . . . . . .    . . . . . . . .    . # . . . . . . 
+// . . . . # . . .    . . . . . # . .    . # . . . . # . 
+// . . . # . . . .    . . . # . . . .    . . . . # . . . 
+// . . . . . # . .    . . . . . . . .    # . . . . . . . 
+// . . . . . . . .    . . . . . . . .    . . . . . . . . 
+
