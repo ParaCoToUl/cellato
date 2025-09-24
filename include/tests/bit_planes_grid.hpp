@@ -388,7 +388,7 @@ private:
         std::cout << BLUE << "\n--- Testing bit_planes_grid to_original_representation with get_cell (" << test_tag << ") ---" << RESET << std::endl;
 
         // Create a small grid
-        const size_t height = 4;
+        const size_t height = 16;
         const size_t width_words = 2;
         const size_t word_bits = sizeof(store_type) * 8;
         const size_t width = width_words * word_bits;
@@ -409,6 +409,8 @@ private:
         // Compare direct get_cell with to_original_representation results
         auto result = grid.to_original_representation();
         
+        auto all_correct = true;
+
         for (size_t y = 0; y < height; ++y) {
             for (size_t x = 0; x < width; ++x) {
                 size_t idx = y * width + x;
@@ -418,8 +420,12 @@ private:
                 tc.silent_if_passed().assert_true(from_get_cell == from_representation, 
                     "get_cell and to_original_representation should return the same value at (" + 
                     std::to_string(x) + "," + std::to_string(y) + ")");
+
+                all_correct = all_correct && (from_get_cell == from_representation);
             }
         }
+
+        tc.assert_true(all_correct, "All cells should match between get_cell and to_original_representation");
     }
 
     // Test bit_planes_grid with a small random grid (for unit tests)
@@ -427,7 +433,7 @@ private:
         std::cout << BLUE << "\n--- Testing bit_planes_grid with small random pattern (" << test_tag << ") ---" << RESET << std::endl;
 
         // Create a smaller random grid for unit tests
-        const size_t height = 10;
+        const size_t height = 8 * 4;
         const size_t width_words = 4;
         const size_t word_bits = sizeof(store_type) * 8;
         const size_t width = width_words * word_bits;
@@ -458,17 +464,16 @@ private:
         std::cout << "  Verifying results..." << std::endl;
         tc.assert_equal(input_grid.size(), result.size(), "Result size should match input size");
         
-        // Check a subset of cells to avoid too many assertions
-        const int check_interval = 5;
+        auto all_correct = true;
         
-        for (size_t i = 0; i < input_grid.size(); i += check_interval) {
-            tc.assert_true(input_grid[i] == result[i], 
-                "Cell at index " + std::to_string(i) + " should match original");
+        for (size_t i = 0; i < input_grid.size(); ++i) {
+            if (input_grid[i] != result[i]) {
+                all_correct = false;
+                tc.silent_if_passed().assert_true(false, "Cell at index " + std::to_string(i) + " should match original");
+            }
         }
         
-        // Also check the last cell
-        tc.assert_true(input_grid[total_cells-1] == result[total_cells-1], 
-            "Last cell should match original");
+        tc.assert_true(all_correct, "All checked cells should match original");
     }
 };
 
@@ -486,9 +491,9 @@ inline void register_bit_planes_grid_tests() {
     test_manager::instance().register_suite(&linear_planes_suite);
 
     // TODO finish tiled planes tests
-    // static constexpr char tiled_planes_tag[] = "Tiled Bit Planes";
-    // static bit_planes_grid_test_suite<tiled_bit_planes, uint64_t, tiled_planes_tag> tiled_planes_suite;
-    // test_manager::instance().register_suite(&tiled_planes_suite);
+    static constexpr char tiled_planes_tag[] = "Tiled Bit Planes";
+    static bit_planes_grid_test_suite<tiled_bit_planes, uint64_t, tiled_planes_tag> tiled_planes_suite;
+    test_manager::instance().register_suite(&tiled_planes_suite);
 }
 
 } // namespace cellato::tests
