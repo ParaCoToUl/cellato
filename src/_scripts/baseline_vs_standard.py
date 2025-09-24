@@ -5,8 +5,8 @@ import sys
 import re
 
 # Define automata to test
-# AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian", "cyclic", "traffic", "hpp", "maze", "critters"]
-AUTOMATA = ["critters"]
+AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian", "cyclic", "traffic", "hpp", "maze", "critters"]
+# AUTOMATA = ["critters"]
 
 GREY_COLOR = "\033[90m"
 RESET_COLOR = "\033[0m"

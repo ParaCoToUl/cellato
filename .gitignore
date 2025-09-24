@@ -4,3 +4,4 @@
 **/_deps
 **/venv
 **/_obsolete
+**/__pycache__
