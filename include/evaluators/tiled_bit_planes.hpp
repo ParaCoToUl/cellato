@@ -208,6 +208,8 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     }
 
     CUDA_CALLABLE static vint get_diagonal_neighbor(eval_state_t state) {
+        // TODO: right now only works for offsets in {-1, 1}
+        
         auto x = state.position.x;
         auto y = state.position.y;
         auto neighbor_xy = load_at(state, x + x_offset_unsigned, y + y_offset_unsigned);
@@ -215,27 +217,31 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         // Bottom-right
         if constexpr (x_offset > 0 && y_offset > 0) {
             neighbor_xy = neighbor_xy
-                .template get_left_shifted_vector<(y_offset_unsigned * x_tile_size) + x_offset_unsigned>()
-                .template get_ANDed_each_plane_with<RIGHT_BORDER>();
+                .template get_left_shifted_vector<bits_per_cell - 1>();
         
         // Top-right
         } else if constexpr (x_offset > 0 && y_offset < 0) {
+            constexpr static auto corner_mask = TOP_LINE | RIGHT_BORDER;
+            
             neighbor_xy = neighbor_xy
-                .template get_right_shifted_vector<(-y_offset_unsigned * x_tile_size) - x_offset_unsigned>()
-                .template get_ANDed_each_plane_with<RIGHT_BORDER>();
-        
+                .template get_right_shifted_vector<(y_tile_size - 2) * x_tile_size + 1>()
+                .template get_ANDed_each_plane_with<corner_mask>();
+            
         // Bottom-left
         } else if constexpr (x_offset < 0 && y_offset > 0) {
+            constexpr static auto corner_mask = BOTTOM_LINE | RIGHT_BORDER;
+            
             neighbor_xy = neighbor_xy
-                .template get_left_shifted_vector<(y_offset_unsigned * x_tile_size) - x_offset_unsigned>()
-                .template get_ANDed_each_plane_with<LEFT_BORDER>();
+                .template get_left_shifted_vector<(y_tile_size - 2) * x_tile_size + 1>()
+                .template get_ANDed_each_plane_with<corner_mask>();
 
         // Top-left
         } else if constexpr (x_offset < 0 && y_offset < 0) {
-            neighbor_xy = neighbor_xy
-                .template get_right_shifted_vector<(-y_offset_unsigned * x_tile_size) + x_offset_unsigned>()
-                .template get_ANDed_each_plane_with<LEFT_BORDER>();
+           neighbor_xy = neighbor_xy
+                .template get_right_shifted_vector<bits_per_cell - 1>();
         }
+
+        return neighbor_xy;
     }
 
     CUDA_CALLABLE static vint load_at(eval_state_t state, std::size_t x, std::size_t y) {

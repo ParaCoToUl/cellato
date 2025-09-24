@@ -99,6 +99,12 @@ def main():
 
             # Linear Bit Planes CPU (64-bit)
             f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+
+            # Tiled Bit Planes CPU (32-bit)
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 32 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
+
+            # Tiled Bit Planes CPU (64-bit)
+            f"--automaton {automaton} --seed 42 --device CPU --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 64 --x_size {CPU.GRID_SIZE} --y_size {CPU.GRID_SIZE} --steps {CPU.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP}",
         ]
 
         test_cases_gpu = [
@@ -120,6 +126,12 @@ def main():
 
                 # Linear Bit Planes CUDA (64-bit)
                 f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator bit_planes --layout bit_planes --precision 64 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
+
+                # Tiled Bit Planes CUDA (32-bit)
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 32 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
+
+                # Tiled Bit Planes CUDA (64-bit)
+                f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 64 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
             ) 
             # for block_y in [1, 2, 4, 8, 16, 32]
             for block_y in [4]  # has been shown to be the best for all automata

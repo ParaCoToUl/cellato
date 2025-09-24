@@ -32,6 +32,8 @@ def main():
             return f"bit_array_{int(row.get('precision'))}"
         elif row.get('evaluator') == 'bit_planes' and row.get('layout') == 'bit_planes':
             return f"bit_planes_{int(row.get('precision'))}"
+        elif row.get('evaluator') == 'tiled_bit_planes' and row.get('layout') == 'tiled_bit_planes':
+            return f"tiled_bit_planes_{int(row.get('precision'))}"
         return None
     
     df['impl_type'] = df.apply(get_impl_type, axis=1)
@@ -59,7 +61,7 @@ def main():
             automaton_results = {'baseline': baseline_time}
             
             # Get times for each implementation
-            for impl in ['standard', 'bit_array_32', 'bit_array_64', 'bit_planes_32', 'bit_planes_64']:
+            for impl in ['standard', 'bit_array_32', 'bit_array_64', 'bit_planes_32', 'bit_planes_64', 'tiled_bit_planes_32', 'tiled_bit_planes_64']:
                 impl_rows = group[group['impl_type'] == impl]
                 if not impl_rows.empty:
                     automaton_results[impl] = impl_rows['average_time_per_cell_ns'].iloc[0]
@@ -76,7 +78,7 @@ def main():
         
         # Add header row
         header = ["Automaton", "Baseline (ns)"]
-        for impl in ['standard', 'bit_array_32', 'bit_array_64', 'bit_planes_32', 'bit_planes_64']:
+        for impl in ['standard', 'bit_array_32', 'bit_array_64', 'bit_planes_32', 'bit_planes_64', 'tiled_bit_planes_32', 'tiled_bit_planes_64']:
             header.append(impl)
         
         # Add header with colors
@@ -93,7 +95,7 @@ def main():
 
             row = [automaton + bits_used[automaton], f"{baseline:.4f} ns"]
 
-            for impl in ['standard', 'bit_array_32', 'bit_array_64', 'bit_planes_32', 'bit_planes_64']:
+            for impl in ['standard', 'bit_array_32', 'bit_array_64', 'bit_planes_32', 'bit_planes_64', 'tiled_bit_planes_32', 'tiled_bit_planes_64']:
                 if impl in data:
                     time = data[impl]
                     speedup = baseline / time

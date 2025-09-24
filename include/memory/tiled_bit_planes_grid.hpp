@@ -162,7 +162,7 @@ class grid {
     
     grid<store_word_type, states_dict_t, device::CPU> to_cpu() const requires (device_type == device::CUDA) {
         // Create a CPU grid
-        grid<store_word_type, states_dict_t, device::CPU> cpu_grid(_y_size, _x_size * word_store_bits);
+        grid<store_word_type, states_dict_t, device::CPU> cpu_grid(y_size_original(), x_size_original());
         size_t data_size = y_size_physical() * x_size_physical() * sizeof(store_word_type);
         
         // Copy each bit plane back to host
