@@ -38,8 +38,8 @@ class traverser {
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
 
-        if ((grid.x_size_physical() - 2) % _block_size_x != 0 ||
-            (grid.y_size_physical() - 2) % _block_size_y != 0) {
+        if (grid.x_size_physical() % _block_size_x != 0 ||
+            grid.y_size_physical() % _block_size_y != 0) {
             std::cerr << "Grid size must be divisible by block size.\n";
             throw std::runtime_error("Invalid grid size for CUDA traverser.");
         }

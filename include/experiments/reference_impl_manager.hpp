@@ -51,18 +51,12 @@ private:
         }
         
         // Create standard grid and add margins
-        standard_grid_t initial_grid(params.x_size, params.y_size);
-        std::copy(initial_state.begin(), initial_state.end(), initial_grid.data());
-        
-        auto padded_grid = initial_grid.template with_empty_margins<margin, margin>();
-        
-        run_params padded_params = params;
-        padded_params.x_size += 2 * margin;
-        padded_params.y_size += 2 * margin;
-        
+        standard_grid_t grid(params.x_size, params.y_size);
+        std::copy(initial_state.begin(), initial_state.end(), grid.data());
+
         // Initialize the runner with padded grid
         runner_t runner;
-        runner.init(padded_grid.data(), padded_params);
+        runner.init(grid.data(), params);
         
         if (params.device == "CUDA") {
             runner.init_cuda();
@@ -84,15 +78,13 @@ private:
         auto result = runner.fetch_result();
         
         // Create a new standard grid from the result
-        standard_grid_t result_grid(padded_grid.x_size_physical(), padded_grid.y_size_physical());
+        standard_grid_t result_grid(grid.x_size_physical(), grid.y_size_physical());
         std::copy(result.begin(), result.end(), result_grid.data());
         
-        // Remove margins
-        auto unpadded_result = result_grid.template with_removed_margins<margin, margin>();
         
         // Calculate checksum from result
-        std::string checksum = unpadded_result.get_checksum();
-        
+        std::string checksum = result_grid.get_checksum();
+
         return { execution_time.count(), checksum };
     }
 };

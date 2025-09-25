@@ -8,10 +8,15 @@
 #include "./algorithm.hpp"
 #include "experiments/run_params.hpp"
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace fire::reference {
+using namespace ::reference::indexing;
 
 struct runner {
+    static constexpr std::size_t x_margin = indexer::x_margin;
+    static constexpr std::size_t y_margin = indexer::y_margin;
+
     void init(const fire_cell_state* grid,
               const cellato::run::run_params& params = cellato::run::run_params()) {
 
@@ -23,7 +28,7 @@ struct runner {
         _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
-            if ((_x_size - 2) % _block_size_x != 0 || (_y_size - 2) % _block_size_y != 0) {
+            if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
@@ -50,12 +55,15 @@ struct runner {
     }
     
     void run(int steps) {
+        indexer idx(_x_size, _y_size);
+        
         for (int step = 0; step < steps; ++step) {
-            // Process each cell
-            for (std::size_t y = 1; y < _y_size - 1; ++y) {
-                for (std::size_t x = 1; x < _x_size - 1; ++x) {
+            // Process each cell, accounting for margins
+            for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
+                for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
                     // Forest fire rules
-                    fire_cell_state current = _current_grid[y * _x_size + x];
+                    const int center_idx = idx.at(x, y);
+                    fire_cell_state current = _current_grid[center_idx];
                     fire_cell_state next = current;
                     
                     if (current == fire_cell_state::empty) {
@@ -64,12 +72,12 @@ struct runner {
                     } 
                     else if (current == fire_cell_state::tree) {
                         // Tree catches fire if any von Neumann neighbor is on fire
-                        // Use explicit indexing for the 4 von Neumann neighbors
+                        // Use toroidal indexing for the 4 von Neumann neighbors
                         next = fire_cell_state::tree;
-                        if (_current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
-                            _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
-                            _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
-                            _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire) {  // West
+                        if (_current_grid[idx.at(x, y-1)] == fire_cell_state::fire ||  // North
+                            _current_grid[idx.at(x+1, y)] == fire_cell_state::fire ||  // East
+                            _current_grid[idx.at(x, y+1)] == fire_cell_state::fire ||  // South
+                            _current_grid[idx.at(x-1, y)] == fire_cell_state::fire) {  // West
                             next = fire_cell_state::fire;
                         }
                     }
@@ -78,18 +86,18 @@ struct runner {
                         next = fire_cell_state::ash;
                     }
                     else if (current == fire_cell_state::ash) {
-                        // Check if ash has fire neighbors using explicit indexing
+                        // Check if ash has fire neighbors using toroidal indexing
                         bool has_fire_neighbor = 
-                            _current_grid[(y - 1) * _x_size + x] == fire_cell_state::fire ||  // North
-                            _current_grid[y * _x_size + (x + 1)] == fire_cell_state::fire ||  // East
-                            _current_grid[(y + 1) * _x_size + x] == fire_cell_state::fire ||  // South
-                            _current_grid[y * _x_size + (x - 1)] == fire_cell_state::fire;    // West
+                            _current_grid[idx.at(x, y-1)] == fire_cell_state::fire ||  // North
+                            _current_grid[idx.at(x+1, y)] == fire_cell_state::fire ||  // East
+                            _current_grid[idx.at(x, y+1)] == fire_cell_state::fire ||  // South
+                            _current_grid[idx.at(x-1, y)] == fire_cell_state::fire;    // West
                         
                         // Ash cell with fire neighbors remains ash, others become empty
                         next = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;
                     }
                     
-                    _next_grid[y * _x_size + x] = next;
+                    _next_grid[center_idx] = next;
                 }
             }
             

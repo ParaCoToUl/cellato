@@ -30,6 +30,37 @@ struct static_for {
     }
 };
 
+struct indexer {
+    
+    template <typename state_t>
+    CUDA_CALLABLE static auto get_cell_at(state_t& state, std::size_t x, std::size_t y) {
+        using grid_type = typename state_t::grid_t;
+        constexpr static auto cells_per_word = grid_type::cells_per_word;
+        std::size_t x_size_original = state.properties.x_size * cells_per_word;
+
+        std::size_t x_wrapped = indexer::get_x(state, x);
+        std::size_t y_wrapped = indexer::get_y(state, y);
+
+        return state.grid.get_individual_cell_at(y_wrapped * x_size_original + x_wrapped);
+    }
+
+    template <typename state_t>
+    CUDA_CALLABLE static std::size_t get_x(state_t& state, std::size_t x) {
+        using grid_type = typename state_t::grid_t;
+        constexpr static auto cells_per_word = grid_type::cells_per_word;
+        std::size_t x_size_original = state.properties.x_size * cells_per_word;
+
+        return (x + x_size_original) % x_size_original;
+    }
+
+    template <typename state_t>
+    CUDA_CALLABLE static std::size_t get_y(state_t& state, std::size_t y) {
+        std::size_t y_size_original = state.properties.y_size;
+
+        return (y + y_size_original) % y_size_original;
+    }
+};
+
 // Implementation evaluator - processes a single subcell
 template <typename grid_t, typename Expression, std::size_t subcell_offset>
 struct _impl_evaluator;
@@ -219,15 +250,18 @@ struct _impl_evaluator<grid_t, alternate_algorithms<Even, Odd>, subcell_offset> 
 template <typename grid_t, int x_offset, int y_offset, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> {
     using store_type = typename grid_t::store_type;
-    constexpr static auto cells_per_word = grid_t::cells_per_word;
+
+    static constexpr std::size_t x_offset_unsigned = static_cast<std::size_t>(x_offset);
+    static constexpr std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
+    
 
     CUDA_CALLABLE static store_type evaluate(state_t<grid_t> state) {
-        std::size_t x_size_original = state.properties.x_size * cells_per_word;
+        constexpr auto cells_per_word = grid_t::cells_per_word;
 
-        std::size_t x_original = state.position.x * cells_per_word + subcell_offset + static_cast<std::size_t>(x_offset);
-        std::size_t y_original = state.position.y + static_cast<std::size_t>(y_offset);
+        std::size_t x = state.position.x * cells_per_word + x_offset_unsigned + subcell_offset;
+        std::size_t y = state.position.y + y_offset_unsigned;
 
-        return state.grid.get_individual_cell_at(y_original * x_size_original + x_original);
+        return indexer::get_cell_at(state, x, y);
     }
 };
 
@@ -263,11 +297,11 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
         auto target_value = _impl_evaluator<grid_t, CellStateValue, subcell_offset>::evaluate(state);
 
         constexpr auto cells_per_word = grid_t::cells_per_word;
-        std::size_t x_original = state.position.x * cells_per_word + subcell_offset;
-        std::size_t y_original = state.position.y;
+        std::size_t x_original = indexer::get_x(state, state.position.x * cells_per_word + subcell_offset);
+        std::size_t y_original = indexer::get_y(state, state.position.y);
 
         int parity = state.time_step % 2;
-        int x_parity = (x_original + 1) % 2;
+        int x_parity = x_original % 2;
         int y_parity = y_original % 2;
 
         int x_coords_0, x_coords_1, y_coords_0, y_coords_1;

@@ -8,10 +8,15 @@
 #include "./algorithm.hpp"
 #include "experiments/run_params.hpp"
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace greenberg::reference {
+using namespace ::reference::indexing;
 
 struct runner {
+    static constexpr std::size_t x_margin = indexer::x_margin;
+    static constexpr std::size_t y_margin = indexer::y_margin;
+
     void init(const ghm_cell_state* grid,
               const cellato::run::run_params& params = cellato::run::run_params()) {
         _x_size = params.x_size;
@@ -22,7 +27,7 @@ struct runner {
         _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
-            if ((_x_size - 2) % _block_size_x != 0 || (_y_size - 2) % _block_size_y != 0) {
+            if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
@@ -49,24 +54,27 @@ struct runner {
     }
 
     void run(int steps) {
+        indexer idx(_x_size, _y_size);
+        
         for (int step = 0; step < steps; ++step) {
-            // Process each cell
-            for (std::size_t y = 1; y < _y_size - 1; ++y) {
-                for (std::size_t x = 1; x < _x_size - 1; ++x) {
-                    ghm_cell_state current = _current_grid[y * _x_size + x];
+            // Process each cell, accounting for margins
+            for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
+                for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
+                    const int center_idx = idx.at(x, y);
+                    ghm_cell_state current = _current_grid[center_idx];
                     ghm_cell_state next = current;
                     
                     if (current == ghm_cell_state::quiescent) {
                         // Quiescent cell becomes excited if it has at least one excited neighbor
                         auto excited_count =
-                            (_current_grid[(y - 1) * _x_size + (x - 1)] == ghm_cell_state::excited) + // Top-left
-                            (_current_grid[(y - 1) * _x_size +  x     ] == ghm_cell_state::excited) + // Top
-                            (_current_grid[(y - 1) * _x_size + (x + 1)] == ghm_cell_state::excited) + // Top-right
-                            (_current_grid[ y      * _x_size + (x - 1)] == ghm_cell_state::excited) + // Left
-                            (_current_grid[ y      * _x_size + (x + 1)] == ghm_cell_state::excited) + // Right
-                            (_current_grid[(y + 1) * _x_size + (x - 1)] == ghm_cell_state::excited) + // Bottom-left
-                            (_current_grid[(y + 1) * _x_size +  x     ] == ghm_cell_state::excited) + // Bottom
-                            (_current_grid[(y + 1) * _x_size + (x + 1)] == ghm_cell_state::excited);  // Bottom-right
+                            (_current_grid[idx.at(x-1, y-1)] == ghm_cell_state::excited) + // Top-left
+                            (_current_grid[idx.at(x  , y-1)] == ghm_cell_state::excited) + // Top
+                            (_current_grid[idx.at(x+1, y-1)] == ghm_cell_state::excited) + // Top-right
+                            (_current_grid[idx.at(x-1, y  )] == ghm_cell_state::excited) + // Left
+                            (_current_grid[idx.at(x+1, y  )] == ghm_cell_state::excited) + // Right
+                            (_current_grid[idx.at(x-1, y+1)] == ghm_cell_state::excited) + // Bottom-left
+                            (_current_grid[idx.at(x  , y+1)] == ghm_cell_state::excited) + // Bottom
+                            (_current_grid[idx.at(x+1, y+1)] == ghm_cell_state::excited);  // Bottom-right
 
                         if (excited_count > 0) {
                             next = ghm_cell_state::excited;
@@ -100,7 +108,7 @@ struct runner {
                         next = ghm_cell_state::quiescent;
                     }
                     
-                    _next_grid[y * _x_size + x] = next;
+                    _next_grid[center_idx] = next;
                 }
             }
             

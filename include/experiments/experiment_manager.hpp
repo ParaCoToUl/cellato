@@ -65,15 +65,14 @@ public:
             LOG << "\nRound: " << round - params.warmup_rounds << "\n";
         }
         
-        grid_t grid = get_padded_grid(params, initial_state);
+        grid_t grid = get_grid(params, initial_state);
         traverser_t traverser = get_initialized_traverser(grid, params);
 
         auto execution_time = run_traverser(traverser, params);
 
         grid_t result = traverser.fetch_result();
         auto result_as_standard = result
-            .to_standard()
-            .template with_removed_margins<test_suite::x_margin, test_suite::y_margin>();
+            .to_standard();
 
         if (params.print) {
             LOG << "\nFinal result:\n";
@@ -83,14 +82,11 @@ public:
         return { execution_time, result_as_standard.get_checksum() };
     }
 
-    grid_t get_padded_grid(const run_params& params, const std::vector<original_cell_t>& initial_state) {
+    grid_t get_grid(const run_params& params, const std::vector<original_cell_t>& initial_state) {
         standard_grid_t initial_grid(params.x_size, params.y_size);
         std::copy(initial_state.begin(), initial_state.end(), initial_grid.data());
 
-        auto grid_padded = initial_grid.template with_empty_margins<test_suite::x_margin, test_suite::y_margin>();
-
-        grid_t grid{grid_padded};
-        return grid;
+        return initial_grid;
     }
 
     double run_traverser(traverser_t& traverser, const run_params& params) {

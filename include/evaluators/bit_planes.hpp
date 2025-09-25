@@ -364,10 +364,7 @@ struct _evaluator_impl<
     constexpr static auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
     
     CUDA_CALLABLE static vector_int<typename params::cell_row_t, 3> evaluate(state_t<params> state) {
-        // The choice of starting offset is arbitrary, as long as it is consistent.
-        // Using (t + 1) ensures the results match those from the other evaluators 
-        // (bit-array and standard implementations).
-        auto parity = (state.time_step + 1) % 2;
+        auto parity = state.time_step % 2;
 
         if (parity == 0) {
             return even_parity(state);
@@ -437,8 +434,7 @@ private:
     }
 
     CUDA_CALLABLE static int y_parity(state_t<params> state) {
-        // Offset by +1 to keep parity consistent with the other evaluators.
-        return (state.position.y + 1) % 2;
+        return state.position.y % 2;
     }
 };
 

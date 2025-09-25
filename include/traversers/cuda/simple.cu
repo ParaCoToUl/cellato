@@ -20,8 +20,8 @@ __global__ void process_grid_kernel_simple(
     size_t height,
     int time_step
 ) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
-    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
     
     cellato::memory::grids::point_in_grid state(input_data);
 
@@ -45,9 +45,10 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     size_t width = current->x_size_physical();
     size_t height = current->y_size_physical();
 
-    size_t width_threads = width - 2; // Exclude borders
-    size_t height_threads = height - 2; // Exclude borders
-    
+    // Toroidal wrapping - same width and height
+    size_t width_threads = width;
+    size_t height_threads = height;
+
     dim3 blockDim(_block_size_x, _block_size_y);
     dim3 gridDim(
         width_threads / blockDim.x,

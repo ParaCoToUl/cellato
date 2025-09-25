@@ -1,8 +1,10 @@
 #include "./reference_implementation.hpp"
 #include <cuda_runtime.h>
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace traffic::reference {
+using namespace ::reference::indexing;
 
 template <traffic_cell_state movable, traffic_cell_state stationary>
 __device__ traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
@@ -29,21 +31,23 @@ __device__ traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic
 // CUDA kernel for Forest traffic (single step)
 __global__ void traffic_kernel(const traffic_cell_state* current, traffic_cell_state* next, 
                             int width, int height, int step) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
-    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    // Calculate thread indices, adjusting for margins
+    int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
+    int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
     
-    const int idx = y * width + x;
+    indexer idx(width, height);
+    const int center_idx = idx.at(x, y);
     
-    traffic_cell_state cell_state = current[idx];
-    traffic_cell_state left_neighbor = current[y * width + (x - 1)];
-    traffic_cell_state right_neighbor = current[y * width + (x + 1)];
-    traffic_cell_state up_neighbor = current[(y - 1) * width + x];
-    traffic_cell_state down_neighbor = current[(y + 1) * width + x];
+    traffic_cell_state cell_state = current[center_idx];
+    traffic_cell_state left_neighbor = current[idx.at(x-1, y)];
+    traffic_cell_state right_neighbor = current[idx.at(x+1, y)];
+    traffic_cell_state up_neighbor = current[idx.at(x, y-1)];
+    traffic_cell_state down_neighbor = current[idx.at(x, y+1)];
 
     if (step % 2 == 0) {
-        next[idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
+        next[center_idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
     } else {
-        next[idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
+        next[center_idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
     }
 }
 
@@ -52,12 +56,14 @@ void runner::run_kernel(int steps) {
         init_cuda();
     }
     
-    // Set up grid and block dimensions
+    // Set up grid and block dimensions, accounting for margins
     dim3 block_size(_block_size_x, _block_size_y);
     
-    // Exclude borders from calculation
-    auto _x_size_threads = _x_size - 2;
-    auto _y_size_threads = _y_size - 2;
+    constexpr std::size_t x_margin = indexer::x_margin;
+    constexpr std::size_t y_margin = indexer::y_margin;
+    
+    auto _x_size_threads = _x_size - 2 * x_margin; // Adjust for margins
+    auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
     
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x, 
                  (_y_size_threads + block_size.y - 1) / block_size.y);

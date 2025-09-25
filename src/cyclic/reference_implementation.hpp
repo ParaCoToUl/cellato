@@ -8,10 +8,15 @@
 #include "./algorithm.hpp"
 #include "experiments/run_params.hpp"
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace cyclic::reference {
+using namespace ::reference::indexing;
 
 struct runner {
+    static constexpr std::size_t x_margin = indexer::x_margin;
+    static constexpr std::size_t y_margin = indexer::y_margin;
+
     void init(const cyclic_cell_state* grid,
               const cellato::run::run_params& params = cellato::run::run_params()) {
 
@@ -23,7 +28,7 @@ struct runner {
         _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
-            if ((_x_size - 2) % _block_size_x != 0 || (_y_size - 2) % _block_size_y != 0) {
+            if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
@@ -50,12 +55,15 @@ struct runner {
     }
     
     void run(int steps) {
+        indexer idx(_x_size, _y_size);
+        
         for (int step = 0; step < steps; ++step) {
-            // Process each cell
-            for (std::size_t y = 1; y < _y_size - 1; ++y) {
-                for (std::size_t x = 1; x < _x_size - 1; ++x) {
+            // Process each cell, accounting for margins
+            for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
+                for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
                     // Forest cyclic rules
-                    cyclic_cell_state current = _current_grid[y * _x_size + x];
+                    const int center_idx = idx.at(x, y);
+                    cyclic_cell_state current = _current_grid[center_idx];
                     cyclic_cell_state next_state = current;
                     
                     constexpr int states = cyclic::STATES;
@@ -67,10 +75,7 @@ struct runner {
                         for (int dx = -1; dx <= 1; dx++) {
                             if (dx == 0 && dy == 0) continue;
 
-                            int neighbor_x = x + dx;
-                            int neighbor_y = y + dy;
-                            int neighbor_idx = neighbor_y * _x_size + neighbor_x;
-
+                            int neighbor_idx = idx.at(x + dx, y + dy);
                             if (_current_grid[neighbor_idx] == target_state) {
                                 count++;
                             }
@@ -83,7 +88,7 @@ struct runner {
                         next_state = current;
                     }
 
-                    _next_grid[y * _x_size + x] = next_state;
+                    _next_grid[center_idx] = next_state;
                 }
             }
             

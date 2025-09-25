@@ -1,21 +1,25 @@
 #include "./reference_implementation.hpp"
 #include <cuda_runtime.h>
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace hpp::reference {
+using namespace ::reference::indexing;
 
 // CUDA kernel for Forest hpp (single step)
 __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next, 
                             int width, int height) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
-    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    // Calculate thread indices, adjusting for margins
+    int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
+    int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
     
-    const int idx = y * width + x;
+    indexer idx(width, height);
+    const int center_idx = idx.at(x, y);
 
-    auto top_neighbor = current[(y - 1) * width + x];
-    auto bottom_neighbor = current[(y + 1) * width + x];
-    auto left_neighbor = current[y * width + (x - 1)];
-    auto right_neighbor = current[y * width + (x + 1)];
+    auto top_neighbor = current[idx.at(x, y-1)];
+    auto bottom_neighbor = current[idx.at(x, y+1)];
+    auto left_neighbor = current[idx.at(x-1, y)];
+    auto right_neighbor = current[idx.at(x+1, y)];
 
     constexpr hpp_cell_state TOP = 0b0001;
     constexpr hpp_cell_state BOTTOM = 0b0010;
@@ -50,7 +54,7 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
         result |= combined_horizontal_incoming; // pass horizontal incoming
     }
 
-    next[idx] = result;
+    next[center_idx] = result;
 }
 
 void runner::run_kernel(int steps) {
@@ -58,12 +62,14 @@ void runner::run_kernel(int steps) {
         init_cuda();
     }
     
-    // Set up grid and block dimensions
+    // Set up grid and block dimensions, accounting for margins
     dim3 block_size(_block_size_x, _block_size_y);
     
-    // Exclude borders from calculation
-    auto _x_size_threads = _x_size - 2;
-    auto _y_size_threads = _y_size - 2;
+    constexpr std::size_t x_margin = indexer::x_margin;
+    constexpr std::size_t y_margin = indexer::y_margin;
+    
+    auto _x_size_threads = _x_size - 2 * x_margin; // Adjust for margins
+    auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
     
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x, 
                  (_y_size_threads + block_size.y - 1) / block_size.y);

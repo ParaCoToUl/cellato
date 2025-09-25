@@ -8,10 +8,15 @@
 #include "./algorithm.hpp"
 #include "experiments/run_params.hpp"
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace wire::reference {
+using namespace ::reference::indexing;
 
 struct runner {
+    static constexpr std::size_t x_margin = indexer::x_margin;
+    static constexpr std::size_t y_margin = indexer::y_margin;
+    
     void init(const wire_cell_state* grid, 
               const cellato::run::run_params& params = cellato::run::run_params()) {
         _x_size = params.x_size;
@@ -22,7 +27,7 @@ struct runner {
         _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
-            if ((_x_size - 2) % _block_size_x != 0 || (_y_size - 2) % _block_size_y != 0) {
+            if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
@@ -49,12 +54,15 @@ struct runner {
     }
 
     void run(int steps) {
+        indexer idx(_x_size, _y_size);
+        
         for (int step = 0; step < steps; ++step) {
-            // Process each cell
-            for (std::size_t y = 1; y < _y_size - 1; ++y) {
-                for (std::size_t x = 1; x < _x_size - 1; ++x) {
+            // Process each cell, accounting for margins
+            for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
+                for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
                     // WireWorld rules
-                    wire_cell_state current = _current_grid[y * _x_size + x];
+                    const int center_idx = idx.at(x, y);
+                    wire_cell_state current = _current_grid[center_idx];
                     wire_cell_state next = current;
                     
                     if (current == wire_cell_state::empty) {
@@ -70,16 +78,16 @@ struct runner {
                         next = wire_cell_state::conductor;
                     }
                     else if (current == wire_cell_state::conductor) {
-                        // Count electron heads in the Moore neighborhood using explicit indexing
+                        // Count electron heads in the Moore neighborhood using toroidal indexing
                         int electron_head_count = 
-                            (_current_grid[(y - 1) * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Top-left
-                            (_current_grid[(y - 1) * _x_size +  x     ] == wire_cell_state::electron_head) + // Top
-                            (_current_grid[(y - 1) * _x_size + (x + 1)] == wire_cell_state::electron_head) + // Top-right
-                            (_current_grid[ y      * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Left
-                            (_current_grid[ y      * _x_size + (x + 1)] == wire_cell_state::electron_head) + // Right
-                            (_current_grid[(y + 1) * _x_size + (x - 1)] == wire_cell_state::electron_head) + // Bottom-left
-                            (_current_grid[(y + 1) * _x_size +  x     ] == wire_cell_state::electron_head) + // Bottom
-                            (_current_grid[(y + 1) * _x_size + (x + 1)] == wire_cell_state::electron_head);  // Bottom-right
+                            (_current_grid[idx.at(x-1, y-1)] == wire_cell_state::electron_head) + // Top-left
+                            (_current_grid[idx.at(x  , y-1)] == wire_cell_state::electron_head) + // Top
+                            (_current_grid[idx.at(x+1, y-1)] == wire_cell_state::electron_head) + // Top-right
+                            (_current_grid[idx.at(x-1, y  )] == wire_cell_state::electron_head) + // Left
+                            (_current_grid[idx.at(x+1, y  )] == wire_cell_state::electron_head) + // Right
+                            (_current_grid[idx.at(x-1, y+1)] == wire_cell_state::electron_head) + // Bottom-left
+                            (_current_grid[idx.at(x  , y+1)] == wire_cell_state::electron_head) + // Bottom
+                            (_current_grid[idx.at(x+1, y+1)] == wire_cell_state::electron_head);  // Bottom-right
                         
                         // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
                         if (electron_head_count == 1 || electron_head_count == 2) {
@@ -89,7 +97,7 @@ struct runner {
                         }
                     }
                     
-                    _next_grid[y * _x_size + x] = next;
+                    _next_grid[center_idx] = next;
                 }
             }
             

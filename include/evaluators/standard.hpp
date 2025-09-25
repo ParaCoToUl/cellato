@@ -145,9 +145,9 @@ struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
         auto constexpr x_offset_unsigned = static_cast<std::size_t>(x_offset);
         auto constexpr y_offset_unsigned = static_cast<std::size_t>(y_offset);
 
-        return state.grid[
-            (state.position.x + x_offset_unsigned) +
-            (state.position.y + y_offset_unsigned) * state.properties.x_size];
+        return state.grid[state.idx(
+            state.position.x + x_offset_unsigned,
+            state.position.y + y_offset_unsigned)];
     }
 };
 
@@ -179,7 +179,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, 
             constexpr int dx[] = {-1, 0, 1, -1, 1, -1, 0, 1};
             constexpr int dy[] = {-1, -1, -1, 0, 0, 1, 1, 1};
 
-            return (... + (state.grid[(x + dx[I]) + (y + dy[I]) * x_size] == target_value));
+            return (... + (state.grid[state.idx(x + dx[I], y + dy[I])] == target_value));
         }(std::make_index_sequence<8>{});
     }
 };
@@ -230,7 +230,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
         }
 
         auto get_cell = [](state_t<cell_type, cell_ptr_type> state, int x_offset, int y_offset) {
-            return state.grid[(state.position.x + x_offset) + (state.position.y + y_offset) * state.properties.x_size];
+            return state.grid[state.idx(state.position.x + x_offset, state.position.y + y_offset)];
         };
 
         return (
@@ -251,7 +251,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, von_neumann_4_neighb
             constexpr int dx[] = {0, 0, 1, -1};
             constexpr int dy[] = {1, -1, 0, 0};
 
-            return (... + (state.grid[(x + dx[I]) + (y + dy[I]) * x_size] == target_value));
+            return (... + (state.grid[state.idx(x + dx[I], y + dy[I])] == target_value));
         }(std::make_index_sequence<4>{});
     }
 };
@@ -268,14 +268,14 @@ struct evaluator<cell_type,
         auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
         return
-            state.grid[(state.position.x - 1) + (state.position.y - 1) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x - 1) + (state.position.y    ) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x - 1) + (state.position.y + 1) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x    ) + (state.position.y - 1) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x    ) + (state.position.y + 1) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x + 1) + (state.position.y - 1) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x + 1) + (state.position.y    ) * state.properties.x_size] == target_value ||
-            state.grid[(state.position.x + 1) + (state.position.y + 1) * state.properties.x_size] == target_value;
+            state.grid[state.idx(state.position.x - 1, state.position.y - 1)] == target_value ||
+            state.grid[state.idx(state.position.x - 1, state.position.y    )] == target_value ||
+            state.grid[state.idx(state.position.x - 1, state.position.y + 1)] == target_value ||
+            state.grid[state.idx(state.position.x    , state.position.y - 1)] == target_value ||
+            state.grid[state.idx(state.position.x    , state.position.y + 1)] == target_value ||
+            state.grid[state.idx(state.position.x + 1, state.position.y - 1)] == target_value ||
+            state.grid[state.idx(state.position.x + 1, state.position.y    )] == target_value ||
+            state.grid[state.idx(state.position.x + 1, state.position.y + 1)] == target_value;
     }
 };
 

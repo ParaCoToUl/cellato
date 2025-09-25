@@ -8,10 +8,15 @@
 #include "./algorithm.hpp"
 #include "experiments/run_params.hpp"
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace traffic::reference {
+using namespace ::reference::indexing;
 
 struct runner {
+    static constexpr std::size_t x_margin = indexer::x_margin;
+    static constexpr std::size_t y_margin = indexer::y_margin;
+
     void init(const traffic_cell_state* grid,
               const cellato::run::run_params& params = cellato::run::run_params()) {
 
@@ -23,7 +28,7 @@ struct runner {
         _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
-            if ((_x_size - 2) % _block_size_x != 0 || (_y_size - 2) % _block_size_y != 0) {
+            if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
@@ -72,22 +77,25 @@ struct runner {
     }
 
     void run(int steps) {
+        indexer idx(_x_size, _y_size);
+        
         for (int step = 0; step < steps; ++step) {
-            // Process each cell
-            for (std::size_t y = 1; y < _y_size - 1; ++y) {
-                for (std::size_t x = 1; x < _x_size - 1; ++x) {
+            // Process each cell, accounting for margins
+            for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
+                for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
                     // Forest traffic rules
-
-                    traffic_cell_state cell_state = _current_grid[y * _x_size + x];
-                    traffic_cell_state left_neighbor = _current_grid[y * _x_size + (x - 1)];
-                    traffic_cell_state right_neighbor = _current_grid[y * _x_size + (x + 1)];
-                    traffic_cell_state up_neighbor = _current_grid[(y - 1) * _x_size + x];
-                    traffic_cell_state down_neighbor = _current_grid[(y + 1) * _x_size + x];
+                    const int center_idx = idx.at(x, y);
+                    
+                    traffic_cell_state cell_state = _current_grid[center_idx];
+                    traffic_cell_state left_neighbor = _current_grid[idx.at(x-1, y)];
+                    traffic_cell_state right_neighbor = _current_grid[idx.at(x+1, y)];
+                    traffic_cell_state up_neighbor = _current_grid[idx.at(x, y-1)];
+                    traffic_cell_state down_neighbor = _current_grid[idx.at(x, y+1)];
 
                     if (step % 2 == 0) {
-                        _next_grid[y * _x_size + x] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
+                        _next_grid[center_idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
                     } else {
-                        _next_grid[y * _x_size + x] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
+                        _next_grid[center_idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
                     }
                 }
             }

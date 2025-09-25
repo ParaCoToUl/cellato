@@ -6,7 +6,7 @@ import re
 
 # Define automata to test
 AUTOMATA = ["game-of-life", "forest-fire", "wire", "greenberg-hastings", "brian", "cyclic", "traffic", "hpp", "maze", "critters"]
-# AUTOMATA = ["game-of-life"]
+# AUTOMATA = ["critters"] 
 
 GREY_COLOR = "\033[90m"
 RESET_COLOR = "\033[0m"
@@ -133,8 +133,8 @@ def main():
                 # Tiled Bit Planes CUDA (64-bit)
                 f"--automaton {automaton} --seed 42 --device CUDA --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 64 --x_size {CUDA.GRID_SIZE} --y_size {CUDA.GRID_SIZE} --steps {CUDA.STEPS} --rounds {ROUNDS} --warmup_rounds {WARMUP} --cuda_block_size_y {block_y}",
             ) 
-            for block_y in [1, 2, 4, 8, 16, 32]
-            # for block_y in [4]  # has been shown to be the best for all automata
+            # for block_y in [1, 2, 4, 8, 16, 32]
+            for block_y in [4]  # has been shown to be the best for all automata
         ]
 
         # flatten the list of test cases

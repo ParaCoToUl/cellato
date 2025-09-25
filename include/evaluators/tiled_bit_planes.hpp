@@ -89,11 +89,6 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     constexpr static std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
-        
-        // printf("Evaluating neighbor_at<%d, %d>, step=%d, position=(%d, %d)\n", x_offset, y_offset,
-        //     state.time_step,
-        //     static_cast<int>(state.position.x), static_cast<int>(state.position.y));
-        
         auto center = get_center_offsetted(state);
         
         if constexpr (x_offset != 0) {

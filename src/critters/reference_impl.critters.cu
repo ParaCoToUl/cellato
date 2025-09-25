@@ -1,18 +1,22 @@
 #include "./reference_implementation.hpp"
 #include <cuda_runtime.h>
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace critters::reference {
+using namespace ::reference::indexing;
 
 // CUDA kernel for Forest critters (single step)
 __global__ void critters_kernel(const critters_cell_state* current, critters_cell_state* next, 
                             int width, int height, int step) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
-    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    // Calculate thread indices, adjusting for margins
+    int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
+    int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
     
-    const int idx = y * width + x;
+    indexer idx(width, height);
+    const int center_idx = idx.at(x, y);
     
-    critters_cell_state cell_state = current[idx];
+    critters_cell_state cell_state = current[center_idx];
 
     int x_parity = x % 2;
     int y_parity = y % 2;
@@ -60,7 +64,7 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
         int dx = x_coords[dx_idx];
         for (int dy_idx = 0; dy_idx < 2; dy_idx++) {
             int dy = y_coords[dy_idx];
-            int neighbor_idx = (y + dy) * width + (x + dx);
+            int neighbor_idx = idx.at(x + dx, y + dy);
             neighbors_count += (current[neighbor_idx] == critters_cell_state::alive) ? 1 : 0;
         }
     }
@@ -72,7 +76,7 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
         next_state = (cell_state == critters_cell_state::alive) ? critters_cell_state::dead : critters_cell_state::alive;
     }
 
-    next[idx] = next_state;
+    next[center_idx] = next_state;
 }
 
 void runner::run_kernel(int steps) {
@@ -80,12 +84,14 @@ void runner::run_kernel(int steps) {
         init_cuda();
     }
     
-    // Set up grid and block dimensions
+    // Set up grid and block dimensions, accounting for margins
     dim3 block_size(_block_size_x, _block_size_y);
     
-    // Exclude borders from calculation
-    auto _x_size_threads = _x_size - 2;
-    auto _y_size_threads = _y_size - 2;
+    constexpr std::size_t x_margin = indexer::x_margin;
+    constexpr std::size_t y_margin = indexer::y_margin;
+
+    auto _x_size_threads = _x_size - 2 * x_margin; // Adjust for margins
+    auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
     
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x, 
                  (_y_size_threads + block_size.y - 1) / block_size.y);

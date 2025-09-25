@@ -1,24 +1,28 @@
 #include "./reference_implementation.hpp"
 #include <cuda_runtime.h>
 #include "traversers/cuda_utils.cuh"
+#include "../_shared/indexing.hpp"
 
 namespace maze::reference {
+using namespace ::reference::indexing;
 
 __global__ void maze_kernel(const maze_cell_state* current, maze_cell_state* next, 
                             int width, int height) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
-    int y = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    // Calculate thread indices, adjusting for margins
+    int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
+    int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
     
-    const int idx = y * width + x;
+    indexer idx(width, height);
+    const int center_idx = idx.at(x, y);
     
-    maze_cell_state cell_state = current[idx];
+    maze_cell_state cell_state = current[center_idx];
     
     // Count wall neighbors in Moore neighborhood (8 surrounding cells)
     int wall_count = 0;
     for (int dy = -1; dy <= 1; ++dy) {
         for (int dx = -1; dx <= 1; ++dx) {
             if (dx == 0 && dy == 0) continue; // Skip the center cell
-            if (current[(y + dy) * width + (x + dx)] == maze_cell_state::wall) {
+            if (current[idx.at(x + dx, y + dy)] == maze_cell_state::wall) {
                 wall_count++;
             }
         }
@@ -34,7 +38,7 @@ __global__ void maze_kernel(const maze_cell_state* current, maze_cell_state* nex
         next_state = maze_cell_state::empty;
     }
 
-    next[idx] = next_state;
+    next[center_idx] = next_state;
 }
 
 void runner::run_kernel(int steps) {
@@ -42,12 +46,14 @@ void runner::run_kernel(int steps) {
         init_cuda();
     }
     
-    // Set up grid and block dimensions
+    // Set up grid and block dimensions, accounting for margins
     dim3 block_size(_block_size_x, _block_size_y);
     
-    // Exclude borders from calculation
-    auto _x_size_threads = _x_size - 2;
-    auto _y_size_threads = _y_size - 2;
+    constexpr std::size_t x_margin = indexer::x_margin;
+    constexpr std::size_t y_margin = indexer::y_margin;
+    
+    auto _x_size_threads = _x_size - 2 * x_margin; // Adjust for margins
+    auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
     
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x, 
                  (_y_size_threads + block_size.y - 1) / block_size.y);
