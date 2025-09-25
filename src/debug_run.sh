@@ -10,9 +10,12 @@ script_dir=$(dirname "$0")
 type="standard"
 type="tiled_bit_planes"
 
-args="--automaton game-of-life --seed 42 --device CPU --traverser simple --evaluator ${type} --layout ${type} --precision 64 --x_size 24 --y_size 24 --steps 10 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4 --print"
+automaton="game-of-life"
+automaton="wire"
 
-args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 64 --x_size 14336 --y_size 14336 --steps 100 --rounds 3 --warmup_rounds 1 --cuda_block_size_y 4"
+args="--automaton ${automaton} --seed 42 --device CPU --traverser simple --evaluator ${type} --layout ${type} --precision 64 --x_size 24 --y_size 24 --steps 10 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4 --print"
+
+# args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 64 --x_size 14336 --y_size 14336 --steps 100 --rounds 3 --warmup_rounds 1 --cuda_block_size_y 4"
 
 # Game of Life with standard grid on CUDA
 # args="--automaton wire --precision 64 \

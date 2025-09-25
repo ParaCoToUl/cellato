@@ -5,3 +5,4 @@
 **/venv
 **/_obsolete
 **/__pycache__
+**/__slurm__

@@ -221,7 +221,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         
         // Top-right
         } else if constexpr (x_offset > 0 && y_offset < 0) {
-            constexpr static auto corner_mask = TOP_LINE | RIGHT_BORDER;
+            constexpr static auto corner_mask = TOP_LINE & RIGHT_BORDER;
             
             neighbor_xy = neighbor_xy
                 .template get_right_shifted_vector<(y_tile_size - 2) * x_tile_size + 1>()
@@ -229,7 +229,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
             
         // Bottom-left
         } else if constexpr (x_offset < 0 && y_offset > 0) {
-            constexpr static auto corner_mask = BOTTOM_LINE | RIGHT_BORDER;
+            constexpr static auto corner_mask = BOTTOM_LINE & LEFT_BORDER;
             
             neighbor_xy = neighbor_xy
                 .template get_left_shifted_vector<(y_tile_size - 2) * x_tile_size + 1>()
