@@ -37,15 +37,36 @@ class traverser {
 
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
-        
-        // Add temporal blocking specific parameters here
-        // _temporal_block_size = params.temporal_block_size;
-        _temporal_block_size = 4;
 
-        if (grid.x_size_physical() % _block_size_x != 0 ||
-            grid.y_size_physical() % _block_size_y != 0) {
-            std::cerr << "Grid size must be divisible by block size.\n";
+        _effective_block_size_x = _block_size_x - 2;
+        _effective_block_size_y = _block_size_y - 2;
+        
+        _temporal_steps = params.temporal_steps;
+        _temporal_tile_size_y = params.temporal_tile_size_y;
+
+        _cells_per_thread = _temporal_tile_size_y / _block_size_y;
+
+        if (grid.x_size_physical() % _effective_block_size_x != 0 ||
+            grid.y_size_physical() % _effective_block_size_y != 0) {
+            std::cerr << "Grid size must be divisible by effective block size. (effective block size: "
+                      << _effective_block_size_x << "x" << _effective_block_size_y << ")\n";
+            std::cerr << "Grid size: " << grid.x_size_physical() << "x" << grid.y_size_physical() << "\n";
             throw std::runtime_error("Invalid grid size for CUDA traverser.");
+        }
+
+        if (params.steps % _temporal_steps != 0) {
+            std::cerr << "Total steps must be divisible by temporal steps.\n";
+            throw std::runtime_error("Invalid steps for temporal tiled traverser.");
+        }
+
+        if (_block_size_x != 32) {
+            std::cerr << "Error: Using non-standard block size for CUDA (recommended: 32).\n";
+            throw std::runtime_error("Invalid block size for CUDA traverser.");
+        }
+
+        if (_temporal_tile_size_y % _block_size_y != 0) {
+            std::cerr << "Temporal tile size Y must be divisible by block size Y.\n";
+            throw std::runtime_error("Invalid temporal tile size for temporal tiled traverser.");
         }
 
         _input_grid = std::move(grid);
@@ -81,9 +102,15 @@ private:
     cuda_grid_t _intermediate_grid_cuda;
     cuda_grid_t* _final_grid;
 
-    int _block_size_x = 16;
-    int _block_size_y = 16;
-    int _temporal_block_size = 4;
+    int _block_size_x = 32;
+    int _block_size_y = 8;
+
+    int _effective_block_size_x = _block_size_x - 2;
+    int _effective_block_size_y = _block_size_y - 2;
+    
+    int _temporal_steps = 4;
+    int _temporal_tile_size_y = 32;
+    int _cells_per_thread = 1;
 
     struct _call_back_obj {
         virtual void call(int iteration, grid_t& grid) = 0;

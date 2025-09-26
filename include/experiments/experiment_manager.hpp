@@ -96,8 +96,7 @@ public:
             traverser.run(params.steps, 
                 [&](int iter, const auto& grid) {
                     auto standard_grid = grid
-                    .to_standard()
-                    .template with_removed_margins<test_suite::x_margin, test_suite::y_margin>();
+                    .to_standard();
 
                     LOG << "\nIteration: " << iter << "\n";
                     standard_grid.print(LOG, _print_config);

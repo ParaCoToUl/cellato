@@ -7,19 +7,53 @@ script_dir=$(dirname "$0")
 # Uncomment one of these test configurations:
 
 
-type="standard"
+# type="standard"
 # type="bit_array"
 # type="bit_planes"
 type="tiled_bit_planes"
 
 # automaton="game-of-life"
 # automaton="wire"
-automaton="traffic"
+# automaton="traffic"
+# automaton="cyclic"
+automaton="forest-fire"
 
 # traverser="simple"
 traverser="tiled_temporal"
 
-args="--automaton ${automaton} --seed 42 --device CUDA --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 32 --x_size 1024 --y_size 1024 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+device="CUDA"
+# device="CPU"
+
+# x_size=240
+# y_size=96
+
+# x_size=1920
+# y_size=1536
+
+# x_size=11520
+# y_size=11520
+
+x_size=30720
+y_size=7168
+
+steps=1000
+
+# tiled
+traverser="tiled_temporal"
+type="tiled_bit_planes"
+device="CUDA"
+
+# reference
+# traverser="simple"
+# type="standard"
+# device="CUDA"
+
+# linear bit planes
+# traverser="simple"
+# type="bit_planes"
+# device="CUDA"
+
+args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 3 --warmup_rounds 1 --cuda_block_size_y 16 --temporal_tile_size_y 16 --temporal_steps 8"
 
 # Game of Life with standard grid on CUDA
 # args="--automaton wire --precision 64 \
@@ -50,5 +84,5 @@ if [ "$should_remove" == "clean" ]; then
 fi
 
 cd "$script_dir"
-srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make -j run ARGS="$args"
-# srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:H100 make -j run ARGS="$args"
+# srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40 make -j run ARGS="$args"
+srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:H100 make -j run ARGS="$args"

@@ -26,6 +26,9 @@ struct run_params {
     int x_tile_size = 0;
     int y_tile_size = 0;
 
+    int temporal_steps = 0;
+    int temporal_tile_size_y = 0;
+
     int rounds = 1;
     int warmup_rounds = 0;
 

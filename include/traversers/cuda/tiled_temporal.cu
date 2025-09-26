@@ -1,6 +1,8 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <stdexcept>
+#include <array>
+#include <type_traits>
 
 #include "./tiled_temporal.hpp"
 #include "../../memory/standard_grid.hpp"
@@ -12,35 +14,134 @@
 
 namespace cellato::traversers::cuda::tiled_temporal {
 
-template <typename evaluator_t, typename grid_data_t, typename output_data_t>
+template <typename TArray>
+struct props {};
+
+template <typename TPointer, std::size_t Size>
+struct props<std::array<TPointer, Size>> {
+    static constexpr std::size_t size = Size;
+    using store_type = TPointer;
+    using no_pointer_type = typename std::remove_pointer<TPointer>::type;
+    using grid_type = std::array<TPointer, Size>;
+
+    static constexpr std::size_t compute_buffer_size(std::size_t total_elements) {
+        constexpr std::size_t bits_count = size;
+        return (total_elements * bits_count);
+    }
+
+    static __device__ grid_type create_from_contiguous(TPointer data, std::size_t total_elements) {
+        grid_type arr;
+        for_each_bit([&]<std::size_t bit_idx>() {
+            std::get<bit_idx>(arr) = data + bit_idx * total_elements;
+        });
+        return arr;
+    }
+
+    static __device__ void assign_to_from(
+        grid_type to, std::size_t to_x_size,
+        std::size_t to_x, std::size_t to_y,
+
+        grid_type from, std::size_t from_x_size,
+        std::size_t from_x, std::size_t from_y
+    ) {
+
+        for_each_bit([&]<std::size_t bit_idx>() {
+            auto from_ptr = std::get<bit_idx>(from);
+            auto to_ptr = std::get<bit_idx>(to);
+
+            to_ptr[to_y * to_x_size + to_x] = from_ptr[from_y * from_x_size + from_x];
+        });
+    } 
+private:
+    template <typename Callback, std::size_t... Is>
+    static __device__ void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
+        (cb.template operator()<Is>(), ...);
+    }
+
+    template <typename Callback>
+    static __device__ void for_each_bit(Callback&& cb) {
+        for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<Size>{});
+    }
+};
+
+template <
+    typename evaluator_t,
+    
+    int temporal_steps, int temporal_tile_size_y,
+    int block_size_x, int block_size_y,
+
+    typename grid_data_t, typename output_data_t>
+
 __global__ void process_grid_kernel_tiled_temporal(
     grid_data_t input_data,
     output_data_t output_data,
     size_t width,
     size_t height,
-    int time_step,
-    int temporal_block_size
+    int time_step
 ) {
-    // Implement the temporal blocking kernel here
-    // This is where the key differences from the simple traverser will be
-    
-    // Basic structure similar to simple.cu:
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    
-    cellato::memory::grids::point_in_grid state(input_data);
+    int global_x_non_wrapped = blockIdx.x * (blockDim.x - 2) + threadIdx.x - 1;
+    int global_y_non_wrapped = blockIdx.y * (blockDim.y - 2) + threadIdx.y - 1;
 
-    state.properties.x_size = width;
-    state.properties.y_size = height;
-    state.position.x = x;
-    state.position.y = y;
-    state.time_step = time_step;
+    std::size_t global_x = static_cast<std::size_t>((global_x_non_wrapped + width) % width);
+    std::size_t global_y = static_cast<std::size_t>((global_y_non_wrapped + height) % height);
 
-    // TODO: Implement temporal blocking logic
-    // This will involve shared memory for the tile and processing multiple time steps
-    
-    auto result = evaluator_t::evaluate(state);
-    save_to(output_data, state.idx(), result);
+    int local_x = threadIdx.x; 
+    int local_y = threadIdx.y;
+
+    constexpr std::size_t temporal_tile_size_x = block_size_x;
+    constexpr std::size_t cells_in_temporal_blocks = temporal_tile_size_y * temporal_tile_size_x;
+
+    // Change from store_type to no_pointer_type for shared memory
+    __shared__ typename props<grid_data_t>::no_pointer_type buffer1[props<grid_data_t>::compute_buffer_size(cells_in_temporal_blocks)];
+    __shared__ typename props<grid_data_t>::no_pointer_type buffer2[props<grid_data_t>::compute_buffer_size(cells_in_temporal_blocks)];
+
+    grid_data_t grid_buffer1 = props<grid_data_t>::create_from_contiguous(buffer1, cells_in_temporal_blocks);
+    grid_data_t grid_buffer2 = props<grid_data_t>::create_from_contiguous(buffer2, cells_in_temporal_blocks);
+
+    props<grid_data_t>::assign_to_from(
+        grid_buffer1, temporal_tile_size_x,
+        local_x, local_y,
+
+        input_data, width,
+        global_x, global_y
+    );
+
+    grid_data_t current = grid_buffer1;
+    grid_data_t next = grid_buffer2;
+
+    __syncthreads();
+
+    for (int t = 0; t < temporal_steps; ++t) {
+        cellato::memory::grids::point_in_grid state(current);
+
+        state.properties.x_size = temporal_tile_size_x;
+        state.properties.y_size = temporal_tile_size_y;
+
+        state.position.x = local_x;
+        state.position.y = local_y;
+
+        state.time_step = time_step + t;
+
+        auto result = evaluator_t::evaluate(state);
+        save_to(next, state.idx(), result);
+
+        auto temp = current;
+        current = next;
+        next = temp;
+
+        __syncthreads();
+    }
+
+    if (threadIdx.x == 0 || threadIdx.x == block_size_x - 1 || threadIdx.y == 0 || threadIdx.y == block_size_y - 1)
+        return;
+
+    props<grid_data_t>::assign_to_from(
+        output_data, width,
+        global_x, global_y,
+
+        current, temporal_tile_size_x,
+        local_x, local_y
+    );
 }
 
 template <typename evaluator_type, typename grid_type>
@@ -58,35 +159,29 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     size_t height_threads = height;
 
     dim3 blockDim(_block_size_x, _block_size_y);
-    dim3 gridDim(
-        width_threads / blockDim.x,
-        height_threads / blockDim.y
+        dim3 gridDim(
+        width_threads / _effective_block_size_x,
+        height_threads / _effective_block_size_y
     );
 
     if constexpr (mode == _run_mode::VERBOSE) {
         call_callback(0, current);
     }
 
-    // TODO: Implement temporal blocking execution strategy
-    // This will differ from the simple traverser - you might process multiple timesteps
-    // in a single kernel launch or use a different loop structure
-    for (int step = 0; step < steps; step += _temporal_block_size) {
-        int actual_steps = std::min(_temporal_block_size, steps - step);
-        
+    for (int step = 0; step < steps; step += _temporal_steps) {
         auto input_data = current->data();
         auto output_data = next->data();
-        
-        process_grid_kernel_tiled_temporal<evaluator_t><<<gridDim, blockDim>>>(
+
+        process_grid_kernel_tiled_temporal<evaluator_t, 8, 16, 32, 16><<<gridDim, blockDim>>>(
             input_data,
             output_data,
             width,
             height,
-            step,
-            actual_steps
+            step
         );
         
         if constexpr (mode == _run_mode::VERBOSE) {
-            call_callback(step + actual_steps, next);
+            call_callback(step + _temporal_steps, next);
         }
 
         std::swap(current, next);

@@ -285,12 +285,20 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
     std::vector<std::string> optional {
         "print", "precision", "x_tile_size", "y_tile_size",
         "seed", "rounds", "warmup_rounds", "print_csv_header",
-        "reference_impl", "cuda_block_size_x", "cuda_block_size_y"
+        "reference_impl", "cuda_block_size_x", "cuda_block_size_y",
+        "temporal_steps", "temporal_tile_size_y"
     };
 
     if (parser.exists("evaluator")) {
         if (parser.get("evaluator") == "bit_planes" || parser.get("evaluator") == "bit_array") {
             required.push_back("precision");
+        }
+    }
+
+    if (parser.exists("traverser")) {
+        if (parser.get("traverser") == "temporal_tiled") {
+            required.push_back("temporal_steps");
+            required.push_back("temporal_tile_size_y");
         }
     }
 
@@ -330,6 +338,9 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
         
         .x_tile_size = parser.exists("x_tile_size") ? std::stoi(parser.get("x_tile_size")) : 0,
         .y_tile_size = parser.exists("y_tile_size") ? std::stoi(parser.get("y_tile_size")) : 0,
+
+        .temporal_steps = parser.exists("temporal_steps") ? std::stoi(parser.get("temporal_steps")) : 0,
+        .temporal_tile_size_y = parser.exists("temporal_tile_size_y") ? std::stoi(parser.get("temporal_tile_size_y")) : 0,
         
         .rounds = parser.exists("rounds") ? std::stoi(parser.get("rounds")) : 1,
         .warmup_rounds = parser.exists("warmup_rounds") ? std::stoi(parser.get("warmup_rounds")) : 0,
@@ -350,27 +361,29 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
 void print_usage() {
     std::cout << "Usage: ./cellato [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --automaton <name>           Name of the cellular automaton\n";
-    std::cout << "  --device <name>              Device to run on (CPU, CUDA)\n";
-    std::cout << "  --traverser <name>           Traverser type (simple, spacial_blocking)\n";
-    std::cout << "  --evaluator <name>           Evaluator type (standard, bit_planes)\n";
-    std::cout << "  --layout <name>              Layout type (standard, bit_array, bit_planes)\n";
-    std::cout << "  --reference_impl <name>      Reference implementation to use (baseline, kokkos, halide, gridtools)\n";
-    std::cout << "  --x_size <number>            X size of the grid\n";
-    std::cout << "  --y_size <number>            Y size of the grid\n";
-    std::cout << "  --x_tile_size <number>       X tile size for CUDA\n";
-    std::cout << "  --y_tile_size <number>       Y tile size for CUDA\n";
-    std::cout << "  --rounds <number>            Number of rounds to run\n";
-    std::cout << "  --warmup_rounds <number>     Number of warmup rounds to run\n";
-    std::cout << "  --steps <number>             Number of steps to run\n";
-    std::cout << "  --precision <number>         Precision for floating-point calculations (32, 64)\n";
-    std::cout << "  --seed <number>              Random seed for initialization\n";
-    std::cout << "  --print                      Print the grid after each step\n";
-    std::cout << "  --reference_impl             Use reference implementation for the automaton\n";
-    std::cout << "  --cuda_block_size_x <number> CUDA block size X (default: 16)\n";
-    std::cout << "  --cuda_block_size_y <number> CUDA block size Y (default: 16)\n";
-    std::cout << "  --print_csv_header           Print CSV header\n";
-    std::cout << "  --help                       Show this help message\n";
+    std::cout << "  --automaton <name>              Name of the cellular automaton\n";
+    std::cout << "  --device <name>                 Device to run on (CPU, CUDA)\n";
+    std::cout << "  --traverser <name>              Traverser type (simple, spacial_blocking)\n";
+    std::cout << "  --evaluator <name>              Evaluator type (standard, bit_planes)\n";
+    std::cout << "  --layout <name>                 Layout type (standard, bit_array, bit_planes)\n";
+    std::cout << "  --reference_impl <name>         Reference implementation to use (baseline, kokkos, halide, gridtools)\n";
+    std::cout << "  --x_size <number>               X size of the grid\n";
+    std::cout << "  --y_size <number>               Y size of the grid\n";
+    std::cout << "  --x_tile_size <number>          X tile size for CUDA\n";
+    std::cout << "  --y_tile_size <number>          Y tile size for CUDA\n";
+    std::cout << "  --temporal_steps <number>       Temporal steps for CUDA (only for temporal_tiled_bit_planes)\n";
+    std::cout << "  --temporal_tile_size_y <number> Temporal tile size Y for CUDA (only for temporal_tiled_bit_planes)\n";
+    std::cout << "  --rounds <number>               Number of rounds to run\n";
+    std::cout << "  --warmup_rounds <number>        Number of warmup rounds to run\n";
+    std::cout << "  --steps <number>                Number of steps to run\n";
+    std::cout << "  --precision <number>            Precision for floating-point calculations (32, 64)\n";
+    std::cout << "  --seed <number>                 Random seed for initialization\n";
+    std::cout << "  --print                         Print the grid after each step\n";
+    std::cout << "  --reference_impl                Use reference implementation for the automaton\n";
+    std::cout << "  --cuda_block_size_x <number>    CUDA block size X (default: 16)\n";
+    std::cout << "  --cuda_block_size_y <number>    CUDA block size Y (default: 16)\n";
+    std::cout << "  --print_csv_header              Print CSV header\n";
+    std::cout << "  --help                          Show this help message\n";
 }
 
 
