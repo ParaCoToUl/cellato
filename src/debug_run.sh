@@ -9,16 +9,17 @@ script_dir=$(dirname "$0")
 
 type="standard"
 # type="bit_array"
-type="bit_planes"
-# type="tiled_bit_planes"
+# type="bit_planes"
+type="tiled_bit_planes"
 
 # automaton="game-of-life"
 # automaton="wire"
 automaton="traffic"
 
-args="--automaton ${automaton} --seed 42 --device CPU --traverser simple --evaluator ${type} --layout ${type} --precision 32 --x_size 64 --y_size 64 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
+# traverser="simple"
+traverser="tiled_temporal"
 
-# args="--automaton game-of-life --seed 42 --device CUDA --traverser simple --evaluator tiled_bit_planes --layout tiled_bit_planes --precision 64 --x_size 14336 --y_size 14336 --steps 100 --rounds 3 --warmup_rounds 1 --cuda_block_size_y 4"
+args="--automaton ${automaton} --seed 42 --device CUDA --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 32 --x_size 1024 --y_size 1024 --steps 100 --rounds 1 --warmup_rounds 0 --cuda_block_size_y 4"
 
 # Game of Life with standard grid on CUDA
 # args="--automaton wire --precision 64 \

@@ -61,10 +61,6 @@ struct _evaluator_impl {
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
         // all but the 'neighbor_at' part is same as bit_planes
 
-        // printf("Evaluating generic evaluator_impl, step=%d, position=(%d, %d)\n",
-        //     state.time_step,
-        //     static_cast<int>(state.position.x), static_cast<int>(state.position.y));
-
         return _simple_bit_planes_evaluator_implementation<typename params::cell_row_t, typename params::state_dict_t, Expression>::evaluate(state);
     }
 };
