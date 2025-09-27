@@ -12,6 +12,7 @@
 #include "../../core/ast.hpp"
 #include "../traverser_utils.hpp"
 #include "../cuda_utils.cuh"
+#include "../../utils/static_dispatcher.hpp"
 
 namespace cellato::traversers::cuda::tiled_temporal {
 
@@ -82,6 +83,10 @@ __global__ void process_grid_kernel_tiled_temporal(
 ) {
     constexpr std::size_t cells_per_thread_y = temporal_tile_size_y / block_size_y;
     constexpr std::size_t temporal_tile_size_x = block_size_x;
+
+    if constexpr (cells_per_thread_y == 0) {
+        return;
+    }
 
     std::size_t global_x_non_wrapped = static_cast<std::size_t>(blockIdx.x) * (temporal_tile_size_x - 2) + threadIdx.x - 1;
     std::size_t global_y_start_non_wrapped = static_cast<std::size_t>(blockIdx.y) * (temporal_tile_size_y - 2) + 
@@ -171,14 +176,12 @@ __global__ void process_grid_kernel_tiled_temporal(
 template <typename evaluator_type, typename grid_type>
 template <_run_mode mode>
 void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
-
     auto current = &_input_grid_cuda;
     auto next = &_intermediate_grid_cuda;
-    
+
     size_t width = current->x_size_physical();
     size_t height = current->y_size_physical();
 
-    // Toroidal wrapping - same width and height
     size_t width_threads = width;
     size_t height_threads = height;
 
@@ -192,29 +195,54 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         call_callback(0, current);
     }
 
-    for (int step = 0; step < steps; step += _temporal_steps) {
-        auto input_data = current->data();
-        auto output_data = next->data();
+    using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 8>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32>;
+    using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
+    
+    cellato::generic_dispatcher::call<
+        temporal_steps_options,
+        tile_y_options,
+        block_x_options,
+        block_y_options
+    >(
+        // Capture everything by reference to modify 'current' and 'next' pointers.
+        [&]<
+            std::size_t temporal_steps, std::size_t temporal_tile_size_y,
+            std::size_t block_size_x, std::size_t block_size_y
+        >() {
+            for (int step = 0; step < steps; step += _temporal_steps) {
+                auto input_data = current->data();
+                auto output_data = next->data();
 
-        process_grid_kernel_tiled_temporal<evaluator_t, 4, 4, 32, 2><<<gridDim, blockDim>>>(
-            input_data,
-            output_data,
-            width,
-            height,
-            step
-        );
-        
-        if constexpr (mode == _run_mode::VERBOSE) {
-            call_callback(step + _temporal_steps, next);
-        }
+                process_grid_kernel_tiled_temporal<
+                    evaluator_type,
+                    temporal_steps, temporal_tile_size_y,
+                    block_size_x, block_size_y
+                ><<<gridDim, blockDim>>>(
+                    input_data,
+                    output_data,
+                    width,
+                    height,
+                    step
+                );
 
-        std::swap(current, next);
+                if constexpr (mode == _run_mode::VERBOSE) {
+                    call_callback(step + _temporal_steps, next);
+                }
 
-        CUCH(cudaGetLastError());
-    }
+                std::swap(current, next);
+                CUCH(cudaGetLastError());
+            }
+        },
+        (std::size_t)_temporal_steps,
+        (std::size_t)_temporal_tile_size_y,
+        (std::size_t)_block_size_x,
+        (std::size_t)_block_size_y
+    );
     
     CUCH(cudaDeviceSynchronize());
-
+    
     _final_grid = current;
 }
 
