@@ -37,19 +37,19 @@ class traverser {
 
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
-
-        _effective_block_size_x = _block_size_x - 2;
-        _effective_block_size_y = _block_size_y - 2;
         
-        _temporal_steps = params.temporal_steps;
         _temporal_tile_size_y = params.temporal_tile_size_y;
+        _temporal_steps = params.temporal_steps;
+
+        _effective_temporal_tile_size_x = _block_size_x - 2;
+        _effective_temporal_tile_size_y = _temporal_tile_size_y - 2;
 
         _cells_per_thread = _temporal_tile_size_y / _block_size_y;
 
-        if (grid.x_size_physical() % _effective_block_size_x != 0 ||
-            grid.y_size_physical() % _effective_block_size_y != 0) {
-            std::cerr << "Grid size must be divisible by effective block size. (effective block size: "
-                      << _effective_block_size_x << "x" << _effective_block_size_y << ")\n";
+        if (grid.x_size_physical() % _effective_temporal_tile_size_x != 0 ||
+            grid.y_size_physical() % _effective_temporal_tile_size_y != 0) {
+            std::cerr << "Grid size must be divisible by effective temporal tile size. (effective temporal tile size: "
+                      << _effective_temporal_tile_size_x << "x" << _effective_temporal_tile_size_y << ")\n";
             std::cerr << "Grid size: " << grid.x_size_physical() << "x" << grid.y_size_physical() << "\n";
             throw std::runtime_error("Invalid grid size for CUDA traverser.");
         }
@@ -102,15 +102,15 @@ private:
     cuda_grid_t _intermediate_grid_cuda;
     cuda_grid_t* _final_grid;
 
-    int _block_size_x = 32;
-    int _block_size_y = 8;
+    int _block_size_x = -1;
+    int _block_size_y = -1;
 
-    int _effective_block_size_x = _block_size_x - 2;
-    int _effective_block_size_y = _block_size_y - 2;
+    int _effective_temporal_tile_size_x = -1;
+    int _effective_temporal_tile_size_y = -1;
     
-    int _temporal_steps = 4;
-    int _temporal_tile_size_y = 32;
-    int _cells_per_thread = 1;
+    int _temporal_steps = -1;
+    int _temporal_tile_size_y = -1;
+    int _cells_per_thread = -1;
 
     struct _call_back_obj {
         virtual void call(int iteration, grid_t& grid) = 0;
