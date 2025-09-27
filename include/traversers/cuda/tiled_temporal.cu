@@ -22,7 +22,7 @@ struct props {};
 template <typename TPointer, std::size_t Size>
 struct props<std::array<TPointer, Size>> {
     static constexpr std::size_t size = Size;
-    using store_type = TPointer;
+    using ptr_type = TPointer;
     using no_pointer_type = typename std::remove_pointer<TPointer>::type;
     using grid_type = std::array<TPointer, Size>;
 
@@ -31,7 +31,7 @@ struct props<std::array<TPointer, Size>> {
         return (total_elements * bits_count);
     }
 
-    static __device__ grid_type create_from_contiguous(TPointer data, std::size_t total_elements) {
+    static __device__ __host__ grid_type create_from_contiguous(TPointer data, std::size_t total_elements) {
         grid_type arr;
         for_each_bit([&]<std::size_t bit_idx>() {
             std::get<bit_idx>(arr) = data + bit_idx * total_elements;
@@ -39,7 +39,7 @@ struct props<std::array<TPointer, Size>> {
         return arr;
     }
 
-    static __device__ void assign_to_from(
+    static __device__ __host__ void assign_to_from(
         grid_type to, std::size_t to_x_size,
         std::size_t to_x, std::size_t to_y,
 
@@ -54,7 +54,7 @@ struct props<std::array<TPointer, Size>> {
             to_ptr[to_y * to_x_size + to_x] = from_ptr[from_y * from_x_size + from_x];
         });
     } 
-private:
+  private:
     template <typename Callback, std::size_t... Is>
     static __device__ void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
         (cb.template operator()<Is>(), ...);
@@ -81,12 +81,12 @@ __global__ void process_grid_kernel_tiled_temporal(
     std::size_t height,
     std::size_t time_step
 ) {
+    using grid_props = props<grid_data_t>;
+    using store_t = typename grid_props::no_pointer_type;
+    using prt_t = typename grid_props::ptr_type;
+
     constexpr std::size_t cells_per_thread_y = temporal_tile_size_y / block_size_y;
     constexpr std::size_t temporal_tile_size_x = block_size_x;
-
-    if constexpr (cells_per_thread_y == 0) {
-        return;
-    }
 
     std::size_t global_x_non_wrapped = static_cast<std::size_t>(blockIdx.x) * (temporal_tile_size_x - 2) + threadIdx.x - 1;
     std::size_t global_y_start_non_wrapped = static_cast<std::size_t>(blockIdx.y) * (temporal_tile_size_y - 2) + 
@@ -109,7 +109,7 @@ __global__ void process_grid_kernel_tiled_temporal(
     for (std::size_t y_offset = 0; y_offset < cells_per_thread_y; ++y_offset) {
         std::size_t global_y_for_load = (global_y_start_non_wrapped + y_offset + height) % height;
         
-        props<grid_data_t>::assign_to_from(
+        grid_props::assign_to_from(
             grid_buffer1, temporal_tile_size_x,
             local_x, local_y_start + y_offset,
 
@@ -163,7 +163,7 @@ __global__ void process_grid_kernel_tiled_temporal(
     for (std::size_t y_offset = y_start_for_saving; y_offset < count_to_save; ++y_offset) {
         std::size_t global_y_for_save = global_y_start_non_wrapped + y_offset;
         
-        props<grid_data_t>::assign_to_from(
+        grid_props::assign_to_from(
             output_data, width,
             global_x_for_save, global_y_for_save,
 
@@ -195,10 +195,10 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         call_callback(0, current);
     }
 
-    using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 8>;
-    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32>;
+    using temporal_steps_options = std::integer_sequence<std::size_t, 4, 8>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16>;
     using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
+    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16>;
     
     cellato::generic_dispatcher::call<
         temporal_steps_options,
@@ -206,33 +206,38 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         block_x_options,
         block_y_options
     >(
-        // Capture everything by reference to modify 'current' and 'next' pointers.
         [&]<
             std::size_t temporal_steps, std::size_t temporal_tile_size_y,
             std::size_t block_size_x, std::size_t block_size_y
         >() {
-            for (int step = 0; step < steps; step += _temporal_steps) {
-                auto input_data = current->data();
-                auto output_data = next->data();
+            if constexpr (block_size_y <= temporal_tile_size_y) {
 
-                process_grid_kernel_tiled_temporal<
-                    evaluator_type,
-                    temporal_steps, temporal_tile_size_y,
-                    block_size_x, block_size_y
-                ><<<gridDim, blockDim>>>(
-                    input_data,
-                    output_data,
-                    width,
-                    height,
-                    step
-                );
+                for (int step = 0; step < steps; step += temporal_steps) {
+                    auto input_data = current->data();
+                    auto output_data = next->data();
 
-                if constexpr (mode == _run_mode::VERBOSE) {
-                    call_callback(step + _temporal_steps, next);
+                    process_grid_kernel_tiled_temporal<
+                        evaluator_type,
+                        temporal_steps, temporal_tile_size_y,
+                        block_size_x, block_size_y
+                    ><<<gridDim, blockDim>>>(
+                        input_data,
+                        output_data,
+                        width,
+                        height,
+                        step
+                    );
+
+                    if constexpr (mode == _run_mode::VERBOSE) {
+                        call_callback(step + temporal_steps, next);
+                    }
+
+                    std::swap(current, next);
+                    CUCH(cudaGetLastError());
                 }
 
-                std::swap(current, next);
-                CUCH(cudaGetLastError());
+            } else {
+                throw std::runtime_error("Invalid configuration: block_size_y must be less than or equal to temporal_tile_size_y");
             }
         },
         (std::size_t)_temporal_steps,

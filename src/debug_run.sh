@@ -53,14 +53,14 @@ device="CUDA"
 # reference
 # traverser="simple"
 # type="standard"
-# device="CPU"
+# device="CUDA"
 
 # linear bit planes
 # traverser="simple"
 # type="bit_planes"
 # device="CUDA"
 
-args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 32 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 1 --warmup_rounds 0 --cuda_block_size_y 8 --temporal_tile_size_y 8 --temporal_steps 4"
+args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 3 --warmup_rounds 1 --cuda_block_size_y 8 --temporal_tile_size_y 16 --temporal_steps 8"
 
 # Game of Life with standard grid on CUDA
 # args="--automaton wire --precision 64 \
