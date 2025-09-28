@@ -16,6 +16,31 @@
 
 namespace cellato::traversers::cuda::tiled_temporal {
 
+#if __CUDA_ARCH__ > 900
+    // Blackwell Architecture (e.g., B100, B200) - CC 9.1+
+    // Note: Assuming "B40" refers to the Blackwell family.
+    // Each SM has 128 KB of combined L1/Shared Memory.
+    // Max configurable shared memory is typically L1/SHM size minus a few KB for L1.
+    constexpr std::size_t max_shm_size = 124 * 1024; // 124 KB
+
+#elif __CUDA_ARCH__ == 900
+    // Hopper Architecture (e.g., H100) - CC 9.0
+    // Each SM has 256 KB of combined L1/Shared Memory.
+    constexpr std::size_t max_shm_size = 228 * 1024; // 228 KB
+
+#elif __CUDA_ARCH__ >= 800
+    // Ampere Architecture (e.g., A100) - CC 8.0 to 8.9
+    // Each SM has 192 KB of combined L1/Shared Memory.
+    constexpr std::size_t max_shm_size = 164 * 1024; // 164 KB
+
+#else
+    // Fallback for older or unsupported architectures (e.g., Turing max is 64 KB)
+    // A compile-time error might be more appropriate depending on your needs.
+    // #error "Unsupported CUDA architecture."
+    constexpr std::size_t max_shm_size = 48 * 1024; // 48 KB (a safe default)
+
+#endif
+
 template <typename TArray>
 struct props {};
 
@@ -100,11 +125,14 @@ __global__ void process_grid_kernel_tiled_temporal(
 
     constexpr std::size_t cells_in_temporal_blocks = temporal_tile_size_y * temporal_tile_size_x;
 
-    __shared__ typename props<grid_data_t>::no_pointer_type buffer1[props<grid_data_t>::compute_buffer_size(cells_in_temporal_blocks)];
-    __shared__ typename props<grid_data_t>::no_pointer_type buffer2[props<grid_data_t>::compute_buffer_size(cells_in_temporal_blocks)];
+    extern __shared__ char s_buffer[];
+    store_t* buffer_base = reinterpret_cast<store_t*>(s_buffer);
 
-    grid_data_t grid_buffer1 = props<grid_data_t>::create_from_contiguous(buffer1, cells_in_temporal_blocks);
-    grid_data_t grid_buffer2 = props<grid_data_t>::create_from_contiguous(buffer2, cells_in_temporal_blocks);
+    store_t* buffer1 = buffer_base;
+    store_t* buffer2 = buffer_base + grid_props::compute_buffer_size(cells_in_temporal_blocks);
+    
+    grid_data_t grid_buffer1 = grid_props::create_from_contiguous(buffer1, cells_in_temporal_blocks);
+    grid_data_t grid_buffer2 = grid_props::create_from_contiguous(buffer2, cells_in_temporal_blocks);
 
     for (std::size_t y_offset = 0; y_offset < cells_per_thread_y; ++y_offset) {
         std::size_t global_y_for_load = (global_y_start_non_wrapped + y_offset + height) % height;
@@ -196,9 +224,9 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     }
 
     using temporal_steps_options = std::integer_sequence<std::size_t, 4, 8>;
-    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128, 256>;
     using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16>;
+    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
     
     cellato::generic_dispatcher::call<
         temporal_steps_options,
@@ -210,17 +238,36 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
             std::size_t temporal_steps, std::size_t temporal_tile_size_y,
             std::size_t block_size_x, std::size_t block_size_y
         >() {
-            if constexpr (block_size_y <= temporal_tile_size_y) {
+            constexpr std::size_t temporal_tile_size_x = block_size_x;
+            constexpr std::size_t required_buffers_bytes = 2 * temporal_tile_size_y * temporal_tile_size_x * grid_type::needed_bits * sizeof(typename grid_type::cell_t);
 
+            if constexpr (required_buffers_bytes > max_shm_size) {
+                throw std::runtime_error("Configuration exceeds maximum shared memory size. The temporal tile is too large.");
+                
+            } else if constexpr (temporal_tile_size_y < block_size_y) {
+                throw std::runtime_error("Invalid configuration: block_size_y must be less than or equal to temporal_tile_size_y");
+                
+            } else {
                 for (int step = 0; step < steps; step += temporal_steps) {
                     auto input_data = current->data();
                     auto output_data = next->data();
+
+                    cudaFuncSetAttribute(
+                        process_grid_kernel_tiled_temporal<
+                            evaluator_type,
+                            temporal_steps, temporal_tile_size_y,
+                            block_size_x, block_size_y,
+                            decltype(input_data), decltype(output_data)
+                        >,
+                        cudaFuncAttributePreferredSharedMemoryCarveout,
+                        cudaSharedmemCarveoutMaxShared
+                    );
 
                     process_grid_kernel_tiled_temporal<
                         evaluator_type,
                         temporal_steps, temporal_tile_size_y,
                         block_size_x, block_size_y
-                    ><<<gridDim, blockDim>>>(
+                    ><<<gridDim, blockDim, required_buffers_bytes>>>(
                         input_data,
                         output_data,
                         width,
@@ -235,9 +282,6 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
                     std::swap(current, next);
                     CUCH(cudaGetLastError());
                 }
-
-            } else {
-                throw std::runtime_error("Invalid configuration: block_size_y must be less than or equal to temporal_tile_size_y");
             }
         },
         (std::size_t)_temporal_steps,
