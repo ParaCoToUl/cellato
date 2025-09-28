@@ -24,11 +24,11 @@ traverser="tiled_temporal"
 device="CUDA"
 # device="CPU"
 
-x_size=240
+# x_size=240
 # y_size=96
 # y_size=112
-y_size=32
-steps=8
+# y_size=32
+# steps=8
 
 # x_size=1920
 # y_size=1536
@@ -39,7 +39,8 @@ steps=8
 
 # big test:
 x_size=30720
-y_size=7168
+# y_size=7168
+y_size=30720
 
 steps=1000
 # 22366-22193-22049-22250-22835-22502-21725-22520-22127-21988-22280-22234-22057-22279-22115-22264
@@ -60,7 +61,7 @@ device="CUDA"
 # type="bit_planes"
 # device="CUDA"
 
-args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 3 --warmup_rounds 1 --cuda_block_size_y 8 --temporal_tile_size_y 16 --temporal_steps 8"
+args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 3 --warmup_rounds 1 --cuda_block_size_y 16 --temporal_tile_size_y 32 --temporal_steps 8"
 
 # Game of Life with standard grid on CUDA
 # args="--automaton wire --precision 64 \
