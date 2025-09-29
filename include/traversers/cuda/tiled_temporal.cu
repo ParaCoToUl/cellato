@@ -223,7 +223,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         call_callback(0, current);
     }
 
-    using temporal_steps_options = std::integer_sequence<std::size_t, 4, 8>;
+    using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
     using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128, 256>;
     using block_x_options        = std::integer_sequence<std::size_t, 32>;
     using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
