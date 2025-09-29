@@ -42,7 +42,7 @@ class traverser {
         _temporal_steps = params.temporal_steps;
 
         _effective_temporal_tile_size_x = _block_size_x - 2;
-        _effective_temporal_tile_size_y = _temporal_tile_size_y - 2;
+        _effective_temporal_tile_size_y = _temporal_tile_size_y - (2 * _temporal_steps);
 
         _cells_per_thread = _temporal_tile_size_y / _block_size_y;
 

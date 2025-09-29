@@ -41,10 +41,13 @@ __global__ void process_grid_kernel_linear_temporal(
     constexpr std::size_t cells_per_thread_y = temporal_tile_size_y / block_size_y;
     constexpr std::size_t temporal_tile_size_x = block_size_x;
 
-    std::size_t global_x_non_wrapped = static_cast<std::size_t>(blockIdx.x) * (temporal_tile_size_x - 2) + threadIdx.x - 1;
-    std::size_t global_y_start_non_wrapped = static_cast<std::size_t>(blockIdx.y) * (temporal_tile_size_y - 2) + 
-                                             static_cast<std::size_t>(threadIdx.y) * cells_per_thread_y - 1;
-    
+    constexpr std::size_t effective_temporal_tile_size_x = temporal_tile_size_x - 2;
+    constexpr std::size_t effective_temporal_tile_size_y = temporal_tile_size_y - (2 * temporal_steps);
+
+    std::size_t global_x_non_wrapped = static_cast<std::size_t>(blockIdx.x) * effective_temporal_tile_size_x + threadIdx.x - 1;
+    std::size_t global_y_start_non_wrapped = static_cast<std::size_t>(blockIdx.y) * effective_temporal_tile_size_y + 
+                                             static_cast<std::size_t>(threadIdx.y) * cells_per_thread_y - temporal_steps;
+
     std::size_t global_x_for_load = (global_x_non_wrapped + width) % width;
     std::size_t global_x_for_save = global_x_non_wrapped;
 
@@ -105,26 +108,19 @@ __global__ void process_grid_kernel_linear_temporal(
     if (threadIdx.x == 0 || threadIdx.x == block_size_x - 1)
         return;
 
-    auto y_start_for_saving = 0;
-    auto count_to_save = cells_per_thread_y;
-
-    if (threadIdx.y == 0) {
-        y_start_for_saving += 1;
-    }
-
-    if (threadIdx.y == block_size_y - 1) {
-        count_to_save -= 1;
-    }
-
-    for (std::size_t y_offset = y_start_for_saving; y_offset < count_to_save; ++y_offset) {
+    for (std::size_t y_offset = 0; y_offset < cells_per_thread_y; ++y_offset) {
         std::size_t global_y_for_save = global_y_start_non_wrapped + y_offset;
-        
+        std::size_t local_y = local_y_start + y_offset;
+
+        if (local_y < temporal_steps || local_y >= (temporal_tile_size_y - temporal_steps))
+            continue;
+
         grid_props::assign_to_from(
             output_data, width,
             global_x_for_save, global_y_for_save,
 
             current, temporal_tile_size_x,
-            local_x, local_y_start + y_offset
+            local_x, local_y
         );
     }
 }

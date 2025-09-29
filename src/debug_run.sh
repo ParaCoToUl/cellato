@@ -47,9 +47,9 @@ steps=1000
 # 22366-22193-22049-22250-22835-22502-21725-22520-22127-21988-22280-22234-22057-22279-22115-22264
 
 # temporal tiled
-# traverser="tiled_temporal"
-# type="tiled_bit_planes"
-# device="CUDA"
+traverser="tiled_temporal"
+type="tiled_bit_planes"
+device="CUDA"
 
 # temporal linear
 traverser="linear_temporal"
