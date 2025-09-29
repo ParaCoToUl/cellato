@@ -4,7 +4,7 @@ import sys
 import subprocess
 import time
 
-ROUNDS = 2         # Number of measurement rounds
+ROUNDS = 1         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds
 
 SEED = 42
@@ -15,18 +15,19 @@ STEPS =                       [1024,  256,   128,    64]
 Y_BLOCK_SIZES = [2, 4, 8, 16, 32]
 TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a single bit automaton using 32-bit precision
 PRECISIONS = [32, 64]
+TEMPORAL_STEPS = [2, 4, 6, 8]
 
 AUTOMATA_bits = {
     "game-of-life": 1,
-    "brian": 1,
-    "maze": 1,
-    "critters": 1,
+    # "brian": 1,
+    # "maze": 1,
+    # "critters": 1,
     "forest-fire": 2,
-    "wire": 2,
+    # "wire": 2,
     "traffic": 2,
     "greenberg-hastings": 3,
     "hpp": 4,
-    "cyclic": 5,
+    # "cyclic": 5,
 }
 
 AUTOMATA= AUTOMATA_bits.keys()
@@ -179,6 +180,24 @@ class TiledBitPlanesImplementation:
 
         return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
 
+class TemporalLinearImplementation:
+    @staticmethod
+    def params(tc: TestCase):
+        temporal_tile_size_x = 32 - 2
+        temporal_tile_size_y = tc.temporal_tile_size_y - 2 * tc.temporal_steps
+
+        cells_per_word_in_x = tc.precision
+        cells_per_word_in_y = 1
+
+        x_divisor = temporal_tile_size_x * cells_per_word_in_x
+        y_divisor = temporal_tile_size_y * cells_per_word_in_y
+
+        x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
+
+        divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
+
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser linear_temporal --layout bit_planes --evaluator bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+
 class TemporalTiledBitPlanesImplementation:
     @staticmethod
     def params(tc: TestCase):
@@ -193,7 +212,9 @@ class TemporalTiledBitPlanesImplementation:
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser tiled_temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+        divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
+
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser tiled_temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
 
 class ParamsGenerator:
 
@@ -248,11 +269,10 @@ class ParamsGenerator:
     def _generate_with_temporal_params(self, tc: TestCase):
         all = []
         
-        if (tc.precision == 32):
-            all.extend(self._generate_with_temporal_tile_size_y(tc.with_temporal_steps(4)))
-        
-        if (tc.precision == 64):
-            all.extend(self._generate_with_temporal_tile_size_y(tc.with_temporal_steps(8)))
+        for temporal_steps in TEMPORAL_STEPS:
+            passed_tc = tc.with_temporal_steps(temporal_steps)
+
+            all.extend(self._generate_with_temporal_tile_size_y(passed_tc))
 
         return all
 
@@ -266,9 +286,22 @@ class ParamsGenerator:
             if (temporal_tile_size_y % tc.cuda_block_size_y != 0):
                 continue  # temporal tile size Y must be divisible by block size Y
 
-            passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
+            # passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
 
-            all.append(TemporalTiledBitPlanesImplementation.params(passed_tc))
+            # all.append(TemporalTiledBitPlanesImplementation.params(passed_tc))
+
+            effective_y_for_linear = temporal_tile_size_y - 2 * tc.temporal_steps
+            effective_y_for_tiled = temporal_tile_size_y - 2
+
+            if (effective_y_for_linear > 0):
+                passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
+                all.append(TemporalLinearImplementation.params(passed_tc))
+
+            max_temporal_steps_for_tiled = 8 if tc.precision == 64 else 4
+
+            if (effective_y_for_tiled > 0 and tc.temporal_steps <= max_temporal_steps_for_tiled):
+                passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
+                all.append(TemporalTiledBitPlanesImplementation.params(passed_tc))
 
         return all
 
@@ -277,7 +310,7 @@ class Executable:
         # Set up paths
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
-        self.path = os.path.join(project_dir, "bin/cellato")
+        self.path = os.path.join(project_dir, "bin_stable/cellato")
         
         # Check if executable exists
         if not os.path.exists(self.path):
@@ -341,8 +374,9 @@ def main():
     # Generate test cases
     generator = ParamsGenerator()
     test_cases = generator.generate()
-    
-    secs_per_case = 4 * (ROUNDS + WARMUP)  # Rough estimate of seconds per test case
+
+    empirical_time_per_case = 4 * 13.0 / 11.2
+    secs_per_case = empirical_time_per_case * (ROUNDS + WARMUP)  # Rough estimate of seconds per test case
     count = len(test_cases)
     total_time_hours = (secs_per_case * count) / 3600
  

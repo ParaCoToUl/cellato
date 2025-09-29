@@ -54,6 +54,11 @@ class traverser {
             throw std::runtime_error("Invalid grid size for CUDA traverser.");
         }
 
+        if (_effective_temporal_tile_size_y <= 0) {
+            std::cerr << "Error: effective_y_tile_size must be greater than 0.\n";
+            throw std::runtime_error("Invalid temporal tile size for temporal linear traverser.");
+        }
+
         if (params.steps % _temporal_steps != 0) {
             std::cerr << "Total steps must be divisible by temporal steps.\n";
             throw std::runtime_error("Invalid steps for temporal linear traverser.");

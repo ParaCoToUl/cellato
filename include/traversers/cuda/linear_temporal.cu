@@ -148,16 +148,16 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     }
     
     // Hot compilation
-    // using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
-    // using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128, 256>;
-    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    // using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
+    using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128>;
+    using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
     
     // Fast compilation
-    using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
-    using tile_y_options         = std::integer_sequence<std::size_t, 32>;
-    using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    using block_y_options        = std::integer_sequence<std::size_t, 8>;
+    // using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
+    // using tile_y_options         = std::integer_sequence<std::size_t, 32>;
+    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    // using block_y_options        = std::integer_sequence<std::size_t, 8>;
 
     cellato::generic_dispatcher::call<
         temporal_steps_options,
@@ -171,13 +171,18 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         >() {
             constexpr std::size_t temporal_tile_size_x = block_size_x;
             constexpr std::size_t required_buffers_bytes = 2 * temporal_tile_size_y * temporal_tile_size_x * grid_type::needed_bits * sizeof(typename grid_type::cell_t);
+            constexpr int effective_y_tile_size = static_cast<int>(temporal_tile_size_y) - 2 * static_cast<int>(temporal_steps);
+
 
             if constexpr (required_buffers_bytes > max_shm_size) {
                 throw std::runtime_error("Configuration exceeds maximum shared memory size. The temporal tile is too large.");
                 
             } else if constexpr (temporal_tile_size_y < block_size_y) {
                 throw std::runtime_error("Invalid configuration: block_size_y must be less than or equal to temporal_tile_size_y");
-                
+
+            } else if constexpr (effective_y_tile_size <= 0) {
+                throw std::runtime_error("Invalid configuration: effective_y_tile_size must be greater than 0.");
+
             } else {
                 for (int step = 0; step < steps; step += temporal_steps) {
                     auto input_data = current->data();

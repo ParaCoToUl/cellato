@@ -1,5 +1,6 @@
 **/*.out
 **/bin
+**/bin_stable
 **/obj
 **/_deps
 **/venv

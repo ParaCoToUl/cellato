@@ -4,7 +4,7 @@
 #SBATCH -A kdss                # account name
 #SBATCH --cpus-per-task=64     # number of CPUs
 #SBATCH --mem=128GB            # memory
-#SBATCH --time=72:00:00         # time limit (HH:MM:SS)
+#SBATCH --time=168:00:00       # time limit (HH:MM:SS)
 #SBATCH --gres=gpu:H100        # GPU resource
 #SBATCH -o __slurm__/job-%j.out        # output file (%j expands to job ID)
 

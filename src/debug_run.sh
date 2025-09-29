@@ -51,7 +51,7 @@ traverser="tiled_temporal"
 type="tiled_bit_planes"
 device="CUDA"
 
-# temporal linear
+# temporal linear planes
 traverser="linear_temporal"
 type="bit_planes"
 device="CUDA"
