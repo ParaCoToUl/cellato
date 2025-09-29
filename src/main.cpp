@@ -437,7 +437,9 @@ int main(int argc, char* argv[]) {
         test::on_cuda::using_<std::uint32_t>::bit_planes<automaton>, \
         test::on_cuda::using_<std::uint64_t>::bit_planes<automaton>, \
         test::on_cuda::using_<std::uint32_t>::temporal_tiled_bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint64_t>::temporal_tiled_bit_planes<automaton>
+        test::on_cuda::using_<std::uint64_t>::temporal_tiled_bit_planes<automaton>, \
+        test::on_cuda::using_<std::uint32_t>::temporal_linear_bit_planes<automaton>, \
+        test::on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>
 
     switch_<
         cases_for(_game_of_life_),

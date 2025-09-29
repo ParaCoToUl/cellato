@@ -12,6 +12,7 @@
 #include "../memory/bit_array_grid.hpp"
 #include "../traversers/cuda/simple.hpp"
 #include "../traversers/cuda/tiled_temporal.hpp"
+#include "../traversers/cuda/linear_temporal.hpp"
 #include "../traversers/cuda/spacial_blocking.hpp"
 #include "./run_params.hpp"
 #include <iostream>
@@ -192,6 +193,34 @@ namespace on_cuda {
                        params.device == CUDA_OPT &&
                        params.evaluator == "tiled_bit_planes" &&
                        params.layout == "tiled_bit_planes" &&
+                       params.precision == sizeof(grid_store_word_t) * 8;
+            }
+        };
+
+        template <typename cellular_automaton>
+        struct temporal_linear_bit_planes {
+            using automaton = cellular_automaton;
+            
+            using original_cell_t = typename cellular_automaton::cell_state;
+            using grid_store_word_t = store_word_type;
+
+            using algorithm_t = typename cellular_automaton::algorithm;
+            using state_dictionary_t = typename cellular_automaton::state_dictionary;
+
+            using grid_t = grids::bit_planes::grid<grid_store_word_t, state_dictionary_t>;
+            using evaluator_t = evaluators::bit_planes::evaluator<grid_store_word_t, state_dictionary_t, algorithm_t>; 
+
+            using traverser_t = traversers::linear_temporal::traverser<evaluator_t, grid_t>;
+
+            constexpr static int x_margin = grid_t::x_word_tile_size;
+            constexpr static int y_margin = grid_t::y_word_tile_size;
+
+            static bool is_for(cellato::run::run_params& params) {
+                return params.automaton == cellular_automaton::name &&
+                       params.traverser == "linear_temporal" &&
+                       params.device == CUDA_OPT &&
+                       params.evaluator == "bit_planes" &&
+                       params.layout == "bit_planes" &&
                        params.precision == sizeof(grid_store_word_t) * 8;
             }
         };

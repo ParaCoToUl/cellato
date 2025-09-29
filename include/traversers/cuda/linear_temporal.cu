@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <cstddef> 
 
-#include "./tiled_temporal.hpp"
+#include "./linear_temporal.hpp"
 #include "../../memory/standard_grid.hpp"
 #include "../../memory/interface.hpp"
 #include "../../evaluators/standard.hpp"
@@ -15,7 +15,7 @@
 #include "../../utils/static_dispatcher.hpp"
 #include "../../traversers/temporal_utils.cuh"
 
-namespace cellato::traversers::cuda::tiled_temporal {
+namespace cellato::traversers::cuda::linear_temporal {
 
 using namespace cellato::traversers::temporal_utils;
 
@@ -27,7 +27,7 @@ template <
 
     typename grid_data_t, typename output_data_t>
 
-__global__ void process_grid_kernel_tiled_temporal(
+__global__ void process_grid_kernel_linear_temporal(
     grid_data_t input_data,
     output_data_t output_data,
     std::size_t width,
@@ -188,7 +188,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
                     auto output_data = next->data();
 
                     cudaFuncSetAttribute(
-                        process_grid_kernel_tiled_temporal<
+                        process_grid_kernel_linear_temporal<
                             evaluator_type,
                             temporal_steps, temporal_tile_size_y,
                             block_size_x, block_size_y,
@@ -198,7 +198,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
                         cudaSharedmemCarveoutMaxShared
                     );
 
-                    process_grid_kernel_tiled_temporal<
+                    process_grid_kernel_linear_temporal<
                         evaluator_type,
                         temporal_steps, temporal_tile_size_y,
                         block_size_x, block_size_y
@@ -240,9 +240,9 @@ auto traverser<evaluator_type, grid_type>::fetch_result() -> grid_t {
     return cpu_grid;
 }
 
-} // namespace cellato::traversers::cuda::tiled_temporal
+} // namespace cellato::traversers::cuda::linear_temporal
 
-#define TILED_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
+#define LINEAR_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
 
 #include "../../../src/game_of_life/cuda_instantiations.cuh"
 #include "../../../src/fire/cuda_instantiations.cuh"
@@ -255,4 +255,4 @@ auto traverser<evaluator_type, grid_type>::fetch_result() -> grid_t {
 #include "../../../src/traffic/cuda_instantiations.cuh"
 #include "../../../src/cyclic/cuda_instantiations.cuh"
 
-#undef TILED_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
+#undef LINEAR_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
