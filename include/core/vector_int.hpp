@@ -601,6 +601,23 @@ class vector_int {
         return result;
     }
 
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_with_switched_rows_of_8() const {
+        constexpr vector_store_type mask = static_cast<vector_store_type>(0x00FF00FF00FF00FF); // binary: 00000000111111110000000011111111
+        
+        vector_int<vector_store_type, bits> result;
+
+        for_each_in<bits>([&]<std::size_t i>() {
+            auto word = std::get<i>(numbers);
+
+            auto left_part = (word & mask);
+            auto right_part = (word & ~mask);
+
+            std::get<i>(result.numbers) = (left_part << 8) | (right_part >> 8);
+        });
+
+        return result;
+    }
+
   private:
     store_t numbers;
 

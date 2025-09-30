@@ -266,7 +266,8 @@ struct _evaluator_impl<
         auto parity = state.time_step % 2;
 
         if (parity == 0) {
-            return count_with_offset< 1>(state);
+            // return count_with_offset< 1>(state); // slower version
+            return fast_even_parity(state);
         } else {
             return count_with_offset<-1>(state);
         }
@@ -318,8 +319,24 @@ struct _evaluator_impl<
             .get_added(c10).template to_vector_with_bits<3>()
             .get_added(c11);
     }
-};
 
+    CUDA_CALLABLE static vint3 fast_even_parity(state_t<params> state) {
+        auto current_state_c = evaluator_t<neighbor_at< 0,  0>>::evaluate(state).template equals_to<cell_state>();
+        auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
+
+        auto switched_pairs = current_state.get_with_switched_pairs_of_numbers();
+
+        auto pairs_summed = current_state
+            .template to_vector_with_bits<2>()
+            .get_added(switched_pairs);
+
+        auto switched_rows_of_blocks = pairs_summed.get_with_switched_rows_of_8();
+
+        return pairs_summed
+            .template to_vector_with_bits<3>()
+            .get_added(switched_rows_of_blocks);
+    }
+};
 
 
 } // namespace cellato::evaluators::tiled_bit_planes
