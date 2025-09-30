@@ -245,6 +245,83 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     }
 };
 
+template <typename params, typename cell_state_type, cell_state_type CellStateValue>
+struct _evaluator_impl<
+    params,
+    count_neighbors<
+        state_constant<CellStateValue>,
+        margolus_alternating_neighborhood>> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    using vint3 = vector_int<cell_row_type, 3>;
+
+    constexpr static auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
+
+    CUDA_CALLABLE static vint3 evaluate(state_t<params> state) {
+        auto parity = state.time_step % 2;
+
+        if (parity == 0) {
+            return count_with_offset< 1>(state);
+        } else {
+            return count_with_offset<-1>(state);
+        }
+    }
+
+  private:
+    constexpr static cell_row_type top_left_bit = static_cast<cell_row_type>(0x0055'0055'0055'0055LLU);
+    constexpr static cell_row_type top_right_bit = top_left_bit << 1;
+    constexpr static cell_row_type bottom_left_bit = top_left_bit << 8;
+    constexpr static cell_row_type bottom_right_bit = bottom_left_bit << 1;
+
+    template <int modifier>
+    CUDA_CALLABLE static vint3 count_with_offset(state_t<params> state) {
+        auto bottom_right = count_block< 0, 1, 0, 1, modifier>(state);
+        auto bottom_left  = count_block<-1, 0, 0, 1, modifier>(state);
+        auto top_right    = count_block< 0, 1,-1, 0, modifier>(state);
+        auto top_left     = count_block<-1, 0,-1, 0, modifier>(state);
+
+        auto result_for_top_left = bottom_right.mask_out_columns(top_left_bit);
+        auto result_for_top_right = bottom_left.mask_out_columns(top_right_bit);
+        auto result_for_bottom_left = top_right.mask_out_columns(bottom_left_bit);
+        auto result_for_bottom_right = top_left.mask_out_columns(bottom_right_bit);
+
+        return result_for_top_left
+            .get_ored(result_for_top_right)
+            .get_ored(result_for_bottom_left)
+            .get_ored(result_for_bottom_right);
+    }
+    
+    template <int x0, int x1, int y0, int y1, int modifier>
+    CUDA_CALLABLE static vint3 count_block(state_t<params> state) {
+        constexpr static int x0_mod = x0 * modifier;
+        constexpr static int x1_mod = x1 * modifier;
+        constexpr static int y0_mod = y0 * modifier;
+        constexpr static int y1_mod = y1 * modifier;
+
+        auto c00_c = evaluator_t<neighbor_at<x0_mod, y0_mod>>::evaluate(state).template equals_to<cell_state>();
+        auto c01_c = evaluator_t<neighbor_at<x0_mod, y1_mod>>::evaluate(state).template equals_to<cell_state>();
+        auto c10_c = evaluator_t<neighbor_at<x1_mod, y0_mod>>::evaluate(state).template equals_to<cell_state>();
+        auto c11_c = evaluator_t<neighbor_at<x1_mod, y1_mod>>::evaluate(state).template equals_to<cell_state>();
+
+        auto c00 = vector_int_factory::from_condition_result<cell_row_type>(c00_c);
+        auto c01 = vector_int_factory::from_condition_result<cell_row_type>(c01_c);
+        auto c10 = vector_int_factory::from_condition_result<cell_row_type>(c10_c);
+        auto c11 = vector_int_factory::from_condition_result<cell_row_type>(c11_c);
+
+        return c00.template to_vector_with_bits<2>()
+            .get_added(c01)
+            .get_added(c10).template to_vector_with_bits<3>()
+            .get_added(c11);
+    }
+};
+
+
+
 } // namespace cellato::evaluators::tiled_bit_planes
 
 #endif // CELLATO_EVALUATORS_TILED_BIT_PLANES_HPP
