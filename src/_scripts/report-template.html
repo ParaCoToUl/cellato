@@ -65,6 +65,55 @@
             visibility: visible;
             opacity: 1;
         }
+        
+        /* Modal styles for detailed runs */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .detailed-runs-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        /* Highlight the best result */
+        .detailed-runs-table tbody tr:first-child {
+            background-color: #d4edda;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -72,5 +121,51 @@
     
     <!-- TABLES_PLACEHOLDER -->
     
+    <!-- DETAILED_RUNS_PLACEHOLDER -->
+    
+    <div id="detailedRunsContainer" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeDetailedRuns()">&times;</span>
+            <h2 id="detailedRunsTitle">Detailed Test Runs</h2>
+            <div id="detailedRunsContent">
+                <!-- Detailed runs content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showDetailedRuns(automaton, implementation) {
+            // Hide all detailed run tables
+            var tables = document.querySelectorAll('.detailed-runs-table');
+            for (var i = 0; i < tables.length; i++) {
+                tables[i].style.display = 'none';
+            }
+            
+            // Find and show the table for this automaton and implementation
+            var targetTable = document.querySelector(`.detailed-runs-table[data-automaton="${automaton}"][data-implementation="${implementation}"]`);
+            if (targetTable) {
+                targetTable.style.display = 'table';
+                
+                // Update the modal title
+                document.getElementById('detailedRunsTitle').innerText = 
+                    `Detailed Test Runs - ${automaton} (${implementation})`;
+                
+                // Show the modal
+                document.getElementById('detailedRunsContainer').style.display = 'block';
+            }
+        }
+        
+        function closeDetailedRuns() {
+            document.getElementById('detailedRunsContainer').style.display = 'none';
+        }
+        
+        // Close the modal when clicking outside of it
+        window.onclick = function(event) {
+            var modal = document.getElementById('detailedRunsContainer');
+            if (event.target == modal) {
+                closeDetailedRuns();
+            }
+        }
+    </script>
 </body>
 </html>

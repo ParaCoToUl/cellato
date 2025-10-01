@@ -41,7 +41,7 @@ def generate_html_table(size, automaton_groups, loader):
         
         html += "<tr>"
         html += f"<td>{automaton_name}</td>"
-        html += f'<td class="tooltip">{baseline_time:.4f} ns<span class="tooltip-text">{baseline_params}</span></td>'
+        html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'Baseline\')">{baseline_time:.4f} ns<span class="tooltip-text">{baseline_params}</span></td>'
         
         # Add data for each implementation
         for impl in implementations[1:]:  # Skip baseline
@@ -57,7 +57,7 @@ def generate_html_table(size, automaton_groups, loader):
                 # Get parameters
                 params = format_params(best_result.values)
                 
-                html += f'<td class="tooltip">{time:.4f} ns ({speedup_html})<span class="tooltip-text">{params}</span></td>'
+                html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'{impl}\')">{time:.4f} ns ({speedup_html})<span class="tooltip-text">{params}</span></td>'
             else:
                 html += "<td>-</td>"
         
@@ -91,6 +91,80 @@ def format_params(params_dict):
         
     return result
 
+def generate_detailed_runs_tables(size_groups, loader):
+    """Generate hidden tables with all test runs for each automaton and implementation"""
+    html = "<div id='detailedRunsContainer' class='modal'>"
+    html += "<div class='modal-content'>"
+    html += "<span class='close-button' onclick='closeDetailedRuns()'>&times;</span>"
+    html += "<h3 id='detailedRunsTitle'>Detailed Test Runs</h3>"
+    html += "<div id='detailedRunsContent'>"
+    
+    # For each size group
+    for size, group in sorted(size_groups.items()):
+        if not group:
+            continue
+        
+        automaton_groups = loader.split_by_implementation(group)
+        
+        # For each automaton
+        for automaton, automaton_group in sorted(loader.split_by_automaton(group).items()):
+            impl_groups = loader.split_by_implementation(automaton_group)
+            
+            # For each implementation
+            for impl, impl_group in sorted(impl_groups.items()):
+                if not impl_group:
+                    continue
+                    
+                # Generate a unique ID for this table
+                table_id = f"detailed-{size}-{automaton}-{impl}".replace(" ", "_")
+                
+                # Sort runs by normalized time
+                sorted_runs = sorted(impl_group, key=lambda r: r.normalized_time())
+                
+                # Start the table
+                html += f"<table id='{table_id}' class='detailed-runs-table' data-automaton='{automaton}' data-implementation='{impl}' style='display:none;'>"
+                html += "<thead><tr><th>Time (ns)</th>"
+                
+                # Find all unique parameters to display
+                relevant_params = set()
+                for run in sorted_runs:
+                    if 'cuda_block_size_y' in run.values:
+                        relevant_params.add('cuda_block_size_y')
+                    
+                    # Check if this is a temporal implementation
+                    is_temporal = run.values.get('traverser', '').startswith('temporal') or \
+                                run.values.get('traverser', '').endswith('_temporal')
+                    
+                    if is_temporal:
+                        if 'temporal_steps' in run.values:
+                            relevant_params.add('temporal_steps')
+                        if 'temporal_tile_size_y' in run.values:
+                            relevant_params.add('temporal_tile_size_y')
+                
+                # Add headers for each parameter
+                for param in sorted(relevant_params):
+                    param_display = param.replace('cuda_block_size_y', 'Block Y').replace('temporal_steps', 'Temp Steps').replace('temporal_tile_size_y', 'Temp Tile Y')
+                    html += f"<th>{param_display}</th>"
+                
+                html += "</tr></thead><tbody>"
+                
+                # Add rows for each run
+                for run in sorted_runs:
+                    time_ns = run.normalized_time() * 1e9
+                    html += f"<tr><td>{time_ns:.4f}</td>"
+                    
+                    # Add values for each parameter
+                    for param in sorted(relevant_params):
+                        value = run.values.get(param, "-")
+                        html += f"<td>{value}</td>"
+                    
+                    html += "</tr>"
+                
+                html += "</tbody></table>"
+    
+    html += "</div></div></div>"
+    return html
+
 def generate_report(csv_path, output_path):
     # Load template
     template_path = os.path.join(os.path.dirname(__file__), 'report-template.html')
@@ -110,8 +184,12 @@ def generate_report(csv_path, output_path):
         automaton_groups = loader.split_by_automaton(group)
         tables_html += generate_html_table(size, automaton_groups, loader)
     
-    # Replace placeholder with tables
+    # Generate detailed runs tables
+    detailed_runs_html = generate_detailed_runs_tables(size_groups, loader)
+    
+    # Replace placeholders with content
     html_content = template.replace("<!-- TABLES_PLACEHOLDER -->", tables_html)
+    html_content = html_content.replace("<!-- DETAILED_RUNS_PLACEHOLDER -->", detailed_runs_html)
     
     # Write to file
     with open(output_path, 'w') as f:
