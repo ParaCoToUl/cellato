@@ -4,6 +4,8 @@ import sys
 import subprocess
 import time
 
+EXE_PATH = "bin_critters/cellato"
+
 ROUNDS = 1         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds
 
@@ -18,15 +20,15 @@ PRECISIONS = [32, 64]
 TEMPORAL_STEPS = [2, 4, 6, 8]
 
 AUTOMATA_bits = {
-    "game-of-life": 1,
+    # "game-of-life": 1,
     # "brian": 1,
     # "maze": 1,
-    # "critters": 1,
-    "forest-fire": 2,
+    "critters": 1,
+    # "forest-fire": 2,
     # "wire": 2,
-    "traffic": 2,
-    "greenberg-hastings": 3,
-    "hpp": 4,
+    # "traffic": 2,
+    # "greenberg-hastings": 3,
+    # "hpp": 4,
     # "cyclic": 5,
 }
 
@@ -310,7 +312,7 @@ class Executable:
         # Set up paths
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
-        self.path = os.path.join(project_dir, "bin_stable/cellato")
+        self.path = os.path.join(project_dir, EXE_PATH)
         
         # Check if executable exists
         if not os.path.exists(self.path):
