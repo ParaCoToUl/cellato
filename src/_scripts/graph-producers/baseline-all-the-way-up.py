@@ -53,10 +53,11 @@ automaton_names = {
 }
 
 # ⚙️ Graph Configuration
+scale = 0.8
 plot_config = {
     'y_axis_mode': 'speedup',
     'y_axis_scale': 'log',
-    'figure_size': (16, 9),
+    'figure_size': (16*scale, 9*scale),
     'bar_width': 0.2,
     'title': f'Performance Comparison for {size}x{size} Grid',
     'show_baseline_bar': False,
@@ -64,18 +65,25 @@ plot_config = {
     'add_data_labels': True,
     'label_fontsize': 10,
     'label_use_background': True,
-    'label_rotation': 45,         # 🆕 Angle for the data labels
-    'label_padding': 3,          # 🆕 Padding above the bar for the labels
+    'label_rotation': 45,
+    'label_padding': 3,
     'custom_colors': {
         'baseline': '#003f5c', 'bit_array': '#7a5195',
         'bit_planes': '#ef5675', 'temporal': '#ffa600'
-    }
+    },
+    'bar_hatches': {  # More subtle hatch patterns
+        'baseline': '/',      # single diagonal lines
+        'bit_array': '\\',    # back diagonal lines
+        'bit_planes': '.',    # dots
+        'temporal': 'o'       # small circles
+    },
+    'hatch_density': 0.5      # Controls how dense the hatches appear (lower = more subtle)
 }
 
 # --- Data Preparation ---
 labels = [automaton_names.get(a, a) for a in AUTOMATA]
 implementations = ['baseline', 'bit_array', 'bit_planes', 'temporal']
-impl_display_names = {'baseline': 'Baseline', 'bit_array': 'Bit Array', 'bit_planes': 'Bit Planes', 'temporal': 'Temporal Bit Planes'}
+impl_display_names = {'baseline': 'Baseline', 'bit_array': 'Bit Array', 'bit_planes': 'Bit Planes', 'temporal': 'Temporal'}
 data = {}
 
 if not plot_config['show_baseline_bar']:
@@ -104,7 +112,11 @@ bar_containers = {}
 
 for i, impl in enumerate(implementations):
     color = plot_config['custom_colors'].get(impl)
-    bars = ax.bar(x + offsets[i], data[impl], width, label=impl_display_names[impl], color=color)
+    hatch = plot_config['bar_hatches'].get(impl)
+    # Use a single character for more subtle hatching with density control
+    if hatch and plot_config.get('hatch_density', 1) < 1:
+        hatch = hatch[0]  # Just use one character for subtlety
+    bars = ax.bar(x + offsets[i], data[impl], width, label=impl_display_names[impl], color=color, hatch=hatch)
     bar_containers[impl] = bars
 
 # --- Styling and Customization ---
@@ -125,7 +137,6 @@ if plot_config['add_data_labels']:
     bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.8) if plot_config['label_use_background'] else None
     for impl, bars in bar_containers.items():
         label_format = '%.1fx' if plot_config['y_axis_mode'] == 'speedup' else '%d'
-        # 🆕 Use new rotation and padding values from config
         ax.bar_label(bars, fmt=label_format,
                      padding=plot_config['label_padding'],
                      fontsize=plot_config['label_fontsize'],
@@ -134,7 +145,6 @@ if plot_config['add_data_labels']:
 
 if plot_config['show_baseline_line'] and plot_config['y_axis_mode'] == 'speedup':
     current_ylim = ax.get_ylim()
-    # 🆕 Increased top margin to give rotated labels more space
     ax.set_ylim(bottom=min(1.0, current_ylim[0]), top=current_ylim[1] * 1.3)
 
 ax.legend(loc='upper left', bbox_to_anchor=(0.23, 0.98), borderaxespad=0.)
