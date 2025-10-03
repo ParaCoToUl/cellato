@@ -6,7 +6,7 @@ import statistics
 import sys
 
 # CSV header
-csv_header = "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,precision,average_time_ms,average_time_per_cell_ns,std_time_ms,rounds_had_same_checksums,checksum"
+csv_header = "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,precision,average_time_ms,average_time_per_cell_ps,std_time_ms,rounds_had_same_checksums,checksum"
 print(csv_header)
 
 # Directories to process (grid sizes)
@@ -93,7 +93,7 @@ for directory in directories:
                f"0,0,"                # x_tile_size,y_tile_size
                f"16,16,"              # cuda_block_size_x,cuda_block_size_y
                f"42,,"                # seed,precision
-               f"{avg_time_ms:.6f},{avg_time_per_cell_ns:.6f},{std_time_ms:.6f},"  # average_time_ms,average_time_per_cell_ns,std_time_ms
+               f"{avg_time_ms:.6f},{avg_time_per_cell_ns:.6f},{std_time_ms:.6f},"  # average_time_ms,average_time_per_cell_ps,std_time_ms
                f"true,")              # rounds_had_same_checksums,checksum (empty)
     
     print(csv_line)

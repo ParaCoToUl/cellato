@@ -1,4 +1,4 @@
-automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,precision,average_time_ms,average_time_per_cell_ns,std_time_ms,rounds_had_same_checksums,checksum
+automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,precision,average_time_ms,average_time_per_cell_ps,std_time_ms,rounds_had_same_checksums,checksum
 game-of-life,CPU,,,,baseline,2048,2048,30,5,2,0,0,32,8,42,0,124.744954,29.741515,0.907039,true,33410-33943-33901-33438-33549-33789-33012-33594-33912-32739-33506-32676-33513-33186-33593-33625
 game-of-life,CPU,simple,standard,standard,,2048,2048,30,5,2,0,0,32,8,42,0,80.410977,19.171471,4.406421,true,33410-33943-33901-33438-33549-33789-33012-33594-33912-32739-33506-32676-33513-33186-33593-33625
 game-of-life,CUDA,,,,baseline,8192,8192,1000,5,2,0,0,32,4,42,0,365.072046,5.439997,0.013607,true,179061-185091-184032-178609-181697-183616-182692-180707-179415-181594-183739-183446-179733-183049-178882-179967

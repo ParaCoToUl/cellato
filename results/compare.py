@@ -36,7 +36,7 @@ def process_data(df):
             # Get the true baseline (reference_impl = "baseline")
             true_baseline = automaton_df[automaton_df['reference_impl'] == 'baseline']
             if not true_baseline.empty:
-                true_baseline_ns = true_baseline.iloc[0]['average_time_per_cell_ns']
+                true_baseline_ns = true_baseline.iloc[0]['average_time_per_cell_ps']
             else:
                 true_baseline_ns = None
             
@@ -47,7 +47,7 @@ def process_data(df):
                                         (automaton_df['layout'] == 'standard') &
                                         (automaton_df['reference_impl'] != 'baseline')]
             if not standard_impl.empty:
-                standard_impl_ns = standard_impl.iloc[0]['average_time_per_cell_ns']
+                standard_impl_ns = standard_impl.iloc[0]['average_time_per_cell_ps']
             else:
                 standard_impl_ns = None
             
@@ -69,10 +69,10 @@ def process_data(df):
             results = {
                 'true_baseline': true_baseline_ns,
                 'standard': standard_impl_ns,
-                'bit_array_32': None if bit_array_32.empty else bit_array_32.iloc[0]['average_time_per_cell_ns'],
-                'bit_array_64': None if bit_array_64.empty else bit_array_64.iloc[0]['average_time_per_cell_ns'],
-                'bit_planes_32': None if bit_planes_32.empty else bit_planes_32.iloc[0]['average_time_per_cell_ns'],
-                'bit_planes_64': None if bit_planes_64.empty else bit_planes_64.iloc[0]['average_time_per_cell_ns']
+                'bit_array_32': None if bit_array_32.empty else bit_array_32.iloc[0]['average_time_per_cell_ps'],
+                'bit_array_64': None if bit_array_64.empty else bit_array_64.iloc[0]['average_time_per_cell_ps'],
+                'bit_planes_32': None if bit_planes_32.empty else bit_planes_32.iloc[0]['average_time_per_cell_ps'],
+                'bit_planes_64': None if bit_planes_64.empty else bit_planes_64.iloc[0]['average_time_per_cell_ps']
             }
             
             grid_result[automaton] = results
@@ -93,11 +93,11 @@ def format_cell(value, baseline=None):
         return "N/A"
     
     if baseline is None:
-        return f"{value:.6f} ns"
+        return f"{value:.6f} ps"
     
     speedup = baseline / value
     color = Colors.GREEN if speedup > 1 else Colors.RED
-    return f"{value:.6f} ns ({color}{speedup:.2f}x{Colors.RESET})"
+    return f"{value:.6f} ps ({color}{speedup:.2f}x{Colors.RESET})"
 
 def display_results(data):
     """Display the results in a formatted table."""

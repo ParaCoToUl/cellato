@@ -38,7 +38,7 @@ def main():
         printer.set_use_colors(use_colors)
         
         # Create header row
-        header = ["Automaton", "Baseline (ns)"]
+        header = ["Automaton", "Baseline (ps)"]
         for impl in implementations[1:]:  # Skip baseline as it's already in the header
             header.append(impl)
             
@@ -68,7 +68,7 @@ def main():
             if automaton in BITS_USED:
                 automaton_name += BITS_USED[automaton]
                 
-            row = [automaton_name, f"{baseline_time:.4f} ns"]
+            row = [automaton_name, f"{baseline_time:.4f} ps"]
             
             # Add data for each implementation
             for impl in implementations[1:]:  # Skip baseline
@@ -81,7 +81,7 @@ def main():
                     color = TablePrinter.COLORS.GREEN if speedup > 1 else TablePrinter.COLORS.RED
                     speedup_str = f"{color}{speedup:.2f}x{TablePrinter.COLORS.RESET}" if use_colors else f"{speedup:.2f}x"
                     
-                    row.append(f"{time:.4f} ns ({speedup_str})")
+                    row.append(f"{time:.4f} ps ({speedup_str})")
                 else:
                     row.append("-")
             

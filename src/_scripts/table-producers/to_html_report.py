@@ -16,7 +16,7 @@ def generate_html_table(size, automaton_groups, loader):
     implementations = list(IMPLEMENTATIONS.keys())
     html += "<tr>"
     html += f"<th>Automaton</th>"
-    html += f"<th>Baseline (ns)</th>"
+    html += f"<th>Baseline (ps)</th>"
     for impl in implementations[1:]:
         html += f"<th>{impl}</th>"
     html += "</tr>"
@@ -45,7 +45,7 @@ def generate_html_table(size, automaton_groups, loader):
         
         html += "<tr>"
         html += f"<td>{automaton_name}</td>"
-        html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'Baseline\', {size})">{baseline_time:.4f} ns<span class="tooltip-text">{baseline_params}</span></td>'
+        html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'Baseline\', {size})">{baseline_time:.4f} ps<span class="tooltip-text">{baseline_params}</span></td>'
         
         # Collect performance data for ranking
         performance_data = []
@@ -87,7 +87,7 @@ def generate_html_table(size, automaton_groups, loader):
                 # Get parameters
                 params = format_params(best_result.values)
                 
-                html += f'<td class="tooltip {ranking_class}" onclick="showDetailedRuns(\'{automaton}\', \'{impl}\', {size})">{time:.4f} ns ({speedup_html})<span class="tooltip-text">{params}</span></td>'
+                html += f'<td class="tooltip {ranking_class}" onclick="showDetailedRuns(\'{automaton}\', \'{impl}\', {size})">{time:.4f} ps ({speedup_html})<span class="tooltip-text">{params}</span></td>'
             else:
                 html += "<td>-</td>"
         
@@ -153,7 +153,7 @@ def generate_detailed_runs_tables(size_groups, loader):
                 
                 # Start the table
                 html += f"<table id='{table_id}' class='detailed-runs-table' data-automaton='{automaton}' data-implementation='{impl}' data-size='{size}' style='display:none;'>"
-                html += "<thead><tr><th>Time (ns)</th>"
+                html += "<thead><tr><th>Time (ps)</th>"
                 
                 # Find all unique parameters to display
                 relevant_params = set()

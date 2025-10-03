@@ -43,7 +43,7 @@ struct experiment_report {
         os << std::endl << BOLD << "Performance Metrics:" << RESET << std::endl;
         os << "  " << YELLOW << "Avg. Execution Time: " << RESET << average_time_ms() << " ms" << std::endl;
         os << "  " << YELLOW << "Std. Deviation: " << RESET << std_time_ms() << " ms" << std::endl;
-        os << "  " << YELLOW << "Avg. Time Per Cell: " << RESET << average_time_per_cell_ns() << " ns" << std::endl;
+        os << "  " << YELLOW << "Avg. Time Per Cell: " << RESET << average_time_per_cell_ps() << " ps" << std::endl;
         
         // Print number of executions
         os << "  " << YELLOW << "Number of Executions: " << RESET << execution_times_ms.size() << std::endl;
@@ -80,13 +80,13 @@ struct experiment_report {
     }
 
     static std::string csv_header() {
-        return run_params::csv_header() + ",average_time_ms,average_time_per_cell_ns,std_time_ms,rounds_had_same_checksums,checksum";
+        return run_params::csv_header() + ",average_time_ms,average_time_per_cell_ps,std_time_ms,rounds_had_same_checksums,checksum";
     }
 
     std::string csv_line() const {
         return params.csv_line() + "," +
                std::to_string(average_time_ms()) + "," +
-               std::to_string(average_time_per_cell_ns()) + "," +
+               std::to_string(average_time_per_cell_ps()) + "," +
                std::to_string(std_time_ms()) + "," +
                (rounds_had_same_checksums() ? "true" : "false") + "," +
                checksums[0];
@@ -119,11 +119,11 @@ struct experiment_report {
         return count == checksums.size();
     }
 
-    double average_time_per_cell_ns() const {
+    double average_time_per_cell_ps() const {
         if (params.x_size == 0 || params.y_size == 0) {
             return 0;
         }
-        return (average_time_ms() * 1e6) / (params.x_size * params.y_size);
+        return (average_time_ms() * 1e9) / (params.x_size * params.y_size) / params.steps;
     }
 };
 
