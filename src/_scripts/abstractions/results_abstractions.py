@@ -33,6 +33,8 @@ BITS_USED = {
     "critters": f"           {TablePrinter.COLORS.YELLOW}1 bit{TablePrinter.COLORS.RESET}",
 }
 
+AUTOMATA = list(BITS_USED.keys())
+
 class RunResult: 
     def __init__(self, csv_header, csv_line):
         self.values = {}
