@@ -153,9 +153,9 @@ struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Value, int bit_idx>
 struct evaluator<cell_type, has_bit_set<Value, bit_idx>, cell_ptr_type> {
-    CUDA_CALLABLE static bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         auto val = evaluator<cell_type, Value, cell_ptr_type>::evaluate(state);
-        return  ((val >> bit_idx) & 1) != 0;
+        return (val & (1 << bit_idx)) != 0;
     }
 };
 

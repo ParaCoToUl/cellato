@@ -1,7 +1,11 @@
 import os
 import sys
-from table_printer import TablePrinter
-from show_optimal_params import CSVLoader, IMPLEMENTATIONS, BITS_USED
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from abstractions.table_printer import TablePrinter
+from abstractions.results_abstractions import CSVLoader, IMPLEMENTATIONS, BITS_USED
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+FILE_WITH_DATA_PATH = f'{script_dir}/../results/grid-search-results.csv'
 
 def generate_html_table(size, automaton_groups, loader):
     title = f"CUDA Performance Comparison - {int(size**0.5)}x{int(size**0.5)} Grid"
@@ -41,15 +45,41 @@ def generate_html_table(size, automaton_groups, loader):
         
         html += "<tr>"
         html += f"<td>{automaton_name}</td>"
-        html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'Baseline\')">{baseline_time:.4f} ns<span class="tooltip-text">{baseline_params}</span></td>'
+        html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'Baseline\', {size})">{baseline_time:.4f} ns<span class="tooltip-text">{baseline_params}</span></td>'
         
-        # Add data for each implementation
+        # Collect performance data for ranking
+        performance_data = []
         for impl in implementations[1:]:  # Skip baseline
             best_result = loader.find_best_implementation(impl_groups[impl], IMPLEMENTATIONS[impl])
             if best_result:
                 time = best_result.normalized_time() * 1e9  # Convert to nanoseconds
                 speedup = baseline_time / time
-                
+                performance_data.append((impl, time, speedup, best_result))
+            else:
+                performance_data.append((impl, None, None, None))
+        
+        # Sort implementations by speedup (descending)
+        ranked_implementations = sorted(
+            [data for data in performance_data if data[2] is not None],
+            key=lambda x: x[2],
+            reverse=True
+        )
+        
+        # Assign rankings for top 3
+        impl_rankings = {}
+        for i, (impl, _, _, _) in enumerate(ranked_implementations[:3]):
+            if i == 0:
+                impl_rankings[impl] = "best-impl"
+            elif i == 1:
+                impl_rankings[impl] = "second-best-impl"
+            elif i == 2:
+                impl_rankings[impl] = "third-best-impl"
+        
+        # Add data for each implementation with proper ranking class
+        for impl, time, speedup, best_result in performance_data:
+            ranking_class = impl_rankings.get(impl, "")
+            
+            if best_result:
                 # Format speedup with color
                 speedup_class = "speedup-positive" if speedup > 1 else "speedup-negative"
                 speedup_html = f'<span class="{speedup_class}">{speedup:.2f}x</span>'
@@ -57,7 +87,7 @@ def generate_html_table(size, automaton_groups, loader):
                 # Get parameters
                 params = format_params(best_result.values)
                 
-                html += f'<td class="tooltip" onclick="showDetailedRuns(\'{automaton}\', \'{impl}\')">{time:.4f} ns ({speedup_html})<span class="tooltip-text">{params}</span></td>'
+                html += f'<td class="tooltip {ranking_class}" onclick="showDetailedRuns(\'{automaton}\', \'{impl}\', {size})">{time:.4f} ns ({speedup_html})<span class="tooltip-text">{params}</span></td>'
             else:
                 html += "<td>-</td>"
         
@@ -122,7 +152,7 @@ def generate_detailed_runs_tables(size_groups, loader):
                 sorted_runs = sorted(impl_group, key=lambda r: r.normalized_time())
                 
                 # Start the table
-                html += f"<table id='{table_id}' class='detailed-runs-table' data-automaton='{automaton}' data-implementation='{impl}' style='display:none;'>"
+                html += f"<table id='{table_id}' class='detailed-runs-table' data-automaton='{automaton}' data-implementation='{impl}' data-size='{size}' style='display:none;'>"
                 html += "<thead><tr><th>Time (ns)</th>"
                 
                 # Find all unique parameters to display
@@ -147,11 +177,12 @@ def generate_detailed_runs_tables(size_groups, loader):
                     html += f"<th>{param_display}</th>"
                 
                 html += "</tr></thead><tbody>"
-                
+
+                best_time_ns = sorted_runs[0].normalized_time() * 1e9
                 # Add rows for each run
                 for run in sorted_runs:
                     time_ns = run.normalized_time() * 1e9
-                    html += f"<tr><td>{time_ns:.4f}</td>"
+                    html += f"<tr><td>{time_ns:.4f} <span style='color: gray;'>({time_ns / best_time_ns:.2f}x)</span></td>"
                     
                     # Add values for each parameter
                     for param in sorted(relevant_params):
@@ -199,7 +230,7 @@ def generate_report(csv_path, output_path):
 
 def main():
     # Get CSV file path from command line or use default
-    csv_file = sys.argv[1] if len(sys.argv) > 1 else 'results/grid-search-results.csv'
+    csv_file = sys.argv[1] if len(sys.argv) > 1 else FILE_WITH_DATA_PATH
     
     # Get output file path or use default
     output_file = sys.argv[2] if len(sys.argv) > 2 else 'performance_report.html'

@@ -4,7 +4,7 @@ import sys
 import subprocess
 import time
 
-EXE_PATH = "bin_critters/cellato"
+EXE_PATH = "bin/cellato"
 
 ROUNDS = 1         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds
@@ -23,10 +23,10 @@ AUTOMATA_bits = {
     # "game-of-life": 1,
     # "brian": 1,
     # "maze": 1,
-    "critters": 1,
+    # "critters": 1,
     # "forest-fire": 2,
     # "wire": 2,
-    # "traffic": 2,
+    "traffic": 2,
     # "greenberg-hastings": 3,
     # "hpp": 4,
     # "cyclic": 5,

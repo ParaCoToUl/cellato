@@ -16,14 +16,19 @@ script_dir=$(dirname "$0")
 # automaton="traffic"
 # automaton="cyclic"
 # automaton="forest-fire"
-automaton="critters"
+# automaton="critters"
+automaton="hpp"
 
 # x_size=$((8*4))
 # y_size=$((8*4))
 # steps=3
 
-x_size=$((1024*16))
-y_size=$((1024*16))
+# x_size=$((1024*16))
+# y_size=$((1024*16))
+# steps=256
+
+x_size=$((8192))
+y_size=$((8192))
 steps=256
 
 # reference
@@ -36,7 +41,12 @@ device="CUDA"
 # type="tiled_bit_planes"
 # device="CUDA"
 
+
 args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 3 --warmup_rounds 2 --cuda_block_size_y 8 --temporal_tile_size_y 32 --temporal_steps 4"
+
+# baseline
+# args="--reference_impl baseline --automaton ${automaton} --seed 42 --device ${device} --x_size ${x_size} --y_size ${y_size} --steps ${steps} --cuda_block_size_y 4 --rounds 1 --warmup_rounds 1"
+
 
 # Game of Life with standard grid on CUDA
 # args="--automaton wire --precision 64 \

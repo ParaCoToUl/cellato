@@ -226,9 +226,9 @@ struct _impl_evaluator<grid_t, less_than<Left, Right>, subcell_offset> {
 
 template <typename grid_t, typename Value, int bit_idx, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         auto val = _impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
-        return ((val >> bit_idx) & 1) != 0;
+        return (val & (1 << bit_idx)) != 0;
     }
 };
 
