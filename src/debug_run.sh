@@ -13,10 +13,10 @@ script_dir=$(dirname "$0")
 
 # automaton="game-of-life"
 # automaton="wire"
-automaton="traffic"
+# automaton="traffic"
 # automaton="cyclic"
 # automaton="forest-fire"
-# automaton="critters"
+automaton="critters"
 # automaton="hpp"
 
 # x_size=$((8*4))
@@ -28,7 +28,7 @@ automaton="traffic"
 # steps=256
 
 x_size=$((30*256))
-y_size=$((30*256))
+y_size=$((7*30*32))
 steps=64
 
 # reference
@@ -42,9 +42,14 @@ device="CUDA"
 # device="CUDA"
 
 # temporal
-# traverser="linear_temporal"
+# traverser="temporal"
 # type="bit_planes"
 # device="CUDA"
+
+# temporal tiled
+traverser="temporal"
+type="tiled_bit_planes"
+device="CUDA"
 
 args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 2 --warmup_rounds 0 --cuda_block_size_y 8 --temporal_tile_size_y 16 --temporal_steps 4"
 

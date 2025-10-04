@@ -198,7 +198,7 @@ class TemporalLinearImplementation:
 
         divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser linear_temporal --layout bit_planes --evaluator bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout bit_planes --evaluator bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
 
 class TemporalTiledBitPlanesImplementation:
     @staticmethod
@@ -216,7 +216,7 @@ class TemporalTiledBitPlanesImplementation:
 
         divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser tiled_temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
 
 class ParamsGenerator:
 

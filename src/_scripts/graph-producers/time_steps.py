@@ -18,8 +18,8 @@ one_step_linear = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': '
 one_step_tiled = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
 # one_step_tiled = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
 
-temporal_linear = {'traverser': 'linear_temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
-temporal_tiled = {'traverser': 'tiled_temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
+temporal_linear = {'traverser': 'temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
+temporal_tiled = {'traverser': 'temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
 
 one_step_linear_group = [x for x in size_group if x.is_implementation(one_step_linear)]
 one_step_tiled_group = [x for x in size_group if x.is_implementation(one_step_tiled)]

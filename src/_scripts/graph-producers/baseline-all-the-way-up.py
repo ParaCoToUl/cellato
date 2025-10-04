@@ -17,8 +17,8 @@ baseline_impl = {'reference_impl': 'baseline'}
 bit_array_impl = {'traverser': 'simple', 'evaluator': 'bit_array', 'layout': 'bit_array'}
 bit_planes_linear = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
 bit_planes_tiled = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
-temporal_linear = {'traverser': 'linear_temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
-temporal_tiled = {'traverser': 'tiled_temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
+temporal_linear = {'traverser': 'temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
+temporal_tiled = {'traverser': 'temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
 
 baseline_group = [x for x in size_group if x.is_implementation(baseline_impl)]
 bit_array_group = [x for x in size_group if x.is_implementation(bit_array_impl)]

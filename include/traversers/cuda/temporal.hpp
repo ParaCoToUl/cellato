@@ -12,7 +12,7 @@
 #include "../../experiments/run_params.hpp"
 #include "../traverser_utils.hpp"
 
-namespace cellato::traversers::cuda::linear_temporal {
+namespace cellato::traversers::cuda::temporal {
 
 using namespace cellato::traversers::utils;
 
@@ -155,6 +155,6 @@ private:
     }
 };
 
-} // namespace cellato::traversers::cuda::linear_temporal
+} // namespace cellato::traversers::cuda::temporal
 
 #endif // CELLATO_TRAVERSERS_CUDA_LINEAR_TEMPORAL_HPP

@@ -296,7 +296,7 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
     }
 
     if (parser.exists("traverser")) {
-        if (parser.get("traverser") == "temporal_tiled") {
+        if (parser.get("traverser") == "temporal") {
             required.push_back("temporal_steps");
             required.push_back("temporal_tile_size_y");
         }

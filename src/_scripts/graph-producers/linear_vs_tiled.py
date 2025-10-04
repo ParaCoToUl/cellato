@@ -16,8 +16,8 @@ print(f"Total results for size {size}x{size}: {len(size_group)}")
 # --- Implementation definitions ---
 bit_planes_linear_impl = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
 bit_planes_tiled_impl = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
-temporal_linear_impl = {'traverser': 'linear_temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
-temporal_tiled_impl = {'traverser': 'tiled_temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
+temporal_linear_impl = {'traverser': 'temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
+temporal_tiled_impl = {'traverser': 'temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
 
 # --- Group results ---
 bit_planes_linear_group = [x for x in size_group if x.is_implementation(bit_planes_linear_impl)]

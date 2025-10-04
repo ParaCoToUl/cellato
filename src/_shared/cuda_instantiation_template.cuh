@@ -5,8 +5,7 @@
 #include <cstdint>
 
 #include "traversers/cuda/simple.hpp"
-#include "traversers/cuda/tiled_temporal.hpp"
-#include "traversers/cuda/linear_temporal.hpp"
+#include "traversers/cuda/temporal.hpp"
 #include "evaluators/standard.hpp"
 #include "evaluators/bit_planes.hpp"
 #include "evaluators/tiled_bit_planes.hpp"
@@ -133,27 +132,29 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::simple::_run
 
 // Temporal tiled bit planes grid with bit planes evaluator (32-bit)
 #define TRAVERSER_TYPE \
-    cellato::traversers::cuda::tiled_temporal::traverser< \
+    cellato::traversers::cuda::temporal::traverser< \
         cellato::evaluators::tiled_bit_planes::evaluator<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
-        cellato::memory::grids::tiled_bit_planes::grid<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
+        cellato::memory::grids::tiled_bit_planes::grid<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU>, \
+        AUTOMATON_NAMESPACE::config::average_halo_radius \
     >
 
 template class TRAVERSER_TYPE;
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::tiled_temporal::_run_mode::QUIET>(int);
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::tiled_temporal::_run_mode::VERBOSE>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::VERBOSE>(int);
 
 #undef TRAVERSER_TYPE
 
 // Temporal tiled bit planes grid with bit planes evaluator (64-bit)
 #define TRAVERSER_TYPE \
-    cellato::traversers::cuda::tiled_temporal::traverser< \
+    cellato::traversers::cuda::temporal::traverser< \
         cellato::evaluators::tiled_bit_planes::evaluator<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
-        cellato::memory::grids::tiled_bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
+        cellato::memory::grids::tiled_bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU>, \
+        AUTOMATON_NAMESPACE::config::average_halo_radius \
     >
 
 template class TRAVERSER_TYPE;
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::tiled_temporal::_run_mode::QUIET>(int);
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::tiled_temporal::_run_mode::VERBOSE>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::VERBOSE>(int);
 
 #undef TRAVERSER_TYPE
 
@@ -163,29 +164,29 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::tiled_tempor
 
 // Temporal linear bit planes grid with bit planes evaluator (32-bit)
 #define TRAVERSER_TYPE \
-    cellato::traversers::cuda::linear_temporal::traverser< \
+    cellato::traversers::cuda::temporal::traverser< \
         cellato::evaluators::bit_planes::evaluator<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
         cellato::memory::grids::bit_planes::grid<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU>, \
         AUTOMATON_NAMESPACE::config::average_halo_radius \
     >
 
 template class TRAVERSER_TYPE;
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::linear_temporal::_run_mode::QUIET>(int);
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::linear_temporal::_run_mode::VERBOSE>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::VERBOSE>(int);
 
 #undef TRAVERSER_TYPE
 
 // Temporal linear bit planes grid with bit planes evaluator (64-bit)
 #define TRAVERSER_TYPE \
-    cellato::traversers::cuda::linear_temporal::traverser< \
+    cellato::traversers::cuda::temporal::traverser< \
         cellato::evaluators::bit_planes::evaluator<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
         cellato::memory::grids::bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU>, \
         AUTOMATON_NAMESPACE::config::average_halo_radius \
     >
 
 template class TRAVERSER_TYPE;
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::linear_temporal::_run_mode::QUIET>(int);
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::linear_temporal::_run_mode::VERBOSE>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_run_mode::VERBOSE>(int);
 
 #undef TRAVERSER_TYPE
 

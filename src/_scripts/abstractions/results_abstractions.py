@@ -13,10 +13,10 @@ IMPLEMENTATIONS = {
     "Bit Planes (64-bit)": {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes', 'precision': 64},
     "Tiled BP (32-bit)": {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes', 'precision': 32},
     "Tiled BP (64-bit)": {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes', 'precision': 64},
-    "Temporal Linear (32-bit)": {'traverser': 'linear_temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes', 'precision': 32},
-    "Temporal Linear (64-bit)": {'traverser': 'linear_temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes', 'precision': 64},
-    "Temporal Tiled (32-bit)": {'traverser': 'tiled_temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes', 'precision': 32},
-    "Temporal Tiled (64-bit)": {'traverser': 'tiled_temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes', 'precision': 64},
+    "Temporal Linear (32-bit)": {'traverser': 'temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes', 'precision': 32},
+    "Temporal Linear (64-bit)": {'traverser': 'temporal', 'evaluator': 'bit_planes', 'layout': 'bit_planes', 'precision': 64},
+    "Temporal Tiled (32-bit)": {'traverser': 'temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes', 'precision': 32},
+    "Temporal Tiled (64-bit)": {'traverser': 'temporal', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes', 'precision': 64},
 }
 
 # These are the bits used by each automaton - for display purposes
