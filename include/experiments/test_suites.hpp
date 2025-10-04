@@ -210,7 +210,7 @@ namespace on_cuda {
             using grid_t = grids::bit_planes::grid<grid_store_word_t, state_dictionary_t>;
             using evaluator_t = evaluators::bit_planes::evaluator<grid_store_word_t, state_dictionary_t, algorithm_t>; 
 
-            using traverser_t = traversers::linear_temporal::traverser<evaluator_t, grid_t>;
+            using traverser_t = traversers::linear_temporal::traverser<evaluator_t, grid_t, cellular_automaton::average_halo_radius>;
 
             constexpr static int x_margin = grid_t::x_word_tile_size;
             constexpr static int y_margin = grid_t::y_word_tile_size;

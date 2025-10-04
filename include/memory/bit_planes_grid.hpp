@@ -39,6 +39,9 @@ class grid {
     constexpr static int needed_bits = states_dict_t::needed_bits;
     static constexpr int word_store_bits = sizeof(store_word_type) * 8;
 
+    static constexpr int x_word_tile_size = word_store_bits;
+    static constexpr int y_word_tile_size = 1;
+
     using storage_tuple_t = std::array<std::vector<store_word_type>, needed_bits>;
     using storage_tuple_of_pointers = std::array<store_word_type*, needed_bits>;
     using cuda_params_t = cuda_params<store_word_type, needed_bits>;

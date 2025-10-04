@@ -23,6 +23,8 @@ template <
     typename evaluator_t,
     
     std::size_t temporal_steps, std::size_t temporal_tile_size_y,
+    std::size_t word_tile_x, std::size_t word_tile_y, double average_halo_radius,
+
     std::size_t block_size_x, std::size_t block_size_y,
 
     typename grid_data_t, typename output_data_t>
@@ -41,12 +43,16 @@ __global__ void process_grid_kernel_linear_temporal(
     constexpr std::size_t cells_per_thread_y = temporal_tile_size_y / block_size_y;
     constexpr std::size_t temporal_tile_size_x = block_size_x;
 
-    constexpr std::size_t effective_temporal_tile_size_x = temporal_tile_size_x - 2;
-    constexpr std::size_t effective_temporal_tile_size_y = temporal_tile_size_y - (2 * temporal_steps);
+    constexpr std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * temporal_steps * 0.999));
+    constexpr std::size_t x_halo_words = (needed_halo_cells + word_tile_x - 1) / word_tile_x;
+    constexpr std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
 
-    std::size_t global_x_non_wrapped = static_cast<std::size_t>(blockIdx.x) * effective_temporal_tile_size_x + threadIdx.x - 1;
+    constexpr std::size_t effective_temporal_tile_size_x = temporal_tile_size_x - (2 * x_halo_words);
+    constexpr std::size_t effective_temporal_tile_size_y = temporal_tile_size_y - (2 * y_halo_words);
+
+    std::size_t global_x_non_wrapped = static_cast<std::size_t>(blockIdx.x) * effective_temporal_tile_size_x + threadIdx.x - x_halo_words;
     std::size_t global_y_start_non_wrapped = static_cast<std::size_t>(blockIdx.y) * effective_temporal_tile_size_y + 
-                                             static_cast<std::size_t>(threadIdx.y) * cells_per_thread_y - temporal_steps;
+                                             static_cast<std::size_t>(threadIdx.y) * cells_per_thread_y - y_halo_words;
 
     std::size_t global_x_for_load = (global_x_non_wrapped + width) % width;
     std::size_t global_x_for_save = global_x_non_wrapped;
@@ -105,14 +111,14 @@ __global__ void process_grid_kernel_linear_temporal(
         __syncthreads();
     }
 
-    if (threadIdx.x == 0 || threadIdx.x == block_size_x - 1)
+    if (threadIdx.x < x_halo_words || threadIdx.x >= (temporal_tile_size_x - x_halo_words))
         return;
 
     for (std::size_t y_offset = 0; y_offset < cells_per_thread_y; ++y_offset) {
         std::size_t global_y_for_save = global_y_start_non_wrapped + y_offset;
         std::size_t local_y = local_y_start + y_offset;
 
-        if (local_y < temporal_steps || local_y >= (temporal_tile_size_y - temporal_steps))
+        if (local_y < y_halo_words || local_y >= (temporal_tile_size_y - y_halo_words))
             continue;
 
         grid_props::assign_to_from(
@@ -125,9 +131,9 @@ __global__ void process_grid_kernel_linear_temporal(
     }
 }
 
-template <typename evaluator_type, typename grid_type>
+template <typename evaluator_type, typename grid_type, double average_halo_radius>
 template <_run_mode mode>
-void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
+void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int steps) {
     auto current = &_input_grid_cuda;
     auto next = &_intermediate_grid_cuda;
 
@@ -148,16 +154,16 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     }
     
     // Hot compilation
-    using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
-    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128>;
-    using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
+    // using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
+    // using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128>;
+    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    // using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
     
     // Fast compilation
-    // using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
-    // using tile_y_options         = std::integer_sequence<std::size_t, 32>;
-    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    // using block_y_options        = std::integer_sequence<std::size_t, 8>;
+    using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 16>;
+    using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    using block_y_options        = std::integer_sequence<std::size_t, 8>;
 
     cellato::generic_dispatcher::call<
         temporal_steps_options,
@@ -171,8 +177,10 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         >() {
             constexpr std::size_t temporal_tile_size_x = block_size_x;
             constexpr std::size_t required_buffers_bytes = 2 * temporal_tile_size_y * temporal_tile_size_x * grid_type::needed_bits * sizeof(typename grid_type::cell_t);
-            constexpr int effective_y_tile_size = static_cast<int>(temporal_tile_size_y) - 2 * static_cast<int>(temporal_steps);
-
+        
+            constexpr std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * temporal_steps));
+            constexpr std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
+            constexpr std::size_t effective_y_tile_size = temporal_tile_size_y - (2 * y_halo_words);
 
             if constexpr (required_buffers_bytes > max_shm_size) {
                 throw std::runtime_error("Configuration exceeds maximum shared memory size. The temporal tile is too large.");
@@ -192,6 +200,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
                         process_grid_kernel_linear_temporal<
                             evaluator_type,
                             temporal_steps, temporal_tile_size_y,
+                            word_tile_x, word_tile_y, average_halo_radius,
                             block_size_x, block_size_y,
                             decltype(input_data), decltype(output_data)
                         >,
@@ -202,6 +211,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
                     process_grid_kernel_linear_temporal<
                         evaluator_type,
                         temporal_steps, temporal_tile_size_y,
+                        word_tile_x, word_tile_y, average_halo_radius,
                         block_size_x, block_size_y
                     ><<<gridDim, blockDim, required_buffers_bytes>>>(
                         input_data,
@@ -231,8 +241,8 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     _final_grid = current;
 }
 
-template <typename evaluator_type, typename grid_type>
-auto traverser<evaluator_type, grid_type>::fetch_result() -> grid_t {
+template <typename evaluator_type, typename grid_type, double average_halo_radius>
+auto traverser<evaluator_type, grid_type, average_halo_radius>::fetch_result() -> grid_t {
     grid_t cpu_grid = _final_grid->to_cpu();
 
     _input_grid_cuda.free_cuda_memory();

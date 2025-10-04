@@ -165,7 +165,8 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::tiled_tempor
 #define TRAVERSER_TYPE \
     cellato::traversers::cuda::linear_temporal::traverser< \
         cellato::evaluators::bit_planes::evaluator<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
-        cellato::memory::grids::bit_planes::grid<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
+        cellato::memory::grids::bit_planes::grid<std::uint32_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU>, \
+        AUTOMATON_NAMESPACE::config::average_halo_radius \
     >
 
 template class TRAVERSER_TYPE;
@@ -178,7 +179,8 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::linear_tempo
 #define TRAVERSER_TYPE \
     cellato::traversers::cuda::linear_temporal::traverser< \
         cellato::evaluators::bit_planes::evaluator<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, AUTOMATON_NAMESPACE::config::algorithm>, \
-        cellato::memory::grids::bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU> \
+        cellato::memory::grids::bit_planes::grid<std::uint64_t, AUTOMATON_NAMESPACE::config::state_dictionary, cellato::memory::grids::device::CPU>, \
+        AUTOMATON_NAMESPACE::config::average_halo_radius \
     >
 
 template class TRAVERSER_TYPE;

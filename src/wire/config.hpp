@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "wire";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = wire_algorithm;
     
     using cell_state = wire_cell_state;

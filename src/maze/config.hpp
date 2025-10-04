@@ -14,6 +14,8 @@ struct config {
 
     static constexpr auto name = "maze";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = maze_algorithm;
     
     using cell_state = maze_cell_state;

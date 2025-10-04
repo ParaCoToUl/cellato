@@ -13,6 +13,8 @@ struct config {
     
     static constexpr auto name = "greenberg-hastings";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = ghm_algorithm;
 
     using cell_state = ghm_cell_state;

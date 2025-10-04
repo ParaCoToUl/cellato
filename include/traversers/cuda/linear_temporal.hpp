@@ -1,6 +1,7 @@
 #ifndef CELLATO_TRAVERSERS_CUDA_LINEAR_TEMPORAL_HPP
 #define CELLATO_TRAVERSERS_CUDA_LINEAR_TEMPORAL_HPP
 
+#include <cstddef>
 #include <iostream>
 #include <utility>
 #include <functional>
@@ -22,12 +23,24 @@ enum class _run_mode {
 
 template <
     typename evaluator_type,
-    typename grid_type >
+    typename grid_type,
+    double average_halo_radius>
 class traverser {
     using evaluator_t = evaluator_type;
     using grid_t = grid_type;
     using cuda_grid_t = typename std::invoke_result<decltype(&grid_t::to_cuda), grid_t>::type;
     using cell_t = typename grid_t::store_type;
+
+    constexpr static std::size_t word_tile_x = grid_t::x_word_tile_size;
+    constexpr static std::size_t word_tile_y = grid_t::y_word_tile_size;
+
+    // constexpr static std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * temporal_steps));
+    // constexpr static std::size_t x_halo_words = (needed_halo_cells + word_tile_x - 1) / word_tile_x;
+    // constexpr static std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
+
+    // constexpr static std::size_t effective_temporal_tile_size_x = temporal_tile_size_x - (2 * x_halo_words);
+    // constexpr static std::size_t effective_temporal_tile_size_y = temporal_tile_size_y - (2 * y_halo_words);
+
 
   public:
     traverser() : _final_grid(nullptr) {}
@@ -41,8 +54,12 @@ class traverser {
         _temporal_tile_size_y = params.temporal_tile_size_y;
         _temporal_steps = params.temporal_steps;
 
-        _effective_temporal_tile_size_x = _block_size_x - 2;
-        _effective_temporal_tile_size_y = _temporal_tile_size_y - (2 * _temporal_steps);
+        std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * _temporal_steps));
+        std::size_t x_halo_words = (needed_halo_cells + word_tile_x - 1) / word_tile_x;
+        std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
+    
+        _effective_temporal_tile_size_x = _block_size_x - 2 * x_halo_words;
+        _effective_temporal_tile_size_y = _temporal_tile_size_y - 2 * y_halo_words;
 
         _cells_per_thread = _temporal_tile_size_y / _block_size_y;
 

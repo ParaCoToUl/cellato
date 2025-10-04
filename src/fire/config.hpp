@@ -14,6 +14,8 @@ struct config {
 
     static constexpr auto name = "forest-fire";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = fire_algorithm;
     
     using cell_state = fire_cell_state;

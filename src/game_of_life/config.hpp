@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "game-of-life";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = gol_algorithm;
     
     using cell_state = gol_cell_state;

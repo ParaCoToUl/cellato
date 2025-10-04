@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "traffic";
 
+    static constexpr double average_halo_radius = 0.5;
+
     using algorithm = traffic_algorithm;
     
     using cell_state = traffic_cell_state;

@@ -152,16 +152,16 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     }
     
     // Hot compilation
-    using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
-    using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128>;
-    using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
+    // using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
+    // using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128>;
+    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    // using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
     
     // Fast compilation
-    // using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
-    // using tile_y_options         = std::integer_sequence<std::size_t, 32>;
-    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    // using block_y_options        = std::integer_sequence<std::size_t, 8>;
+    using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 16>;
+    using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    using block_y_options        = std::integer_sequence<std::size_t, 8>;
 
     cellato::generic_dispatcher::call<
         temporal_steps_options,

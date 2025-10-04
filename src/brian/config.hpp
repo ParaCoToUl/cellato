@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "brian";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = brian_algorithm;
 
     using cell_state = brian_cell_state;

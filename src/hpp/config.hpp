@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "hpp";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = hpp_algorithm;
     
     using cell_state = hpp_cell_state;

@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "cyclic";
 
+    static constexpr double average_halo_radius = 1.0;
+
     using algorithm = cyclic_algorithm;
     
     using cell_state = cyclic_cell_state;

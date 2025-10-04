@@ -13,6 +13,8 @@ struct config {
 
     static constexpr auto name = "critters";
 
+    static constexpr double average_halo_radius = 0.5;
+
     using algorithm = critters_algorithm;
     
     using cell_state = critters_cell_state;
