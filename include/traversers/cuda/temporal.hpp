@@ -34,14 +34,6 @@ class traverser {
     constexpr static std::size_t word_tile_x = grid_t::x_word_tile_size;
     constexpr static std::size_t word_tile_y = grid_t::y_word_tile_size;
 
-    // constexpr static std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * temporal_steps));
-    // constexpr static std::size_t x_halo_words = (needed_halo_cells + word_tile_x - 1) / word_tile_x;
-    // constexpr static std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
-
-    // constexpr static std::size_t effective_temporal_tile_size_x = temporal_tile_size_x - (2 * x_halo_words);
-    // constexpr static std::size_t effective_temporal_tile_size_y = temporal_tile_size_y - (2 * y_halo_words);
-
-
   public:
     traverser() : _final_grid(nullptr) {}
 

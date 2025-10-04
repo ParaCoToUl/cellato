@@ -154,16 +154,22 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
     }
     
     // Hot compilation
-    // using temporal_steps_options = std::integer_sequence<std::size_t, 2, 4, 6, 8>;
+    // using temporal_steps_options = std::integer_sequence<std::size_t, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24>;
     // using tile_y_options         = std::integer_sequence<std::size_t, 8, 16, 32, 64, 128>;
     // using block_x_options        = std::integer_sequence<std::size_t, 32>;
     // using block_y_options        = std::integer_sequence<std::size_t, 2, 4, 8, 16, 32>;
     
-    // Fast compilation
-    using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
-    using tile_y_options         = std::integer_sequence<std::size_t, 16>;
+    // Verification compilation
+    using temporal_steps_options = std::integer_sequence<std::size_t, 4, 8, 12, 20>;
+    using tile_y_options         = std::integer_sequence<std::size_t, 8, 32>;
     using block_x_options        = std::integer_sequence<std::size_t, 32>;
-    using block_y_options        = std::integer_sequence<std::size_t, 8>;
+    using block_y_options        = std::integer_sequence<std::size_t, 2, 4>;
+
+    // Fast compilation
+    // using temporal_steps_options = std::integer_sequence<std::size_t, 4>;
+    // using tile_y_options         = std::integer_sequence<std::size_t, 16>;
+    // using block_x_options        = std::integer_sequence<std::size_t, 32>;
+    // using block_y_options        = std::integer_sequence<std::size_t, 8>;
 
     cellato::generic_dispatcher::call<
         temporal_steps_options,
@@ -178,9 +184,11 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
             constexpr std::size_t temporal_tile_size_x = block_size_x;
             constexpr std::size_t required_buffers_bytes = 2 * temporal_tile_size_y * temporal_tile_size_x * grid_type::needed_bits * sizeof(typename grid_type::cell_t);
         
-            constexpr std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * temporal_steps));
-            constexpr std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
-            constexpr std::size_t effective_y_tile_size = temporal_tile_size_y - (2 * y_halo_words);
+            constexpr std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * temporal_steps * 0.999));
+            constexpr int y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
+            constexpr int x_halo_words = (needed_halo_cells + word_tile_x - 1) / word_tile_x;
+            constexpr int effective_y_tile_size = static_cast<int>(temporal_tile_size_y) - (2 * y_halo_words);
+            constexpr int effective_x_tile_size = static_cast<int>(temporal_tile_size_x) - (2 * x_halo_words);
 
             if constexpr (required_buffers_bytes > max_shm_size) {
                 throw std::runtime_error("Configuration exceeds maximum shared memory size. The temporal tile is too large.");
@@ -190,6 +198,9 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
 
             } else if constexpr (effective_y_tile_size <= 0) {
                 throw std::runtime_error("Invalid configuration: effective_y_tile_size must be greater than 0.");
+
+            } else if constexpr (effective_x_tile_size <= 0) {
+                throw std::runtime_error("Invalid configuration: effective_x_tile_size must be greater than 0.");
 
             } else {
                 for (int step = 0; step < steps; step += temporal_steps) {

@@ -12,27 +12,63 @@ WARMUP = 1         # Number of warmup rounds
 SEED = 42
 DEVICE = "CUDA"
 
-GRID_SIZES = [x ** 2 for x in [4096, 8192, 16384, 32768]]
-STEPS =                       [1024,  256,   128,    64]
+# GRID_SIZES = [x ** 2 for x in [4096, 8192, 16384, 32768]]
+# STEPS =                       [1024,  256,   128,    64]
+GRID_SIZES = [x ** 2 for x in [16384]]
+STEPS =                       [128]
 Y_BLOCK_SIZES = [2, 4, 8, 16, 32]
 TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a single bit automaton using 32-bit precision
 PRECISIONS = [32, 64]
-TEMPORAL_STEPS = [2, 4, 6, 8]
+TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+
+AUTOMATA_TO_TEST = [
+    # "game-of-life",
+    # "brian",
+    # "maze",
+    "critters",
+    "forest-fire",
+    "wire",
+    "traffic",
+    "greenberg-hastings",
+    "hpp",
+    "cyclic",
+]
+
 
 AUTOMATA_bits = {
-    # "game-of-life": 1,
-    # "brian": 1,
-    # "maze": 1,
-    # "critters": 1,
-    # "forest-fire": 2,
-    # "wire": 2,
+    "game-of-life": 1,
+    "brian": 1,
+    "maze": 1,
+    "critters": 1,
+    "forest-fire": 2,
+    "wire": 2,
     "traffic": 2,
-    # "greenberg-hastings": 3,
-    # "hpp": 4,
-    # "cyclic": 5,
+    "greenberg-hastings": 3,
+    "hpp": 4,
+    "cyclic": 5,
 }
 
-AUTOMATA= AUTOMATA_bits.keys()
+average_halo_radii = {
+    "game-of-life": 1.0,
+    "brian": 1.0,
+    "maze": 1.0,
+    "critters": 1.0,
+    "forest-fire": 1.0,
+    "wire": 1.0,
+    "traffic": 1.0,
+    "greenberg-hastings": 1.0,
+    "hpp": 1.0,
+    "cyclic": 1.0,
+}
+
+
+shared_memory_size = 228 * 1024  # 228kB on H100
+def get_max_y_temporal_tile_for(bits, temporal_tile_size_x, precision):
+    for test_size_y in reversed(TEMPORAL_TILE_SIZES_Y):
+        required_shared_memory = 2 * temporal_tile_size_x * test_size_y * (precision // 8) * bits
+
+        if required_shared_memory <= shared_memory_size:
+            return test_size_y
 
 terminal_supports_colors = sys.stdout.isatty() and os.name != 'nt' and 'NO_COLOR' not in os.environ
 
@@ -45,6 +81,20 @@ GREEN_COLOR = "\033[92m" if terminal_supports_colors else ""
 CYAN_COLOR = "\033[96m" if terminal_supports_colors else ""
 YELLOW_COLOR = "\033[93m" if terminal_supports_colors else ""
 
+def get_effective_xy_block_size(
+    temporal_tile_size_x, temporal_tile_size_y,
+    temporal_steps, average_halo_radius,
+    x_word_tile_size, y_word_tile_size):
+    
+    needed_halo_cells = math.ceil(temporal_steps * average_halo_radius * 0.999)
+    
+    x_halo_words = (needed_halo_cells + x_word_tile_size - 1) // x_word_tile_size
+    y_halo_words = (needed_halo_cells + y_word_tile_size - 1) // y_word_tile_size
+    
+    effective_temporal_tile_size_x = temporal_tile_size_x - (2 * x_halo_words)
+    effective_temporal_tile_size_y = temporal_tile_size_y - (2 * y_halo_words)
+
+    return (effective_temporal_tile_size_x, effective_temporal_tile_size_y)
 class TestCase:
     def __init__(self):
         self.automaton = None
@@ -70,7 +120,9 @@ class TestCase:
         for attr, value in self.__dict__.items():
             setattr(tc, attr, value)
         return tc
-    
+
+
+
     def with_attr(self, attr, value):
         setattr(self, attr, value)
         return self
@@ -185,14 +237,14 @@ class TiledBitPlanesImplementation:
 class TemporalLinearImplementation:
     @staticmethod
     def params(tc: TestCase):
-        temporal_tile_size_x = 32 - 2
-        temporal_tile_size_y = tc.temporal_tile_size_y - 2 * tc.temporal_steps
+        effective_temporal_tile_size_x, effective_temporal_tile_size_y \
+            = TemporalLinearImplementation.get_effective_xy_block_size(tc)
 
         cells_per_word_in_x = tc.precision
         cells_per_word_in_y = 1
 
-        x_divisor = temporal_tile_size_x * cells_per_word_in_x
-        y_divisor = temporal_tile_size_y * cells_per_word_in_y
+        x_divisor = effective_temporal_tile_size_x * cells_per_word_in_x
+        y_divisor = effective_temporal_tile_size_y * cells_per_word_in_y
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
 
@@ -200,23 +252,45 @@ class TemporalLinearImplementation:
 
         return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout bit_planes --evaluator bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
 
+    @staticmethod
+    def get_effective_xy_block_size(tc: TestCase):
+        return get_effective_xy_block_size(
+            temporal_tile_size_x = 32,
+            temporal_tile_size_y = tc.temporal_tile_size_y,
+            temporal_steps = tc.temporal_steps,
+            average_halo_radius = average_halo_radii[tc.automaton],
+            x_word_tile_size = tc.precision,
+            y_word_tile_size = 1
+        )
+
 class TemporalTiledBitPlanesImplementation:
     @staticmethod
     def params(tc: TestCase):
-        temporal_tile_size_x = 32 - 2
-        temporal_tile_size_y = tc.temporal_tile_size_y - 2
+        effective_temporal_tile_size_x, effective_temporal_tile_size_y \
+            = TemporalTiledBitPlanesImplementation.get_effective_xy_block_size(tc)
 
         cells_per_word_in_x = 8
         cells_per_word_in_y = tc.precision // cells_per_word_in_x
 
-        x_divisor = temporal_tile_size_x * cells_per_word_in_x
-        y_divisor = temporal_tile_size_y * cells_per_word_in_y
+        x_divisor = effective_temporal_tile_size_x * cells_per_word_in_x
+        y_divisor = effective_temporal_tile_size_y * cells_per_word_in_y
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
 
         divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
 
         return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+
+    @staticmethod
+    def get_effective_xy_block_size(tc: TestCase):
+        return get_effective_xy_block_size(
+            temporal_tile_size_x = 32,
+            temporal_tile_size_y = tc.temporal_tile_size_y,
+            temporal_steps = tc.temporal_steps,
+            average_halo_radius = average_halo_radii[tc.automaton],
+            x_word_tile_size = 8,
+            y_word_tile_size = tc.precision // 8
+        )
 
 class ParamsGenerator:
 
@@ -227,7 +301,7 @@ class ParamsGenerator:
         test_case = TestCase().with_device(DEVICE)
         all = []
 
-        for automaton in AUTOMATA:
+        for automaton in AUTOMATA_TO_TEST:
             tc = test_case.with_automaton(automaton)
             all.extend(self._generate_with_size_and_steps(tc))
 
@@ -281,29 +355,29 @@ class ParamsGenerator:
     def _generate_with_temporal_tile_size_y(self, tc: TestCase):
         all = []
 
-        for temporal_tile_size_y in TEMPORAL_TILE_SIZES_Y:
-            if (temporal_tile_size_y < tc.cuda_block_size_y):
-                continue  # temporal tile size Y must be at least as large as block size Y
+        temporal_tile_size_y = get_max_y_temporal_tile_for(
+            bits = AUTOMATA_bits[tc.automaton],
+            temporal_tile_size_x = 32,
+            precision = tc.precision
+        )
 
-            if (temporal_tile_size_y % tc.cuda_block_size_y != 0):
-                continue  # temporal tile size Y must be divisible by block size Y
+        passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
+        
+        if (temporal_tile_size_y < tc.cuda_block_size_y):
+            return []  # temporal tile size Y must be at least as large as block size Y
 
-            # passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
+        if (temporal_tile_size_y % tc.cuda_block_size_y != 0):
+            return []  # temporal tile size Y must be divisible by block size Y
 
-            # all.append(TemporalTiledBitPlanesImplementation.params(passed_tc))
+        _, effective_y_for_linear = TemporalLinearImplementation.get_effective_xy_block_size(passed_tc)
+        _, effective_y_for_tiled = TemporalTiledBitPlanesImplementation.get_effective_xy_block_size(passed_tc)
 
-            effective_y_for_linear = temporal_tile_size_y - 2 * tc.temporal_steps
-            effective_y_for_tiled = temporal_tile_size_y - 2
+        if (effective_y_for_linear > 0):
+            all.append(TemporalLinearImplementation.params(passed_tc))
 
-            if (effective_y_for_linear > 0):
-                passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
-                all.append(TemporalLinearImplementation.params(passed_tc))
-
-            max_temporal_steps_for_tiled = 8 if tc.precision == 64 else 4
-
-            if (effective_y_for_tiled > 0 and tc.temporal_steps <= max_temporal_steps_for_tiled):
-                passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
-                all.append(TemporalTiledBitPlanesImplementation.params(passed_tc))
+        if (effective_y_for_tiled > 0):
+            passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
+            all.append(TemporalTiledBitPlanesImplementation.params(passed_tc))
 
         return all
 
@@ -311,7 +385,7 @@ class Executable:
     def __init__(self):
         # Set up paths
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_dir = os.path.join(script_dir, "..", "..")
+        project_dir = os.path.join(script_dir, "..", "..", "..")
         self.path = os.path.join(project_dir, EXE_PATH)
         
         # Check if executable exists
@@ -320,11 +394,12 @@ class Executable:
             print("Try running 'make' first", file=sys.stderr)
             sys.exit(1)
         
-    def run(self, args):
+    def run(self, args, throw_on_error=False):
         """Run the executable with the given arguments and return the output."""
         cmd = [self.path] + args.split()
         
         try:
+            # print(f"Running command: {' '.join(cmd)}", file=sys.stderr)
             process = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -338,9 +413,15 @@ class Executable:
             if csv_lines:
                 return csv_lines[-1]  # Return the last line which is the CSV data
             else:
+                if throw_on_error:
+                    raise RuntimeError(f"No output from command: {' '.join(cmd)}")
+
                 print(f"No output from command: {' '.join(cmd)}", file=sys.stderr)
                 return None
         except subprocess.CalledProcessError as e:
+            if throw_on_error:
+                raise RuntimeError(f"Error running command: {' '.join(cmd)}\nSTDERR: {e.stderr}") from e
+                
             print(f"Error running command: {' '.join(cmd)}", file=sys.stderr)
             print(f"STDERR: {e.stderr}", file=sys.stderr)
             return None
