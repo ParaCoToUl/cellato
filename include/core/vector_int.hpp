@@ -193,9 +193,11 @@ class vector_int {
 
     template <typename val_t = int>
     CUDA_CALLABLE val_t get_at(int index) const {
+        #ifndef __CUDA_ARCH__
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
+        #endif
 
         val_t value = 0;
 

@@ -196,37 +196,15 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
         int x_coords[2], y_coords[2];
 
         if (parity == 0) {
-            if (x_parity == 0) {
-                x_coords[0] = 0;
-                x_coords[1] = 1;
-            } else {
-                x_coords[0] = -1;
-                x_coords[1] = 0;
-            }
-            
-            if (y_parity == 0) {
-                y_coords[0] = 0;
-                y_coords[1] = 1;
-            } else {
-                y_coords[0] = -1;
-                y_coords[1] = 0;
-            }
-        } else {  // step_parity == 1
-            if (x_parity == 0) {
-                x_coords[0] = -1;
-                x_coords[1] = 0;
-            } else {
-                x_coords[0] = 0;
-                x_coords[1] = 1;
-            }
-            
-            if (y_parity == 0) {
-                y_coords[0] = -1;
-                y_coords[1] = 0;
-            } else {
-                y_coords[0] = 0;
-                y_coords[1] = 1;
-            }
+            if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; } 
+            else { x_coords[0] = -1; x_coords[1] = 0; }
+            if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; }
+            else { y_coords[0] = -1; y_coords[1] = 0; }
+        } else {  // parity == 1
+            if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; } 
+            else { x_coords[0] = 0; x_coords[1] = 1; }
+            if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; }
+            else { y_coords[0] = 0; y_coords[1] = 1; }
         }
 
         auto get_cell = [](state_t<cell_type, cell_ptr_type> state, int x_offset, int y_offset) {
@@ -239,6 +217,41 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
             (get_cell(state, x_coords[1], y_coords[0]) == target_value) +
             (get_cell(state, x_coords[1], y_coords[1]) == target_value)
         );
+    }
+};
+
+template <typename cell_type, typename cell_ptr_type>
+struct evaluator<cell_type, margolus_180_neighbor, cell_ptr_type> {
+    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+        // Determine the 2x2 block this cell belongs to.
+        auto parity = state.time_step % 2;
+        auto x_parity = state.position.x % 2;
+        auto y_parity = state.position.y % 2;
+
+        int x_coords[2], y_coords[2];
+
+        if (parity == 0) {
+            if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; } 
+            else { x_coords[0] = -1; x_coords[1] = 0; }
+            if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; }
+            else { y_coords[0] = -1; y_coords[1] = 0; }
+        } else {  // parity == 1
+            if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; } 
+            else { x_coords[0] = 0; x_coords[1] = 1; }
+            if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; }
+            else { y_coords[0] = 0; y_coords[1] = 1; }
+        }
+
+        // The offset to the diagonal neighbor is the sum of the coordinate pairs.
+        int dx_opposite = x_coords[0] + x_coords[1];
+        int dy_opposite = y_coords[0] + y_coords[1];
+
+        // Get and return the state of the diagonally opposite cell.
+        // The "toggling" is handled later by the algorithm's AST.
+        return state.grid[state.idx(
+            state.position.x + dx_opposite, 
+            state.position.y + dy_opposite
+        )];
     }
 };
 

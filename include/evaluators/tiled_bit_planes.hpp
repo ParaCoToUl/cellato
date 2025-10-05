@@ -338,6 +338,63 @@ struct _evaluator_impl<
     }
 };
 
+template <typename params>
+struct _evaluator_impl<
+    params,
+    margolus_180_neighbor> {
+
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto parity = state.time_step % 2;
+
+        if (parity == 0) {
+            // return get_with_offset< 1>(state); // slower version
+            return fast_even_parity(state);
+        } else {
+            return get_with_offset<-1>(state);
+        }
+    }
+
+  private:
+    using cell_row_type = typename params::cell_row_t;
+    
+    constexpr static cell_row_type top_left_bit = static_cast<cell_row_type>(0x0055'0055'0055'0055LLU);
+    constexpr static cell_row_type top_right_bit = top_left_bit << 1;
+    constexpr static cell_row_type bottom_left_bit = top_left_bit << 8;
+    constexpr static cell_row_type bottom_right_bit = bottom_left_bit << 1;
+
+    template <int modifier>
+    CUDA_CALLABLE static auto get_with_offset(state_t<params> state) {
+        auto bottom_right = get_margolus_neighbor< 1, 1, modifier>(state);
+        auto bottom_left  = get_margolus_neighbor<-1, 1, modifier>(state);
+        auto top_right    = get_margolus_neighbor< 1,-1, modifier>(state);
+        auto top_left     = get_margolus_neighbor<-1,-1, modifier>(state);
+
+        auto result_for_top_left = bottom_right.mask_out_columns(top_left_bit);
+        auto result_for_top_right = bottom_left.mask_out_columns(top_right_bit);
+        auto result_for_bottom_left = top_right.mask_out_columns(bottom_left_bit);
+        auto result_for_bottom_right = top_left.mask_out_columns(bottom_right_bit);
+
+        return result_for_top_left
+            .get_ored(result_for_top_right)
+            .get_ored(result_for_bottom_left)
+            .get_ored(result_for_bottom_right);
+    }
+
+    template <int x, int y, int modifier>
+    CUDA_CALLABLE static auto get_margolus_neighbor(state_t<params> state)
+    {
+        return evaluator_t<neighbor_at<x * modifier, y * modifier>>::evaluate(state);
+    }
+
+    CUDA_CALLABLE static auto fast_even_parity(state_t<params> state) {
+        auto current_state = evaluator_t<neighbor_at< 0,  0>>::evaluate(state);
+        return current_state.get_with_switched_pairs_of_numbers().get_with_switched_rows_of_8();
+    }
+};
+
 
 } // namespace cellato::evaluators::tiled_bit_planes
 

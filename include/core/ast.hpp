@@ -24,6 +24,7 @@ struct neighbor_at {
 struct moore_8_neighbors {};
 struct von_neumann_4_neighbors {};
 struct margolus_alternating_neighborhood {};
+struct margolus_180_neighbor {};
 
 template <typename Constant, typename Neighborhood>
 struct count_neighbors {

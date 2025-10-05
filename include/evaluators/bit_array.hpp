@@ -383,6 +383,80 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
     }
 };
 
+template <typename grid_t, std::size_t subcell_offset>
+struct _impl_evaluator<grid_t, margolus_180_neighbor, subcell_offset> {
+
+    using store_type = typename grid_t::store_type;
+
+    CUDA_CALLABLE static store_type evaluate(state_t<grid_t> state) {
+        // Determine the absolute original coordinates of the specific sub-cell.
+        constexpr auto cells_per_word = grid_t::cells_per_word;
+        std::size_t x_original = indexer::get_x(state, state.position.x * cells_per_word + subcell_offset);
+        std::size_t y_original = indexer::get_y(state, state.position.y);
+
+        // Calculate parities to determine the 2x2 block for this sub-cell.
+        int parity = state.time_step % 2;
+        int x_parity = x_original % 2;
+        int y_parity = y_original % 2;
+
+        int x_coords_0, x_coords_1, y_coords_0, y_coords_1;
+
+        if (parity == 0) {
+            if (x_parity == 0) { x_coords_0 = 0; x_coords_1 = 1; } 
+            else { x_coords_0 = -1; x_coords_1 = 0; }
+            
+            if (y_parity == 0) { y_coords_0 = 0; y_coords_1 = 1; } 
+            else { y_coords_0 = -1; y_coords_1 = 0; }
+        } else {  // parity == 1
+            if (x_parity == 0) { x_coords_0 = -1; x_coords_1 = 0; } 
+            else { x_coords_0 = 0; x_coords_1 = 1; }
+            
+            if (y_parity == 0) { y_coords_0 = -1; y_coords_1 = 0; } 
+            else { y_coords_0 = 0; y_coords_1 = 1; }
+        }
+
+        // The offset to the diagonal neighbor is the sum of the coordinate pairs.
+        int dx_opposite = x_coords_0 + x_coords_1;
+        int dy_opposite = y_coords_0 + y_coords_1;
+
+        // Fetch and return the state of the diagonally opposite cell using the helper.
+        return get_cell_at(state, dx_opposite, dy_opposite);
+    }
+
+    // Helper to get the state of a cell at a relative offset.
+    // This is identical to the one in your example to ensure consistent cell access.
+    template <int x_offset, int y_offset>
+    using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
+
+    CUDA_CALLABLE static store_type get_cell_at(state_t<grid_t> state, int x_offset, int y_offset) {
+        if (x_offset == 0) {
+            if (y_offset == 0) {
+                return cell_at< 0,  0>::evaluate(state);
+            } else if (y_offset == 1) {
+                return cell_at< 0,  1>::evaluate(state);
+            } else { // y_offset == -1
+                return cell_at< 0, -1>::evaluate(state);
+            }
+        } else if (x_offset == 1) {
+            if (y_offset == 0) {
+                return cell_at< 1,  0>::evaluate(state);
+            } else if (y_offset == 1) {
+                return cell_at< 1,  1>::evaluate(state);
+            } else { // y_offset == -1
+                return cell_at< 1, -1>::evaluate(state);
+            }
+        } else { // x_offset == -1
+            if (y_offset == 0) {
+                return cell_at<-1,  0>::evaluate(state);
+            } else if (y_offset == 1) {
+                return cell_at<-1,  1>::evaluate(state);
+            } else { // y_offset == -1
+                return cell_at<-1, -1>::evaluate(state);
+            }
+        }
+    }
+};
+
 template <typename grid_t, typename CellStateValue, std::size_t subcell_offset>
 struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, von_neumann_4_neighbors>, subcell_offset> {
     

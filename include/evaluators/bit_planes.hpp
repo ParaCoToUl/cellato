@@ -438,6 +438,57 @@ private:
     }
 };
 
+template <typename params>
+struct _evaluator_impl<params, margolus_180_neighbor> {
+    template <typename E>
+    using evaluator_t = typename params::template evaluator_t<params, E>;
+
+    using cell_row_type = typename params::cell_row_t;
+    using state_dictionary_type = typename params::state_dict_t;
+
+    using state_vint_type = vector_int<cell_row_type, state_dictionary_type::needed_bits>;
+    
+    CUDA_CALLABLE static auto evaluate(state_t<params> state) {
+        auto parity = state.time_step % 2;
+
+        if (parity == 0) {
+            return even_parity(state);
+        } else {
+            return odd_parity(state);
+        }
+    }
+  private:
+    CUDA_CALLABLE static auto even_parity(state_t<params> state) {
+        auto vertical_neighbor = (y_parity(state) == 0) ?
+            evaluator_t<neighbor_at< 0,   1>>::evaluate(state) :
+            evaluator_t<neighbor_at< 0,  -1>>::evaluate(state);
+
+        return vertical_neighbor.get_with_switched_pairs_of_numbers();
+    }
+
+    CUDA_CALLABLE static auto odd_parity(state_t<params> state) {
+        auto even_cells = (y_parity(state) == 0) ?
+            evaluator_t<neighbor_at< 1, -1>>::evaluate(state) :
+            evaluator_t<neighbor_at< 1,  1>>::evaluate(state);
+
+        auto odd_cells = (y_parity(state) == 0) ?
+            evaluator_t<neighbor_at<-1, -1>>::evaluate(state) :
+            evaluator_t<neighbor_at<-1,  1>>::evaluate(state);
+
+        constexpr cell_row_type alternating_mask_0_at_0 = static_cast<cell_row_type>(0xAAAAAAAAAAAAAAAALLU);
+        constexpr cell_row_type alternating_mask_1_at_0 = static_cast<cell_row_type>(0x5555555555555555LLU);
+
+        auto even_masked = even_cells.mask_out_columns(alternating_mask_0_at_0);
+        auto odd_masked  = odd_cells.mask_out_columns(alternating_mask_1_at_0);
+
+        return even_masked.get_ored(odd_masked);
+    }
+
+    CUDA_CALLABLE static int y_parity(state_t<params> state) {
+        return state.position.y % 2;
+    }
+};
+
 template <typename params, typename cell_state_type, cell_state_type CellStateValue>
 struct _evaluator_impl<
     params,

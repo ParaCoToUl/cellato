@@ -8,15 +8,14 @@ using namespace ::reference::indexing;
 
 // CUDA kernel for Forest critters (single step)
 __global__ void critters_kernel(const critters_cell_state* current, critters_cell_state* next, 
-                            int width, int height, int step) {
-    // Calculate thread indices, adjusting for margins
+                                int width, int height, int step) {
     int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
     int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
     
     indexer idx(width, height);
     const int center_idx = idx.at(x, y);
     
-    critters_cell_state cell_state = current[center_idx];
+    critters_cell_state own_state = current[center_idx];
 
     int x_parity = x % 2;
     int y_parity = y % 2;
@@ -26,54 +25,53 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
     int y_coords[2];
     
     if (step_parity == 0) {
-        if (x_parity == 0) {
-            x_coords[0] = 0;
-            x_coords[1] = 1;
-        } else {
-            x_coords[0] = -1;
-            x_coords[1] = 0;
-        }
+        if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; } 
+        else { x_coords[0] = -1; x_coords[1] = 0; }
         
-        if (y_parity == 0) {
-            y_coords[0] = 0;
-            y_coords[1] = 1;
-        } else {
-            y_coords[0] = -1;
-            y_coords[1] = 0;
-        }
+        if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; } 
+        else { y_coords[0] = -1; y_coords[1] = 0; }
     } else { // step_parity == 1
-        if (x_parity == 0) {
-            x_coords[0] = -1;
-            x_coords[1] = 0;
-        } else {
-            x_coords[0] = 0;
-            x_coords[1] = 1;
-        }
+        if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; } 
+        else { x_coords[0] = 0; x_coords[1] = 1; }
         
-        if (y_parity == 0) {
-            y_coords[0] = -1;
-            y_coords[1] = 0;
-        } else {
-            y_coords[0] = 0;
-            y_coords[1] = 1;
-        }
+        if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; } 
+        else { y_coords[0] = 0; y_coords[1] = 1; }
     }
     
-    int neighbors_count = 0;
+    // Count the total number of live cells in the 2x2 block
+    int live_cells_in_block = 0;
     for (int dx_idx = 0; dx_idx < 2; dx_idx++) {
         int dx = x_coords[dx_idx];
         for (int dy_idx = 0; dy_idx < 2; dy_idx++) {
             int dy = y_coords[dy_idx];
             int neighbor_idx = idx.at(x + dx, y + dy);
-            neighbors_count += (current[neighbor_idx] == critters_cell_state::alive) ? 1 : 0;
+            live_cells_in_block += (current[neighbor_idx] == critters_cell_state::alive) ? 1 : 0;
         }
     }
     
     critters_cell_state next_state;
-    if (neighbors_count == 2) {
-        next_state = cell_state; // Remain the same
+
+    if (live_cells_in_block == 2) {
+        // Rule 1: No change. The block remains the same.
+        next_state = own_state;
+    } else if (live_cells_in_block == 3) {
+        // Rule 3: Flip and rotate 180 degrees.
+        // The new state is the FLIPPED state of the DIAGONAL neighbor.
+
+        int dx_opposite = x_coords[0] + x_coords[1];
+        int dy_opposite = y_coords[0] + y_coords[1];
+        
+        int opposite_idx = idx.at(x + dx_opposite, y + dy_opposite);
+        critters_cell_state opposite_state = current[opposite_idx];
+
+        next_state = (opposite_state == critters_cell_state::alive) 
+                     ? critters_cell_state::dead 
+                     : critters_cell_state::alive;
     } else {
-        next_state = (cell_state == critters_cell_state::alive) ? critters_cell_state::dead : critters_cell_state::alive;
+        // Rule 2 (covers counts 0, 1, and 4): Flip the state in place.
+        next_state = (own_state == critters_cell_state::alive) 
+                     ? critters_cell_state::dead 
+                     : critters_cell_state::alive;
     }
 
     next[center_idx] = next_state;
