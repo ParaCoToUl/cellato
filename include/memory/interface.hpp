@@ -18,10 +18,10 @@ enum class device {
 };
 
 struct properties {
-    std::size_t x_size;
-    std::size_t y_size;
+    int x_size;
+    int y_size;
 
-    CUDA_CALLABLE std::size_t idx(std::size_t x, std::size_t y) const {
+    CUDA_CALLABLE int idx(int x, int y) const {
         auto x_real = (x + x_size) % x_size;
         auto y_real = (y + y_size) % y_size;
         return y_real * x_size + x_real;
@@ -29,17 +29,13 @@ struct properties {
 };
 
 struct point {
-    std::size_t x;
-    std::size_t y;
+    int x;
+    int y;
 };
 
 template <typename grid_data_type>
 struct point_in_grid {
     using grid_t = grid_data_type;
-
-    constexpr point_in_grid() = default;
-    CUDA_CALLABLE point_in_grid(grid_data_type grid_data)
-        : grid(grid_data) {}
 
     grid_data_type grid{};
 
@@ -49,11 +45,11 @@ struct point_in_grid {
 
     int time_step = 0;
 
-    CUDA_CALLABLE std::size_t idx() const {
+    CUDA_CALLABLE int idx() const {
         return properties.idx(position.x, position.y);
     }
 
-    CUDA_CALLABLE std::size_t idx(std::size_t x, std::size_t y) const {
+    CUDA_CALLABLE int idx(int x, int y) const {
         return properties.idx(x, y);
     }
 };

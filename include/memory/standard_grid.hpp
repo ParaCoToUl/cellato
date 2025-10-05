@@ -25,8 +25,8 @@ class print_config;
 template <typename cell_type>
 struct cuda_params {
     cell_type* cuda_data;
-    std::size_t x_size;
-    std::size_t y_size;
+    int x_size;
+    int y_size;
 };
 
 template <typename cell_type, device device_type = device::CPU>
@@ -35,14 +35,14 @@ public:
     using store_type = cell_type;
     constexpr static bool HAS_OWN_PRINT = true;
 
-    grid(std::size_t x_size, std::size_t y_size)
+    grid(int x_size, int y_size)
         : _properties{x_size, y_size}, _data(x_size * y_size) {}
 
     grid() = default;
 
-    grid(std::vector<cell_type>&& data, std::size_t x_size, std::size_t y_size)
+    grid(std::vector<cell_type>&& data, int x_size, int y_size)
         : _properties{x_size, y_size}, _data(std::move(data)) {
-        if (_data.size() != x_size * y_size) {
+        if ((int)_data.size() != x_size * y_size) {
             throw std::invalid_argument("Data size does not match grid dimensions");
         }
     }
@@ -72,19 +72,19 @@ public:
         }
     }
 
-    std::size_t x_size_physical() const {
+    int x_size_physical() const {
         return _properties.x_size;
     }
 
-    std::size_t y_size_physical() const {
+    int y_size_physical() const {
         return _properties.y_size;
     }
 
-    std::size_t x_size_logical() const {
+    int x_size_logical() const {
         return _properties.x_size;
     }
 
-    std::size_t y_size_logical() const {
+    int y_size_logical() const {
         return _properties.y_size;
     }
 
@@ -97,8 +97,8 @@ public:
 
         std::vector<cell_type> new_data(new_properties.x_size * new_properties.y_size, cell_type{});
 
-        for (std::size_t y = 0; y < _properties.y_size; ++y) {
-            for (std::size_t x = 0; x < _properties.x_size; ++x) {
+        for (int y = 0; y < _properties.y_size; ++y) {
+            for (int x = 0; x < _properties.x_size; ++x) {
                 new_data[new_properties.idx(x + x_margin, y + y_margin)] = _data[_properties.idx(x, y)];
             }
         }
@@ -115,8 +115,8 @@ public:
 
         std::vector<cell_type> new_data(new_properties.x_size * new_properties.y_size);
 
-        for (std::size_t y = 0; y < new_properties.y_size; ++y) {
-            for (std::size_t x = 0; x < new_properties.x_size; ++x) {
+        for (int y = 0; y < new_properties.y_size; ++y) {
+            for (int x = 0; x < new_properties.x_size; ++x) {
                 new_data[new_properties.idx(x, y)] = _data[_properties.idx(x + x_margin, y + y_margin)];
             }
         }
@@ -129,8 +129,8 @@ public:
     }
 
     void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const requires (device_type == device::CPU) {
-        for (std::size_t y = 0; y < _properties.y_size; ++y) {
-            for (std::size_t x = 0; x < _properties.x_size; ++x) {
+        for (int y = 0; y < _properties.y_size; ++y) {
+            for (int x = 0; x < _properties.x_size; ++x) {
                 os << config.get_str(_data[_properties.idx(x, y)]) << " ";
 
                 if ((x + 1) % 8 == 0) {
@@ -181,22 +181,22 @@ public:
         std::stringstream result;
         
         // Calculate tile dimensions
-        const std::size_t tile_width = (_properties.x_size + dims - 1) / dims;
-        const std::size_t tile_height = (_properties.y_size + dims - 1) / dims;
+        const int tile_width = (_properties.x_size + dims - 1) / dims;
+        const int tile_height = (_properties.y_size + dims - 1) / dims;
         
         // Process each tile
         for (int tile_y = 0; tile_y < dims; ++tile_y) {
             for (int tile_x = 0; tile_x < dims; ++tile_x) {
                 // Calculate the boundaries of this tile
-                std::size_t start_x = tile_x * tile_width;
-                std::size_t start_y = tile_y * tile_height;
-                std::size_t end_x = std::min(start_x + tile_width, _properties.x_size);
-                std::size_t end_y = std::min(start_y + tile_height, _properties.y_size);
+                int start_x = tile_x * tile_width;
+                int start_y = tile_y * tile_height;
+                int end_x = std::min(start_x + tile_width, _properties.x_size);
+                int end_y = std::min(start_y + tile_height, _properties.y_size);
                 
                 // Sum the values in this tile
                 std::uint64_t sum = 0;
-                for (std::size_t y = start_y; y < end_y; ++y) {
-                    for (std::size_t x = start_x; x < end_x; ++x) {
+                for (int y = start_y; y < end_y; ++y) {
+                    for (int x = start_x; x < end_x; ++x) {
                         sum += static_cast<std::uint64_t>(_data[_properties.idx(x, y)]);
                     }
                 }

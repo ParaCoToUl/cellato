@@ -64,8 +64,8 @@ class traverser {
             auto next_data = next->data();
 
             // Process cells
-            for (std::size_t y = 0; y < state.properties.y_size; ++y) {
-                for (std::size_t x = 0; x < state.properties.x_size; ++x) {
+            for (int y = 0; y < state.properties.y_size; ++y) {
+                for (int x = 0; x < state.properties.x_size; ++x) {
 
                     state.position.x = x;
                     state.position.y = y;
