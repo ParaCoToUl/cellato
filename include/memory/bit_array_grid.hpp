@@ -45,18 +45,18 @@ public:
     class CellReference {
     private:
         BitArrayProxy& _proxy;
-        std::size_t _index;
+        int _index;
 
     public:
-        CUDA_CALLABLE CellReference(BitArrayProxy& proxy, std::size_t index)
+        CUDA_CALLABLE CellReference(BitArrayProxy& proxy, int index)
             : _proxy(proxy), _index(index) {}
 
         // Implicit conversion operator for reading
         CUDA_CALLABLE operator store_word_type() const {
             // Calculate which word and which bits within that word
-            std::size_t word_index = _index / _proxy.cells_per_word;
-            std::size_t bit_offset = (_index % _proxy.cells_per_word) * _proxy._bits_per_cell;
-            
+            int word_index = _index / _proxy.cells_per_word;
+            int bit_offset = (_index % _proxy.cells_per_word) * _proxy._bits_per_cell;
+
             // Extract bits for this cell
             store_word_type state_index = (_proxy._data[word_index] >> bit_offset) & _proxy._cell_mask;
             
@@ -70,12 +70,12 @@ public:
         : _data(data) {}
 
     // Operator[] returns a reference proxy for both read and write access
-    CUDA_CALLABLE CellReference get_individual_cell_at(std::size_t index) {
+    CUDA_CALLABLE CellReference get_individual_cell_at(int index) {
         return CellReference(*this, index);
     }
     
     // Const version for read-only access
-    CUDA_CALLABLE store_word_type& operator[](std::size_t index) {
+    CUDA_CALLABLE store_word_type& operator[](int index) {
         return _data[index];
     }
 };

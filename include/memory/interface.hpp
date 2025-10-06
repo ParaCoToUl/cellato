@@ -10,7 +10,11 @@
 #endif
 #endif
 
+#include "idx_type.hpp"
+
 namespace cellato::memory::grids {
+
+using idx_type = cellato::memory::idx_type;
 
 enum class device {
     CPU,
@@ -18,10 +22,10 @@ enum class device {
 };
 
 struct properties {
-    int x_size;
-    int y_size;
+    idx_type x_size;
+    idx_type y_size;
 
-    CUDA_CALLABLE int idx(int x, int y) const {
+    CUDA_CALLABLE idx_type idx(idx_type x, idx_type y) const {
         auto x_real = (x + x_size) % x_size;
         auto y_real = (y + y_size) % y_size;
         return y_real * x_size + x_real;
@@ -29,8 +33,8 @@ struct properties {
 };
 
 struct point {
-    int x;
-    int y;
+    idx_type x;
+    idx_type y;
 };
 
 template <typename grid_data_type>
@@ -43,13 +47,13 @@ struct point_in_grid {
 
     grids::point position{};
 
-    int time_step = 0;
+    idx_type time_step = 0;
 
-    CUDA_CALLABLE int idx() const {
+    CUDA_CALLABLE idx_type idx() const {
         return properties.idx(position.x, position.y);
     }
 
-    CUDA_CALLABLE int idx(int x, int y) const {
+    CUDA_CALLABLE idx_type idx(idx_type x, idx_type y) const {
         return properties.idx(x, y);
     }
 };

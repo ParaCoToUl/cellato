@@ -12,20 +12,20 @@
 namespace reference::indexing {
 
 struct indexer {
-    static constexpr std::size_t x_margin = 0;
-    static constexpr std::size_t y_margin = 0;
+    static constexpr int x_margin = 0;
+    static constexpr int y_margin = 0;
     
-    CUDA_CALLABLE indexer(std::size_t x_size, std::size_t y_size)
+    CUDA_CALLABLE indexer(int x_size, int y_size)
         : _x_size(x_size), _y_size(y_size) {};
 
-    CUDA_CALLABLE std::size_t at(std::size_t x, std::size_t y) {
+    CUDA_CALLABLE int at(int x, int y) {
         auto x_real = (x + _x_size) % _x_size;
         auto y_real = (y + _y_size) % _y_size;
         return y_real * _x_size + x_real;
     }
 
 private:
-    std::size_t _x_size, _y_size;
+    int _x_size, _y_size;
 };
 
 }

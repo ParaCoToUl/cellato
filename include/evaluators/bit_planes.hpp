@@ -15,6 +15,7 @@
 #include "../memory/bit_planes_grid.hpp"
 #include "../memory/grid_utils.hpp"
 #include "../memory/interface.hpp"
+#include "../memory/idx_type.hpp"
 
 // Use the same CUDA_CALLABLE definition as in standard evaluator
 #ifdef __CUDACC__
@@ -24,6 +25,8 @@
 #endif
 
 namespace cellato::evaluators::bit_planes {
+
+using idx_type = cellato::memory::idx_type;
 
 using namespace cellato::ast;
 using namespace cellato::core::bitwise;
@@ -258,7 +261,7 @@ struct _evaluator_impl<params, not_equals<Left, Right>> {
     }
 };
 
-template <typename params, typename Value, int bit_idx>
+template <typename params, typename Value, idx_type bit_idx>
 struct _evaluator_impl<params, has_bit_set<Value, bit_idx>> {
 
     template <typename E>
@@ -271,16 +274,13 @@ struct _evaluator_impl<params, has_bit_set<Value, bit_idx>> {
 };
 
 
-template <typename params, int x_offset, int y_offset>
+template <typename params, idx_type x_offset, idx_type y_offset>
 struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     static constexpr int vector_width_bits = sizeof(typename params::cell_row_t) * 8;
 
     using eval_state_t = state_t<params>;
     using cell_row_type = typename params::cell_row_t;
     using state_dictionary_type = typename params::state_dict_t;
-
-    constexpr static std::size_t x_offset_unsigned = static_cast<std::size_t>(x_offset);
-    constexpr static std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
         auto center = get_center_vector_int(state);
@@ -334,7 +334,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     CUDA_CALLABLE static vint get_center_vector_int(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto idx = state.properties.idx(x, y + y_offset_unsigned);
+        auto idx = state.properties.idx(x, y + y_offset);
 
         return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
     }
@@ -342,7 +342,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     CUDA_CALLABLE static vint get_neighbor_vector_int(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto idx = state.properties.idx(x + x_offset_unsigned, y + y_offset_unsigned);
+        auto idx = state.properties.idx(x + x_offset, y + y_offset);
 
         return vector_int_factory::load_from<cell_row_type>(state.grid, idx);
     }

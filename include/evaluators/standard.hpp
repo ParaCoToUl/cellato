@@ -7,6 +7,7 @@
 
 #include "../core/ast.hpp"
 #include "../memory/interface.hpp"
+#include "../memory/idx_type.hpp"
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE __host__ __device__
@@ -15,6 +16,8 @@
 #endif
 
 namespace cellato::evaluators::standard {
+
+using idx_type = cellato::memory::idx_type;
 
 using namespace cellato::ast;
 using namespace cellato::memory;
@@ -139,7 +142,7 @@ struct evaluator<cell_type, not_equals<Left, Right>, cell_ptr_type> {
     }
 };
 
-template <typename cell_type, typename cell_ptr_type, int x_offset, int y_offset>
+template <typename cell_type, typename cell_ptr_type, idx_type x_offset, idx_type y_offset>
 struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
     static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
         return state.grid[state.idx(
@@ -148,7 +151,7 @@ struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
     }
 };
 
-template <typename cell_type, typename cell_ptr_type, typename Value, int bit_idx>
+template <typename cell_type, typename cell_ptr_type, typename Value, idx_type bit_idx>
 struct evaluator<cell_type, has_bit_set<Value, bit_idx>, cell_ptr_type> {
     CUDA_CALLABLE static auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         auto val = evaluator<cell_type, Value, cell_ptr_type>::evaluate(state);
@@ -204,7 +207,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
             else { y_coords[0] = 0; y_coords[1] = 1; }
         }
 
-        auto get_cell = [](state_t<cell_type, cell_ptr_type> state, int x_offset, int y_offset) {
+        auto get_cell = [](state_t<cell_type, cell_ptr_type> state, idx_type x_offset, idx_type y_offset) {
             return state.grid[state.idx(state.position.x + x_offset, state.position.y + y_offset)];
         };
 

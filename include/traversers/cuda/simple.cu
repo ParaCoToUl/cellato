@@ -5,6 +5,7 @@
 #include "./simple.hpp"
 #include "../../memory/standard_grid.hpp"
 #include "../../memory/interface.hpp"
+#include "../../memory/idx_type.hpp"
 #include "../../evaluators/standard.hpp"
 #include "../../core/ast.hpp"
 #include "../traverser_utils.hpp"
@@ -12,17 +13,19 @@
 
 namespace cellato::traversers::cuda::simple {
 
+using idx_type = cellato::memory::idx_type;
+
 template <typename evaluator_t, typename grid_data_t, typename output_data_t>
 __global__ void process_grid_kernel_simple(
     grid_data_t input_data,
     output_data_t output_data,
-    size_t width,
-    size_t height,
-    int time_step
+    idx_type width,
+    idx_type height,
+    idx_type time_step
 ) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    
+    idx_type x = blockIdx.x * blockDim.x + threadIdx.x;
+    idx_type y = blockIdx.y * blockDim.y + threadIdx.y;
+
     cellato::memory::grids::point_in_grid state(input_data);
 
     state.properties.x_size = width;
@@ -41,13 +44,13 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
 
     auto current = &_input_grid_cuda;
     auto next = &_intermediate_grid_cuda;
-    
-    size_t width = current->x_size_physical();
-    size_t height = current->y_size_physical();
+
+    idx_type width = current->x_size_physical();
+    idx_type height = current->y_size_physical();
 
     // Toroidal wrapping - same width and height
-    size_t width_threads = width;
-    size_t height_threads = height;
+    idx_type width_threads = width;
+    idx_type height_threads = height;
 
     dim3 blockDim(_block_size_x, _block_size_y);
     dim3 gridDim(
@@ -59,7 +62,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
         call_callback(0, current);
     }
 
-    for (int step = 0; step < steps; ++step) {
+    for (idx_type step = 0; step < steps; ++step) {
         auto input_data = current->data();
         auto output_data = next->data();
         

@@ -17,6 +17,7 @@
 #include "../memory/bit_planes_grid.hpp"
 #include "../memory/grid_utils.hpp"
 #include "../memory/interface.hpp"
+#include "../memory/idx_type.hpp"
 
 // Use the same CUDA_CALLABLE definition as in standard evaluator
 #ifdef __CUDACC__
@@ -26,6 +27,8 @@
 #endif
 
 namespace cellato::evaluators::tiled_bit_planes {
+
+using idx_type = cellato::memory::idx_type;
 
 using namespace cellato::ast;
 using namespace cellato::core::bitwise;
@@ -73,16 +76,13 @@ using evaluator = _evaluator_impl<
 
 
 // Partial specialization for neighbor_at
-template <typename params, int x_offset, int y_offset>
+template <typename params, idx_type x_offset, idx_type y_offset>
 struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     static constexpr int vector_width_bits = sizeof(typename params::cell_row_t) * 8;
 
     using eval_state_t = state_t<params>;
     using cell_row_type = typename params::cell_row_t;
     using state_dictionary_type = typename params::state_dict_t;
-
-    constexpr static std::size_t x_offset_unsigned = static_cast<std::size_t>(x_offset);
-    constexpr static std::size_t y_offset_unsigned = static_cast<std::size_t>(y_offset);
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
         auto center = get_center_offsetted(state);
@@ -124,18 +124,18 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         auto center = load_at(state, x, y);
 
         if constexpr (y_offset > 0) {
-            center = center.template get_right_shifted_vector<y_offset_unsigned * x_tile_size>();
+            center = center.template get_right_shifted_vector<y_offset * x_tile_size>();
         } else if constexpr (y_offset < 0) {
-            center = center.template get_left_shifted_vector<-y_offset_unsigned * x_tile_size>();
+            center = center.template get_left_shifted_vector<-y_offset * x_tile_size>();
         }
 
         if constexpr (x_offset > 0) {
             center = center
-                .template get_right_shifted_vector<x_offset_unsigned>()
+                .template get_right_shifted_vector<x_offset>()
                 .template get_ANDed_each_plane_with<~RIGHT_BORDER>();
         } else if constexpr (x_offset < 0) {
             center = center
-                .template get_left_shifted_vector<-x_offset_unsigned>()
+                .template get_left_shifted_vector<-x_offset>()
                 .template get_ANDed_each_plane_with<~LEFT_BORDER>(); 
         }
 
@@ -145,7 +145,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     CUDA_CALLABLE static vint get_horizontal_neighbor(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto neighbor_x = load_at(state, x + x_offset_unsigned, y);
+        auto neighbor_x = load_at(state, x + x_offset, y);
 
         constexpr int shift = x_tile_size - abs(x_offset);
 
@@ -162,9 +162,9 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         static_assert(x_offset != 0, "x_offset must be non-zero");
 
         if constexpr (y_offset > 0) {
-            neighbor_x = neighbor_x.template get_right_shifted_vector<y_offset_unsigned * x_tile_size>();
+            neighbor_x = neighbor_x.template get_right_shifted_vector<y_offset * x_tile_size>();
         } else if constexpr (y_offset < 0) {
-            neighbor_x = neighbor_x.template get_left_shifted_vector<-y_offset_unsigned * x_tile_size>();
+            neighbor_x = neighbor_x.template get_left_shifted_vector<-y_offset * x_tile_size>();
         }
 
         return neighbor_x;
@@ -173,7 +173,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     CUDA_CALLABLE static vint get_vertical_neighbor(eval_state_t state) {
         auto x = state.position.x;
         auto y = state.position.y;
-        auto neighbor_y = load_at(state, x, y + y_offset_unsigned);
+        auto neighbor_y = load_at(state, x, y + y_offset);
 
         constexpr int shift = (y_tile_size - abs(y_offset)) * x_tile_size;
 
@@ -187,12 +187,12 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         
         if constexpr (x_offset > 0) {
             neighbor_y = neighbor_y
-                .template get_right_shifted_vector<x_offset_unsigned>()
+                .template get_right_shifted_vector<x_offset>()
                 .template get_ANDed_each_plane_with<~RIGHT_BORDER>();
         } else if constexpr (x_offset < 0) {
             neighbor_y = neighbor_y
-                .template get_left_shifted_vector<-x_offset_unsigned>()
-                .template get_ANDed_each_plane_with<~LEFT_BORDER>(); 
+                .template get_left_shifted_vector<-x_offset>()
+                .template get_ANDed_each_plane_with<~LEFT_BORDER>();
         }
 
         return neighbor_y;
@@ -203,7 +203,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         
         auto x = state.position.x;
         auto y = state.position.y;
-        auto neighbor_xy = load_at(state, x + x_offset_unsigned, y + y_offset_unsigned);
+        auto neighbor_xy = load_at(state, x + x_offset, y + y_offset);
 
         // Bottom-right
         if constexpr (x_offset > 0 && y_offset > 0) {

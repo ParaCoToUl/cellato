@@ -15,6 +15,7 @@
 #include <stdexcept>
 
 #include "../memory/grid_utils.hpp"
+#include "../memory/idx_type.hpp"
 
 // Add CUDA_CALLABLE macro definition
 #ifdef __CUDACC__
@@ -24,6 +25,8 @@
 #endif
 
 namespace cellato::core::bitwise {
+
+using idx_type = cellato::memory::idx_type;
 
 using namespace cellato::memory::grids::utils;
 
@@ -181,7 +184,7 @@ class vector_int {
         }
         #endif
 
-        for_each_bit([&]<std::size_t bit_idx>() {
+        for_each_bit([&]<idx_type bit_idx>() {
             auto ith_bit = static_cast<vector_store_type>((value >> bit_idx) & 1);
 
             auto old_value = std::get<bit_idx>(numbers);
@@ -201,7 +204,7 @@ class vector_int {
 
         val_t value = 0;
 
-        for_each_bit([&]<std::size_t bit_idx>() {
+        for_each_bit([&]<idx_type bit_idx>() {
             auto word = std::get<bit_idx>(numbers);
             auto bit = (word >> index) & 1;
 
@@ -214,7 +217,7 @@ class vector_int {
     std::string to_str() const {
         std::string str;
 
-        for (std::size_t i = 0; i < width_in_bits; ++i) {
+        for (idx_type i = 0; i < width_in_bits; ++i) {
             str += std::to_string(get_at(i)) + " ";
         }
 
@@ -234,7 +237,7 @@ class vector_int {
 
         vector_store_type carry = std::get<0>(numbers) & std::get<0>(other.numbers);
 
-        for_each_in<min_bits - 1>([&]<std::size_t i>() {
+        for_each_in<min_bits - 1>([&]<idx_type i>() {
             constexpr auto next_bit_idx = i + 1;
 
             // Get bits from both vectors at the current position
@@ -251,7 +254,7 @@ class vector_int {
 
         if constexpr (other_bits > bits) {
             // Fix: Properly propagate carry through all bits of the larger vector
-            for_each_in<other_bits - bits>([&]<std::size_t i>() {
+            for_each_in<other_bits - bits>([&]<idx_type i>() {
                 constexpr auto bit_idx = min_bits + i;
 
                 // Get bit from the larger vector
@@ -265,7 +268,7 @@ class vector_int {
             });
         } else if constexpr (other_bits < bits) {
             // Fix: Same correction for when the first vector is larger
-            for_each_in<bits - other_bits>([&]<std::size_t i>() {
+            for_each_in<bits - other_bits>([&]<idx_type i>() {
                 constexpr auto bit_idx = min_bits + i;
 
                 // Get bit from the larger vector
@@ -307,7 +310,7 @@ class vector_int {
         vector_store_type mask) const {
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
             auto masked_word = word & mask;
 
@@ -322,7 +325,7 @@ class vector_int {
         vector_int<vector_store_type, target_bits> result;
         constexpr auto min_bits = (target_bits < bits ? target_bits : bits);
 
-        for_each_in<min_bits>([&]<std::size_t i>() {
+        for_each_in<min_bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
             std::get<i>(result.numbers) = word;
         });
@@ -351,7 +354,7 @@ class vector_int {
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_ANDed_each_plane_with() const {
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
             auto masked_word = word & constant;
 
@@ -388,14 +391,14 @@ class vector_int {
 
     template <typename tuple_of_pointers_storage_t>
     CUDA_CALLABLE static vector_int<vector_store_type, bits> load_from(
-        tuple_of_pointers_storage_t storage, std::size_t offset) {
+        tuple_of_pointers_storage_t storage, idx_type offset) {
 
         vector_int<vector_store_type, bits> result;
 
         constexpr auto storage_size = std::tuple_size_v<tuple_of_pointers_storage_t>;
         constexpr auto loaded_bits = std::min<int>(storage_size, bits);
 
-        for_each_in<loaded_bits>([&]<std::size_t bit_idx>() {
+        for_each_in<loaded_bits>([&]<idx_type bit_idx>() {
             auto ptr_to_ith_storage = std::get<bit_idx>(storage);
             std::get<bit_idx>(result.numbers) = ptr_to_ith_storage[offset];
         });
@@ -406,12 +409,12 @@ class vector_int {
     static constexpr bool has_save_to_method = true;
 
     template <typename tuple_of_pointers_storage_t>
-    CUDA_CALLABLE void save_to(tuple_of_pointers_storage_t storage, std::size_t offset) const {
+    CUDA_CALLABLE void save_to(tuple_of_pointers_storage_t storage, idx_type offset) const {
 
         constexpr auto storage_size = std::tuple_size_v<tuple_of_pointers_storage_t>;
         constexpr auto saved_bits = std::min<int>(storage_size, bits);
 
-        for_each_in<saved_bits>([&]<std::size_t bit_idx>() {
+        for_each_in<saved_bits>([&]<idx_type bit_idx>() {
             auto ptr_to_ith_storage = std::get<bit_idx>(storage);
             ptr_to_ith_storage[offset] = std::get<bit_idx>(numbers);
         });
@@ -424,7 +427,7 @@ class vector_int {
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = constats_ops<vector_store_type>::ones;
 
-        for_each_in<min_bits>([&]<std::size_t i>() {
+        for_each_in<min_bits>([&]<idx_type i>() {
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
 
@@ -432,13 +435,13 @@ class vector_int {
         });
 
         if constexpr (other_bits < bits) {
-            for_each_in<bits - other_bits>([&]<std::size_t i>() {
+            for_each_in<bits - other_bits>([&]<idx_type i>() {
                 auto a = std::get<min_bits + i>(numbers);
                 result &= ~a;
             });
         }
         else if constexpr (other_bits > bits) {
-            for_each_in<other_bits - bits>([&]<std::size_t i>() {
+            for_each_in<other_bits - bits>([&]<idx_type i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
                 result &= ~a;
             });
@@ -454,7 +457,7 @@ class vector_int {
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = 0;
 
-        for_each_in<min_bits>([&]<std::size_t i>() {
+        for_each_in<min_bits>([&]<idx_type i>() {
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
 
@@ -462,13 +465,13 @@ class vector_int {
         });
 
         if constexpr (other_bits < bits) {
-            for_each_in<bits - other_bits>([&]<std::size_t i>() {
+            for_each_in<bits - other_bits>([&]<idx_type i>() {
                 auto a = std::get<min_bits + i>(numbers);
                 result |= a;
             });
         }
         else if constexpr (other_bits > bits) {
-            for_each_in<other_bits - bits>([&]<std::size_t i>() {
+            for_each_in<other_bits - bits>([&]<idx_type i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
                 result |= a;
             });
@@ -484,7 +487,7 @@ class vector_int {
 
         vector_store_type result = constats_ops<vector_store_type>::ones;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto a = std::get<i>(numbers);
 
             constexpr auto constant_is_set =
@@ -510,8 +513,8 @@ class vector_int {
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         
         if constexpr (bits > other_bits) {
-            for_each_in<bits - other_bits>([&]<std::size_t i_lower>() {
-                constexpr std::size_t i = bits - i_lower - 1;
+            for_each_in<bits - other_bits>([&]<idx_type i_lower>() {
+                constexpr idx_type i = bits - i_lower - 1;
                 auto a = std::get<i>(numbers);
 
                 result = result | a;
@@ -521,16 +524,16 @@ class vector_int {
         decided = result;
         
         if constexpr (other_bits > bits) {
-            for_each_in<other_bits - bits>([&]<std::size_t i_lower>() {
-                constexpr std::size_t i = other_bits - i_lower - 1;
+            for_each_in<other_bits - bits>([&]<idx_type i_lower>() {
+                constexpr idx_type i = other_bits - i_lower - 1;
 
                 auto b = std::get<i>(other.numbers);
                 decided = decided | b;
             });
         }
 
-        for_each_in<min_bits>([&]<std::size_t i_lower>() {
-            constexpr std::size_t i = min_bits - i_lower - 1;
+        for_each_in<min_bits>([&]<idx_type i_lower>() {
+            constexpr idx_type i = min_bits - i_lower - 1;
 
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
@@ -553,8 +556,8 @@ class vector_int {
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         
         if constexpr (other_bits > bits) {
-            for_each_in<other_bits - bits>([&]<std::size_t i_lower>() {
-                constexpr std::size_t i = other_bits - i_lower - 1;
+            for_each_in<other_bits - bits>([&]<idx_type i_lower>() {
+                constexpr idx_type i = other_bits - i_lower - 1;
 
                 auto b = std::get<i>(other.numbers);
                 result = result | b;
@@ -564,16 +567,16 @@ class vector_int {
         decided = result;
 
         if constexpr (bits > other_bits) {
-            for_each_in<bits - other_bits>([&]<std::size_t i_lower>() {
-                constexpr std::size_t i = bits - i_lower - 1;
+            for_each_in<bits - other_bits>([&]<idx_type i_lower>() {
+                constexpr idx_type i = bits - i_lower - 1;
                 auto a = std::get<i>(numbers);
 
                 decided = decided | a;
             });
         }
 
-        for_each_in<min_bits>([&]<std::size_t i_lower>() {
-            constexpr std::size_t i = min_bits - i_lower - 1;
+        for_each_in<min_bits>([&]<idx_type i_lower>() {
+            constexpr idx_type i = min_bits - i_lower - 1;
 
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
@@ -591,7 +594,7 @@ class vector_int {
         
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
 
             auto left_part = (word & mask);
@@ -608,7 +611,7 @@ class vector_int {
         
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
 
             auto left_part = (word & mask);
@@ -623,9 +626,9 @@ class vector_int {
   private:
     store_t numbers;
 
-    template <typename Callback, std::size_t... Is>
+    template <typename Callback, std::size_t ... Is>
     CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
-        (cb.template operator()<Is>(), ...);
+        (cb.template operator()<static_cast<idx_type>(Is)>(), ...);
     }
 
     template <typename Callback>
@@ -633,7 +636,7 @@ class vector_int {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<bits>{});
     }
 
-    template <std::size_t count, typename Callback>
+    template <idx_type count, typename Callback>
     CUDA_CALLABLE static void for_each_in(Callback&& cb) {
         for_each_bit_impl(std::forward<Callback>(cb), std::make_index_sequence<count>{});
     }
@@ -642,7 +645,7 @@ class vector_int {
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_shifted_vector(int shift) const {
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             vector_store_type word = std::get<i>(numbers);
             vector_store_type shifted_word = shift_op_t::apply(word, shift);
 
@@ -656,7 +659,7 @@ class vector_int {
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_shifted_vector() const {
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
             auto shifted_word = shift_op_t::template apply<shift>(word);
 
@@ -690,7 +693,7 @@ class vector_int {
 
         vector_int<vector_store_type, max_bits> result;
 
-        for_each_in<min_bits>([&]<std::size_t i>() {
+        for_each_in<min_bits>([&]<idx_type i>() {
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
 
@@ -698,14 +701,14 @@ class vector_int {
         });
 
         if constexpr (other_bits < bits) {
-            for_each_in<bits - min_bits>([&]<std::size_t i>() {
+            for_each_in<bits - min_bits>([&]<idx_type i>() {
                 constexpr auto action = op_t::template action_for_bit<int, 0>(0);
 
                 auto a = std::get<min_bits + i>(numbers);
                 std::get<min_bits + i>(result.numbers) = apply_action<action>(a);
             });
         } else if constexpr (other_bits > bits) {
-            for_each_in<other_bits - min_bits>([&]<std::size_t i>() {
+            for_each_in<other_bits - min_bits>([&]<idx_type i>() {
                 constexpr auto action = op_t::template action_for_bit<int, 0>(0);
 
                 auto a = std::get<min_bits + i>(other.numbers);
@@ -720,7 +723,7 @@ class vector_int {
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_oped() const {
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             auto word = std::get<i>(numbers);
             auto oped_word = op_t::apply(word);
 
@@ -734,7 +737,7 @@ class vector_int {
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_oped() const {
         vector_int<vector_store_type, bits> result;
 
-        for_each_in<bits>([&]<std::size_t i>() {
+        for_each_in<bits>([&]<idx_type i>() {
             constexpr auto action = op_t::template action_for_bit<int, constant>(i);
 
             auto word = std::get<i>(numbers);
@@ -757,7 +760,7 @@ struct vector_int_factory {
 
         vector_int<vector_store_type, bits + 1> result;
 
-        for_each_in<bits + 1>([&]<std::size_t bit_idx>() {
+        for_each_in<bits + 1>([&]<idx_type bit_idx>() {
             constexpr auto is_set
                 = constats_ops<vector_store_type>::template is_set_at<constant>(bit_idx);
 
@@ -781,7 +784,7 @@ struct vector_int_factory {
     }
 
     template <typename vector_store_type, typename pointer_storage_t>
-    CUDA_CALLABLE static auto load_from(pointer_storage_t storage, std::size_t offset) {
+    CUDA_CALLABLE static auto load_from(pointer_storage_t storage, idx_type offset) {
         constexpr auto bits = std::tuple_size_v<pointer_storage_t>;
         static_assert(bits > 0, "Storage must have at least one element");
 
@@ -789,9 +792,9 @@ struct vector_int_factory {
     }
 
   private:
-    template <typename Callback, std::size_t... Is>
+    template <typename Callback, std::size_t ... Is>
     CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
-        (cb.template operator()<Is>(), ...);
+        (cb.template operator()<static_cast<idx_type>(Is)>(), ...);
     }
 
     template <int count, typename Callback>

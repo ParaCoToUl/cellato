@@ -8,11 +8,13 @@
 #include <memory>
 
 #include "../../memory/interface.hpp"
+#include "../../memory/idx_type.hpp"
 #include "../../experiments/run_params.hpp"
 #include "../traverser_utils.hpp"
 
 namespace cellato::traversers::cuda::simple {
 
+using idx_type = cellato::memory::idx_type;
 using namespace cellato::traversers::utils;
 
 enum class _run_mode {
@@ -70,7 +72,7 @@ class traverser {
     
 private:
     template <_run_mode mode>
-    void run_kernel(int steps);
+    void run_kernel(idx_type steps);
     
     grid_t _input_grid;
     cuda_grid_t _input_grid_cuda;
