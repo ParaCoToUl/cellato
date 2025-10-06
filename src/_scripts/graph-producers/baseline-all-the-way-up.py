@@ -7,7 +7,7 @@ import numpy as np
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from abstractions.results_abstractions import CSVLoader, AUTOMATA
 
-path_to_csv = "../results/grid-search-results.csv"
+path_to_csv = "../results/16k-hot-results.csv"
 size=16384
 loader = CSVLoader(path_to_csv)
 size_group = loader.get_groups_by_sizes([size**2])[size**2]

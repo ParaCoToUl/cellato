@@ -4,7 +4,7 @@ import sys
 import subprocess
 import time
 
-EXE_PATH = "bin/cellato"
+EXE_PATH = "bin_critters/cellato"
 
 ROUNDS = 1         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds
@@ -19,25 +19,25 @@ STEPS =                       [128]
 Y_BLOCK_SIZES = [2, 4, 8, 16, 32]
 TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a single bit automaton using 32-bit precision
 PRECISIONS = [32, 64]
-TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24]
 
 AUTOMATA_TO_TEST = [
-    # "game-of-life",
-    # "brian",
-    # "maze",
-    "critters",
+    "game-of-life",
+    "brian",
+    "maze",
     "forest-fire",
     "wire",
     "traffic",
     "greenberg-hastings",
     "hpp",
     "cyclic",
+    "critters",
 ]
 
 
 AUTOMATA_bits = {
     "game-of-life": 1,
-    "brian": 1,
+    "brian": 2,
     "maze": 1,
     "critters": 1,
     "forest-fire": 2,
@@ -61,14 +61,33 @@ average_halo_radii = {
     "cyclic": 1.0,
 }
 
-
-shared_memory_size = 228 * 1024  # 228kB on H100
-def get_max_y_temporal_tile_for(bits, temporal_tile_size_x, precision):
-    for test_size_y in reversed(TEMPORAL_TILE_SIZES_Y):
-        required_shared_memory = 2 * temporal_tile_size_x * test_size_y * (precision // 8) * bits
-
-        if required_shared_memory <= shared_memory_size:
-            return test_size_y
+# max sizes for H100 GPU
+biggest_temporal_tile_size_for_automata = {
+    32: {
+        "game-of-life": 128,
+        "brian": 64,
+        "maze": 128,
+        "critters": 128,
+        "forest-fire": 64,
+        "wire": 64,
+        "traffic": 64,
+        "greenberg-hastings": 64,
+        "hpp": 32,
+        "cyclic": 32,
+    },
+    64: {
+        "game-of-life": 64,
+        "brian": 32,
+        "maze": 64,
+        "critters": 64,
+        "forest-fire": 32,
+        "wire": 32,
+        "traffic": 32,
+        "greenberg-hastings": 32,
+        "hpp": 16,
+        "cyclic": 16,
+    }
+}
 
 terminal_supports_colors = sys.stdout.isatty() and os.name != 'nt' and 'NO_COLOR' not in os.environ
 
@@ -240,11 +259,11 @@ class TemporalLinearImplementation:
         effective_temporal_tile_size_x, effective_temporal_tile_size_y \
             = TemporalLinearImplementation.get_effective_xy_block_size(tc)
 
-        cells_per_word_in_x = tc.precision
-        cells_per_word_in_y = 1
+        x_word_tile_size = tc.precision
+        y_word_tile_size = 1
 
-        x_divisor = effective_temporal_tile_size_x * cells_per_word_in_x
-        y_divisor = effective_temporal_tile_size_y * cells_per_word_in_y
+        x_divisor = effective_temporal_tile_size_x * x_word_tile_size
+        y_divisor = effective_temporal_tile_size_y * y_word_tile_size
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
 
@@ -269,11 +288,11 @@ class TemporalTiledBitPlanesImplementation:
         effective_temporal_tile_size_x, effective_temporal_tile_size_y \
             = TemporalTiledBitPlanesImplementation.get_effective_xy_block_size(tc)
 
-        cells_per_word_in_x = 8
-        cells_per_word_in_y = tc.precision // cells_per_word_in_x
+        x_word_tile_size = 8
+        y_word_tile_size = tc.precision // x_word_tile_size
 
-        x_divisor = effective_temporal_tile_size_x * cells_per_word_in_x
-        y_divisor = effective_temporal_tile_size_y * cells_per_word_in_y
+        x_divisor = effective_temporal_tile_size_x * x_word_tile_size
+        y_divisor = effective_temporal_tile_size_y * y_word_tile_size
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
 
@@ -355,11 +374,7 @@ class ParamsGenerator:
     def _generate_with_temporal_tile_size_y(self, tc: TestCase):
         all = []
 
-        temporal_tile_size_y = get_max_y_temporal_tile_for(
-            bits = AUTOMATA_bits[tc.automaton],
-            temporal_tile_size_x = 32,
-            precision = tc.precision
-        )
+        temporal_tile_size_y = biggest_temporal_tile_size_for_automata[tc.precision][tc.automaton]
 
         passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
         

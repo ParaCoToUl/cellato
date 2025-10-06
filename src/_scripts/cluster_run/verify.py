@@ -159,11 +159,7 @@ def main():
                 for temporal_steps in TEMPORAL_STEPS:
                     tc_tsteps = tc_prec.clone().with_temporal_steps(temporal_steps)
 
-                    max_y_tile = cuda_test.get_max_y_temporal_tile_for(
-                        bits=cuda_test.AUTOMATA_bits[automaton],
-                        temporal_tile_size_x=32,
-                        precision=precision
-                    )
+                    max_y_tile = cuda_test.biggest_temporal_tile_size_for_automata[precision][automaton]
                     
                     if max_y_tile is None:
                         continue

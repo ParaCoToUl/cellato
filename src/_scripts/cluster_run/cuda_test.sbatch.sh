@@ -6,7 +6,7 @@
 #SBATCH --mem=128GB            # memory
 #SBATCH --time=168:00:00       # time limit (HH:MM:SS)
 #SBATCH --gres=gpu:H100        # GPU resource
-#SBATCH -o __slurm__/job-%j.out        # output file (%j expands to job ID)
+#SBATCH -o ../__slurm__/job-%j.out        # output file (%j expands to job ID)
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -23,6 +23,6 @@ ID=$(date +%Y%m%d-%H%M%S)
 
 # Run the Python script from scripts folder regardless of where this sbatch is called from
 # cd "${SCRIPT_DIR}"
-python ${SCRIPT_DIR}/cuda_test.py > ${SCRIPT_DIR}/../results/cuda_test_${ID}.csv
+python ./cuda_test.py > ./results/cuda_test_${ID}.csv
 
 echo "Job completed"

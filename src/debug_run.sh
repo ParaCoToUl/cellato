@@ -36,10 +36,15 @@ traverser="simple"
 type="standard"
 device="CUDA"
 
-# bit tiles
+# bit planes linear
 # traverser="simple"
-# type="tiled_bit_planes"
+# type="bit_planes"
 # device="CUDA"
+
+# bit tiles
+traverser="simple"
+type="tiled_bit_planes"
+device="CUDA"
 
 # temporal
 # traverser="temporal"
@@ -47,9 +52,9 @@ device="CUDA"
 # device="CUDA"
 
 # temporal tiled
-traverser="temporal"
-type="tiled_bit_planes"
-device="CUDA"
+# traverser="temporal"
+# type="tiled_bit_planes"
+# device="CUDA"
 
 args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 2 --warmup_rounds 0 --cuda_block_size_y 8 --temporal_tile_size_y 16 --temporal_steps 4"
 

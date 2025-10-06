@@ -5,9 +5,22 @@ import numpy as np
 
 # --- 1. Data Loading ---
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from abstractions.results_abstractions import CSVLoader, AUTOMATA
+from abstractions.results_abstractions import CSVLoader
 
-path_to_csv = "../results/grid-search-results.csv"
+AUTOMATA=[
+    "game-of-life",
+    "forest-fire",
+    "wire",
+    "greenberg-hastings",
+    "brian",
+    "cyclic",
+    "traffic",
+    "hpp",
+    "maze",
+    "critters"
+]
+
+path_to_csv = "../results/16k-hot-results.csv"
 size=16384
 loader = CSVLoader(path_to_csv)
 size_group = loader.get_groups_by_sizes([size**2])[size**2]
