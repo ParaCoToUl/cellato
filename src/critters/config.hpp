@@ -11,7 +11,7 @@ namespace critters {
 
 struct config {
 
-    static constexpr auto name = "critters";
+    static constexpr char name[] = "critters";
 
     static constexpr double average_halo_radius = 1.0;
 

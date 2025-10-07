@@ -11,7 +11,7 @@ namespace game_of_life {
 
 struct config {
 
-    static constexpr auto name = "game-of-life";
+    static constexpr char name[] = "game-of-life";
 
     static constexpr double average_halo_radius = 1.0;
 

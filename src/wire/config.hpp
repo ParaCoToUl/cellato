@@ -11,7 +11,7 @@ namespace wire {
 
 struct config {
 
-    static constexpr auto name = "wire";
+    static constexpr char name[] = "wire";
 
     static constexpr double average_halo_radius = 1.0;
 

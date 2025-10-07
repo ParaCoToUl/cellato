@@ -11,7 +11,7 @@ namespace greenberg {
 
 struct config {
     
-    static constexpr auto name = "greenberg-hastings";
+    static constexpr char name[] = "greenberg-hastings";
 
     static constexpr double average_halo_radius = 1.0;
 

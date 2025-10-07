@@ -12,7 +12,7 @@ namespace maze {
 
 struct config {
 
-    static constexpr auto name = "maze";
+    static constexpr char name[] = "maze";
 
     static constexpr double average_halo_radius = 1.0;
 

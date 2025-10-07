@@ -11,7 +11,7 @@ namespace brian {
 
 struct config {
 
-    static constexpr auto name = "brian";
+    static constexpr char name[] = "brian";
 
     static constexpr double average_halo_radius = 1.0;
 

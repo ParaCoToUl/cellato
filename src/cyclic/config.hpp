@@ -11,7 +11,7 @@ namespace cyclic {
 
 struct config {
 
-    static constexpr auto name = "cyclic";
+    static constexpr char name[] = "cyclic";
 
     static constexpr double average_halo_radius = 1.0;
 

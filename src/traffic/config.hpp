@@ -11,7 +11,7 @@ namespace traffic {
 
 struct config {
 
-    static constexpr auto name = "traffic";
+    static constexpr char name[] = "traffic";
 
     static constexpr double average_halo_radius = 1.0;
 

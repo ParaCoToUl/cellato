@@ -12,7 +12,7 @@ namespace fire {
 
 struct config {
 
-    static constexpr auto name = "forest-fire";
+    static constexpr char name[] = "forest-fire";
 
     static constexpr double average_halo_radius = 1.0;
 

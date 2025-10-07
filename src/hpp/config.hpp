@@ -11,7 +11,7 @@ namespace hpp {
 
 struct config {
 
-    static constexpr auto name = "hpp";
+    static constexpr char name[] = "hpp";
 
     static constexpr double average_halo_radius = 1.0;
 
