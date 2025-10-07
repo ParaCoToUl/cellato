@@ -485,13 +485,13 @@ def main():
     generator = ParamsGenerator()
     test_cases = generator.generate()
 
-    # test_cases = [tc for tc in test_cases if 'temporal' not in tc]  # TEMPORAL TESTS ARE DISABLED FOR NOW
-    # test_cases = [tc for tc in test_cases if 'bit_array' not in tc]  # ONLY 32-BIT TESTS FOR NOW
-    # test_cases = [tc for tc in test_cases if 'bit_planes' not in tc]  # ONLY 32-BIT TESTS FOR NOW
-    # # for t in test_cases:
-    # #     print(t, file=sys.stderr)
+    test_cases = [tc for tc in test_cases if 'temporal' not in tc]  # TEMPORAL TESTS ARE DISABLED FOR NOW
+    test_cases = [tc for tc in test_cases if 'bit_array' not in tc]  # ONLY 32-BIT TESTS FOR NOW
+    test_cases = [tc for tc in test_cases if 'bit_planes' not in tc]  # ONLY 32-BIT TESTS FOR NOW
+    # for t in test_cases:
+    #     print(t, file=sys.stderr)
 
-    # # exit(0)
+    # exit(0)
 
     empirical_time_per_case = 4 * 13.0 / 11.2
     secs_per_case = empirical_time_per_case * (ROUNDS + WARMUP)  # Rough estimate of seconds per test case

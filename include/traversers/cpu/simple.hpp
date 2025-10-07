@@ -25,6 +25,7 @@ class traverser {
     using cell_t = typename grid_t::store_type;
 
   public:
+    static constexpr bool is_CUDA = false;
 
     void init(grid_t grid, 
               const cellato::run::run_params& params) {

@@ -81,8 +81,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
 
         CUCH(cudaGetLastError());
     }
-    
-    CUCH(cudaDeviceSynchronize());
+
 
     _final_grid = current;
 }

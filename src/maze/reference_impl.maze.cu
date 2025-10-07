@@ -68,8 +68,6 @@ void runner::run_kernel(int steps) {
         d_current = d_next;
         d_next = temp;
     }
-    
-    CUCH(cudaDeviceSynchronize());
 }
 
 } // namespace maze::reference

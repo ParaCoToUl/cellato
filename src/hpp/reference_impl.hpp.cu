@@ -86,8 +86,6 @@ void runner::run_kernel(int steps) {
 
         CUCH(cudaGetLastError());
     }
-    
-    CUCH(cudaDeviceSynchronize());
 }
 
 } // namespace hpp::reference

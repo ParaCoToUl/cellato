@@ -250,8 +250,6 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
         (idx_type)_block_size_y
     );
     
-    CUCH(cudaDeviceSynchronize());
-    
     _final_grid = current;
 }
 

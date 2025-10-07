@@ -88,8 +88,6 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
 
         std::swap(current, next);
     }
-    
-    CUCH(cudaDeviceSynchronize());
 
     if (steps % 2 == 1) {
         _final_grid = next;

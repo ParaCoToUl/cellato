@@ -32,6 +32,9 @@ class traverser {
     using cell_t = typename grid_t::store_type;
 
   public:
+    static constexpr bool is_CUDA = true;
+
+    
     traverser() : _final_grid(nullptr) {}
 
     void init(grid_t grid,

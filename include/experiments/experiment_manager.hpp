@@ -4,9 +4,12 @@
 #include <vector>
 #include <thread>
 #include <iostream>
+#include <chrono>
+#include <cuda_runtime.h>
 
 #include "./run_params.hpp"
 #include "./experiment_report.hpp"
+#include "../traversers/cuda_utils.cuh"
 
 namespace cellato::run {
 
@@ -70,6 +73,10 @@ public:
 
         auto execution_time = run_traverser(traverser, params);
 
+        if (traverser.is_CUDA) {
+            CUCH(cudaDeviceSynchronize());
+        }
+
         grid_t result = traverser.fetch_result();
         auto result_as_standard = result
             .to_standard();
@@ -90,29 +97,68 @@ public:
     }
 
     double run_traverser(traverser_t& traverser, const run_params& params) {
-        auto start_time = std::chrono::high_resolution_clock::now();
+        if (traverser.is_CUDA) {
+            return time_gpu_run(traverser, params);
+        } else {
+            return time_cpu_run(traverser, params);
+        }
+    }
 
+    void dispatch_run(traverser_t& traverser, const run_params& params) {
         if (params.print) {
             traverser.run(params.steps, 
                 [&](int iter, const auto& grid) {
-                    auto standard_grid = grid
-                    .to_standard();
-
+                    auto standard_grid = grid.to_standard();
                     LOG << "\nIteration: " << iter << "\n";
                     standard_grid.print(LOG, _print_config);
-
                     std::this_thread::sleep_for(std::chrono::milliseconds(400));
                     LOG << "\n";
                 }
             );
-        }
-        else {
+        } else {
             traverser.run(params.steps);
         }
+    }
 
-        auto end_time = std::chrono::high_resolution_clock::now();
+    /**
+    * @brief Times the workload using CUDA events for high-precision GPU measurement.
+    */
+    double time_gpu_run(traverser_t& traverser, const run_params& params) {
+        cudaEvent_t start, stop;
+        CUCH(cudaEventCreate(&start));
+        CUCH(cudaEventCreate(&stop));
 
-        std::chrono::duration<double, std::milli> execution_time = end_time - start_time;
+        CUCH(cudaEventRecord(start));
+        
+        // Call the single, non-repeated dispatch function
+        dispatch_run(traverser, params); 
+
+        CUCH(cudaEventRecord(stop));
+        CUCH(cudaEventSynchronize(stop));
+
+        float milliseconds = 0;
+        CUCH(cudaEventElapsedTime(&milliseconds, start, stop));
+
+        CUCH(cudaEventDestroy(start));
+        CUCH(cudaEventDestroy(stop));
+
+        CUCH(cudaDeviceSynchronize());
+
+        return static_cast<double>(milliseconds);
+    }
+
+    /**
+    * @brief Times the workload using std::chrono, suitable for synchronous CPU code.
+    */
+    double time_cpu_run(traverser_t& traverser, const run_params& params) {
+        const auto start_time = std::chrono::high_resolution_clock::now();
+
+        // Call the single, non-repeated dispatch function
+        dispatch_run(traverser, params);
+
+        const auto end_time = std::chrono::high_resolution_clock::now();
+        const std::chrono::duration<double, std::milli> execution_time = end_time - start_time;
+        
         return execution_time.count();
     }
 

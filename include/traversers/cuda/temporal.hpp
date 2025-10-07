@@ -35,6 +35,8 @@ class traverser {
     constexpr static std::size_t word_tile_y = grid_t::y_word_tile_size;
 
   public:
+    static constexpr bool is_CUDA = true;
+
     traverser() : _final_grid(nullptr) {}
 
     void init(grid_t grid, 
