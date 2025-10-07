@@ -22,17 +22,16 @@ PRECISIONS = [32, 64]
 TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24]
 
 AUTOMATA_TO_TEST = [
+    "critters",
+    "traffic",
     "hpp",
     "game-of-life",
     "brian",
     "maze",
     "forest-fire",
     "wire",
-    "traffic",
     "greenberg-hastings",
-    "hpp",
     "cyclic",
-    "critters",
 ]
 
 
@@ -473,6 +472,14 @@ def main():
     # Generate test cases
     generator = ParamsGenerator()
     test_cases = generator.generate()
+
+    # test_cases = [tc for tc in test_cases if 'temporal' not in tc]  # TEMPORAL TESTS ARE DISABLED FOR NOW
+    # test_cases = [tc for tc in test_cases if 'bit_array' not in tc]  # ONLY 32-BIT TESTS FOR NOW
+    # test_cases = [tc for tc in test_cases if 'bit_planes' not in tc]  # ONLY 32-BIT TESTS FOR NOW
+    # # for t in test_cases:
+    # #     print(t, file=sys.stderr)
+
+    # # exit(0)
 
     empirical_time_per_case = 4 * 13.0 / 11.2
     secs_per_case = empirical_time_per_case * (ROUNDS + WARMUP)  # Rough estimate of seconds per test case

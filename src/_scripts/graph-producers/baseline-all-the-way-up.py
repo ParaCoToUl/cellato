@@ -45,40 +45,47 @@ for automaton in AUTOMATA:
     }
 print("Finished processing data. Starting plot generation.")
 
+
 # --- 2. Plotting Phase ---
 automaton_names = {
-    "game-of-life": "Game of Life", "forest-fire": "Forest Fire", "wire": "Wireworld",
-    "greenberg-hastings": "Greenberg-Hastings", "brian": "Brian's Brain", "cyclic": "Cyclic",
-    "traffic": "Traffic", "hpp": "HPP Gas", "maze": "Maze", "critters": "Critters"
+    "game-of-life": "GoL", "forest-fire": "fire", "wire": "wire",
+    "greenberg-hastings": "excitable", "brian": "brian", "cyclic": "cyclic",
+    "traffic": "traffic", "hpp": "fluid", "maze": "maze", "critters": "critters"
 }
 
 # ⚙️ Graph Configuration
-scale = 0.8
+scale = 0.9
 plot_config = {
     'y_axis_mode': 'speedup',
     'y_axis_scale': 'log',
-    'figure_size': (16*scale, 9*scale),
+    'figure_size': (16*scale, 6*scale),
     'bar_width': 0.2,
     'title': f'Performance Comparison for {size}x{size} Grid',
     'show_baseline_bar': False,
     'show_baseline_line': True,
-    'add_data_labels': True,
-    'label_fontsize': 10,
+    'add_data_labels': False,
+
+    # --- FONT SIZE CONTROLS (NEW & IMPROVED) ---
+    'title_fontsize': 20,         # Size of the plot title
+    'axis_label_fontsize': 16,    # Size of the X and Y axis labels
+    'tick_label_fontsize': 14,    # Size of the numbers/names on the axes
+    'legend_fontsize': 14,        # Size of the text in the legend
+    'data_label_fontsize': 10,    # Renamed from 'label_fontsize' for clarity
+
     'label_use_background': True,
     'label_rotation': 45,
     'label_padding': 3,
     'custom_colors': {
-        'baseline': '#003f5c', 'bit_array': '#7a5195',
-        'bit_planes': '#ef5675', 'temporal': '#ffa600'
+        'baseline': '#003f5c', 'bit_array': '#1f77b4',
+        'bit_planes': '#2ca02c', 'temporal': '#ff7f0e'
     },
-    'bar_hatches': {  # More subtle hatch patterns
-        'baseline': '/',      # single diagonal lines
-        'bit_array': '\\',    # back diagonal lines
-        'bit_planes': '.',    # dots
-        'temporal': 'o'       # small circles
+    'bar_hatches': {
+        'baseline': '/', 'bit_array': '\\',
+        'bit_planes': '.', 'temporal': 'o'
     },
-    'hatch_density': 0.5      # Controls how dense the hatches appear (lower = more subtle)
+    'hatch_density': 0.5
 }
+
 
 # --- Data Preparation ---
 labels = [automaton_names.get(a, a) for a in AUTOMATA]
@@ -113,17 +120,19 @@ bar_containers = {}
 for i, impl in enumerate(implementations):
     color = plot_config['custom_colors'].get(impl)
     hatch = plot_config['bar_hatches'].get(impl)
-    # Use a single character for more subtle hatching with density control
     if hatch and plot_config.get('hatch_density', 1) < 1:
-        hatch = hatch[0]  # Just use one character for subtlety
+        hatch = hatch[0]
     bars = ax.bar(x + offsets[i], data[impl], width, label=impl_display_names[impl], color=color, hatch=hatch)
     bar_containers[impl] = bars
 
+
 # --- Styling and Customization ---
-ax.set_ylabel(y_axis_label)
-ax.set_title(plot_config['title'])
+# Applying the new font sizes from plot_config
+ax.set_ylabel(y_axis_label, fontsize=plot_config['axis_label_fontsize']) # <-- MODIFIED
+# ax.set_title(plot_config['title'], fontsize=plot_config['title_fontsize']) # <-- MODIFIED
 ax.set_xticks(x)
-ax.set_xticklabels(labels, rotation=45, ha="right")
+ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=plot_config['tick_label_fontsize']) # <-- MODIFIED
+ax.tick_params(axis='y', labelsize=plot_config['tick_label_fontsize']) # <-- NEW: Set Y-axis tick label size
 ax.set_yscale(plot_config['y_axis_scale'])
 ax.grid(axis='y', linestyle='--', alpha=0.7)
 
@@ -139,7 +148,7 @@ if plot_config['add_data_labels']:
         label_format = '%.1fx' if plot_config['y_axis_mode'] == 'speedup' else '%d'
         ax.bar_label(bars, fmt=label_format,
                      padding=plot_config['label_padding'],
-                     fontsize=plot_config['label_fontsize'],
+                     fontsize=plot_config['data_label_fontsize'], # <-- MODIFIED (renamed key)
                      bbox=bbox_props,
                      rotation=plot_config['label_rotation'])
 
@@ -147,9 +156,10 @@ if plot_config['show_baseline_line'] and plot_config['y_axis_mode'] == 'speedup'
     current_ylim = ax.get_ylim()
     ax.set_ylim(bottom=min(1.0, current_ylim[0]), top=current_ylim[1] * 1.3)
 
-ax.legend(loc='upper left', bbox_to_anchor=(0.23, 0.98), borderaxespad=0.)
-fig.tight_layout()
+# Apply the legend font size
+ax.legend(loc='upper left', bbox_to_anchor=(0.23, 0.98), borderaxespad=0., fontsize=plot_config['legend_fontsize']) # <-- MODIFIED
+fig.tight_layout() # This is important to ensure the larger labels fit
 
 # --- Saving ---
-plt.savefig('performance_graph.png', dpi=300, bbox_inches='tight')
-print("Graph successfully saved as performance_graph.png")
+plt.savefig('performance_graph.pdf', dpi=300, bbox_inches='tight')
+print("Graph successfully saved as performance_graph.pdf!")

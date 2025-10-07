@@ -90,16 +90,17 @@ print("Finished processing data. Starting plot generation.")
 
 # --- 2. Plotting Phase ---
 automaton_names = {
-    "game-of-life": "Game of Life", "forest-fire": "Forest Fire", "wire": "Wireworld",
-    "greenberg-hastings": "Greenberg-Hastings", "brian": "Brian's Brain", "cyclic": "Cyclic",
-    "traffic": "Traffic", "hpp": "HPP Gas", "maze": "Maze", "critters": "Critters"
+    "game-of-life": "GoL", "forest-fire": "fire", "wire": "wire",
+    "greenberg-hastings": "excitable", "brian": "brian", "cyclic": "cyclic",
+    "traffic": "traffic", "hpp": "fluid", "maze": "maze", "critters": "critters"
 }
 
 # ⚙️ Graph Configuration
+scale = 0.6
 plot_config = {
     'plot_mode': 'subplots',
     'y_axis_mode': 'speedup',
-    'figure_size': (16, 8),
+    'figure_size': (16*scale, 8*scale),
     'linear_color': '#08519c',
     'tiled_color': '#006d2c'
 }
@@ -151,7 +152,7 @@ def plot_incomplete_line(ax, x_data, y_data, **kwargs):
 # --- Plotting Logic ---
 if plot_config['plot_mode'] == 'combined':
     fig, ax = plt.subplots(figsize=plot_config['figure_size'])
-    ax.set_title('Overall Effect of Temporal Blocking')
+    # ax.set_title('Overall Effect of Temporal Blocking')
 
     is_first_linear, is_first_tiled = True, True
     for automaton, y_values in plot_data.items():
@@ -171,7 +172,7 @@ if plot_config['plot_mode'] == 'combined':
 
 elif plot_config['plot_mode'] == 'subplots':
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=plot_config['figure_size'], sharey=True)
-    fig.suptitle('Effect of Temporal Blocking by Automaton')
+    # fig.suptitle('Effect of Temporal Blocking by Automaton')
 
     colors = plt.cm.get_cmap('tab10', len(AUTOMATA))
     linestyles = ['-', '--', ':', '-.']
@@ -218,8 +219,8 @@ elif plot_config['plot_mode'] == 'subplots':
                     fontsize=9)
             
     ax1.set_ylabel(y_axis_label)
-    ax2.legend()
+    ax1.legend()
 
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig('temporal_scaling_subplots.png', dpi=300)
-    print("Subplots graph saved as temporal_scaling_subplots.png")
+    plt.savefig('temporal_scaling_subplots.pdf', dpi=300)
+    print("Subplots graph saved as temporal_scaling_subplots.pdf")

@@ -56,15 +56,16 @@ print("Finished processing data. Starting plot generation.")
 
 # --- 2. Plotting Phase ---
 automaton_names = {
-    "game-of-life": "Game of Life", "forest-fire": "Forest Fire", "wire": "Wireworld",
-    "greenberg-hastings": "Greenberg-Hastings", "brian": "Brian's Brain", "cyclic": "Cyclic",
-    "traffic": "Traffic", "hpp": "HPP Gas", "maze": "Maze", "critters": "Critters"
+    "game-of-life": "GoL", "forest-fire": "fire", "wire": "wire",
+    "greenberg-hastings": "excitable", "brian": "brian", "cyclic": "cyclic",
+    "traffic": "traffic", "hpp": "fluid", "maze": "maze", "critters": "critters"
 }
 
 # ⚙️ Graph Configuration
+scale = 0.6
 plot_config = {
     'y_axis_scale': 'linear',
-    'figure_size': (16, 9),
+    'figure_size': (16*scale, 6*scale),
     'bar_width': 0.18,
     'group_gap': 0.02,
     'title': f'Linear vs. Tiled Throughput for {size}x{size} Grid', # 🆕 Updated Title
@@ -89,7 +90,7 @@ impl_display_names = {
 data = {impl: [] for impl in implementations}
 
 # 🆕 Y-axis is now throughput. The label and data calculation are changed.
-y_axis_label = "Throughput (Giga Cell Updates Per Second) — Higher is Better"
+y_axis_label = "Throughput (Giga Cell Updates Per Second)"
 for automaton in AUTOMATA:
     for impl in implementations:
         time_in_ps = bests_by_automaton[automaton][impl]
@@ -114,7 +115,7 @@ for impl in implementations:
 
 # --- Styling and Customization ---
 ax.set_ylabel(y_axis_label)
-ax.set_title(plot_config['title'])
+# ax.set_title(plot_config['title'])
 ax.set_xticks(x)
 ax.set_xticklabels(labels, rotation=45, ha="right")
 ax.set_yscale(plot_config['y_axis_scale'])
@@ -129,5 +130,5 @@ ax.legend(loc='upper left')
 fig.tight_layout()
 
 # --- Saving ---
-plt.savefig('linear_vs_tiled_throughput.png', dpi=300, bbox_inches='tight')
-print("Graph successfully saved as linear_vs_tiled_throughput.png")
+plt.savefig('linear_vs_tiled_throughput.pdf', dpi=300, bbox_inches='tight')
+print("Graph successfully saved as linear_vs_tiled_throughput.pdf")
