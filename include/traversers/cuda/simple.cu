@@ -15,6 +15,8 @@ namespace cellato::traversers::cuda::simple {
 
 using idx_type = cellato::memory::idx_type;
 
+namespace {
+
 template <typename evaluator_t, typename grid_data_t, typename output_data_t>
 __global__ void process_grid_kernel_simple(
     grid_data_t input_data,
@@ -23,19 +25,19 @@ __global__ void process_grid_kernel_simple(
     idx_type height,
     idx_type time_step
 ) {
-    idx_type x = blockIdx.x * blockDim.x + threadIdx.x;
-    idx_type y = blockIdx.y * blockDim.y + threadIdx.y;
+    const idx_type x = blockIdx.x * blockDim.x + threadIdx.x;
+    const idx_type y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    cellato::memory::grids::point_in_grid state(input_data);
+    const cellato::memory::grids::point_in_grid state{
+        .grid=input_data,
+        .properties{.x_size = width, .y_size = height},
+        .position{.x = x, .y = y},
+        .time_step = time_step
+    };
 
-    state.properties.x_size = width;
-    state.properties.y_size = height;
-    state.position.x = x;
-    state.position.y = y;
-    state.time_step = time_step;
+    save_to(output_data, state.idx(), evaluator_t::evaluate(state));
+}
 
-    auto result = evaluator_t::evaluate(state);
-    save_to(output_data, state.idx(), result);
 }
 
 template <typename evaluator_type, typename grid_type>
@@ -45,30 +47,27 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
     auto current = &_input_grid_cuda;
     auto next = &_intermediate_grid_cuda;
 
-    idx_type width = current->x_size_physical();
-    idx_type height = current->y_size_physical();
+    const idx_type width = current->x_size_physical();
+    const idx_type height = current->y_size_physical();
 
     // Toroidal wrapping - same width and height
-    idx_type width_threads = width;
-    idx_type height_threads = height;
+    const idx_type width_threads = width;
+    const idx_type height_threads = height;
 
-    dim3 blockDim(_block_size_x, _block_size_y);
-    dim3 gridDim(
-        width_threads / blockDim.x,
-        height_threads / blockDim.y
+    const dim3 blockDim(_block_size_x, _block_size_y);
+    const dim3 gridDim(
+        (width_threads + blockDim.x - 1) / blockDim.x,
+        (height_threads + blockDim.y - 1) / blockDim.y
     );
 
     if constexpr (mode == _run_mode::VERBOSE) {
         call_callback(0, current);
     }
 
-    for (idx_type step = 0; step < steps; ++step) {
-        auto input_data = current->data();
-        auto output_data = next->data();
-        
+    for (int step = 0; step < steps; ++step) {
         process_grid_kernel_simple<evaluator_t><<<gridDim, blockDim>>>(
-            input_data,
-            output_data,
+            current->data(),
+            next->data(),
             width,
             height,
             step
