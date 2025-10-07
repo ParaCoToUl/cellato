@@ -33,16 +33,16 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
     const auto incoming_from_left = (left_neighbor & LEFT);
     const auto incoming_from_right = (right_neighbor & RIGHT);
 
-    const auto vertical_collision_appears = (incoming_from_top != 0) && (incoming_from_bottom != 0);
-    const auto horizontal_collision_appears = (incoming_from_left != 0) && (incoming_from_right != 0);
+    const auto vertical_collision = (incoming_from_top != 0) & (incoming_from_bottom != 0);
+    const auto horizontal_collision = (incoming_from_left != 0) & (incoming_from_right != 0);
 
     const auto combined_vertical_incoming = incoming_from_top | incoming_from_bottom;
     const auto combined_horizontal_incoming = incoming_from_left | incoming_from_right;
 
     hpp_cell_state result = 0;
 
-    const auto just_vertical_collision = vertical_collision_appears && !((incoming_from_left != 0) || (incoming_from_right != 0));
-    const auto just_horizontal_collision = horizontal_collision_appears && !((incoming_from_top != 0) || (incoming_from_bottom != 0));
+    const auto just_vertical_collision = vertical_collision && (combined_horizontal_incoming == 0);
+    const auto just_horizontal_collision = horizontal_collision && (combined_vertical_incoming == 0);
 
     if (just_vertical_collision) {
         result |= (LEFT | RIGHT); // horizontal outgoing
