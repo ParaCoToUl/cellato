@@ -17,12 +17,13 @@ echo "Current directory: $(pwd)"
 echo "Scripts directory: ${SCRIPT_DIR}"
 
 ID=$(date +%Y%m%d-%H%M%S)
+RAND_3_LETTERS=$(tr -dc A-Z </dev/urandom | head -c 3 ; echo '')
 
 # Activate virtual environment if needed (uncomment and modify if you use one)
 # source /path/to/your/venv/bin/activate
 
 # Run the Python script from scripts folder regardless of where this sbatch is called from
 mkdir -p ./results
-python ./run_all.py $@ > ./results/cuda_test_${ID}.csv
+python ./run_all.py $@ > ./results/h100_cuda_test_${ID}_${RAND_3_LETTERS}.csv
 
 echo "Job completed"

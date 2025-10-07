@@ -22,7 +22,7 @@ AUTOMATA=[
 
 path_to_csv = "../results/16k-hot-results.csv"
 size=16384
-time_steps = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24]
+time_steps = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24]
 loader = CSVLoader(path_to_csv)
 size_group = loader.get_groups_by_sizes([size**2])[size**2]
 print(f"Total results for size {size}x{size}: {len(size_group)}")

@@ -170,7 +170,7 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
 
     // Fast compilation
     // using temporal_steps_options = std::integer_sequence<idx_type, 4>;
-    // using tile_y_options         = std::integer_sequence<idx_type, 128>;
+    // using tile_y_options         = std::integer_sequence<idx_type, 32>;
     // using block_x_options        = std::integer_sequence<idx_type, 32>;
     // using block_y_options        = std::integer_sequence<idx_type, 8>;
 

@@ -6,7 +6,7 @@ import time
 
 EXE_PATH = "bin_stable/cellato"
 
-ROUNDS = 3         # Number of measurement rounds
+ROUNDS = 5         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds
 
 SEED = 42
@@ -21,7 +21,7 @@ STEPS =                       [128]
 Y_BLOCK_SIZES = [2, 4, 8, 16, 32]
 TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a single bit automaton using 32-bit precision
 PRECISIONS = [32, 64]
-TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24]
+TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24]
 
 
 ALL_AUTOMATA = [
@@ -485,13 +485,13 @@ def main():
     generator = ParamsGenerator()
     test_cases = generator.generate()
 
-    test_cases = [tc for tc in test_cases if 'temporal' not in tc]  # TEMPORAL TESTS ARE DISABLED FOR NOW
-    test_cases = [tc for tc in test_cases if 'bit_array' not in tc]  # ONLY 32-BIT TESTS FOR NOW
-    test_cases = [tc for tc in test_cases if 'bit_planes' not in tc]  # ONLY 32-BIT TESTS FOR NOW
-    # for t in test_cases:
-    #     print(t, file=sys.stderr)
+    # test_cases = [tc for tc in test_cases if 'temporal' not in tc]  # TEMPORAL TESTS ARE DISABLED FOR NOW
+    # test_cases = [tc for tc in test_cases if 'bit_array' not in tc]  # ONLY 32-BIT TESTS FOR NOW
+    # test_cases = [tc for tc in test_cases if 'bit_planes' not in tc]  # ONLY 32-BIT TESTS FOR NOW
+    # # for t in test_cases:
+    # #     print(t, file=sys.stderr)
 
-    # exit(0)
+    # # exit(0)
 
     empirical_time_per_case = 4 * 13.0 / 11.2
     secs_per_case = empirical_time_per_case * (ROUNDS + WARMUP)  # Rough estimate of seconds per test case

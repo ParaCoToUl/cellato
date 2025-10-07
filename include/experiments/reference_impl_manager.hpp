@@ -5,6 +5,10 @@
 #include <chrono>
 #include <iostream>
 #include <string>
+#include <tuple>
+
+#include <cuda_runtime.h>
+#include "../traversers/cuda_utils.cuh"
 
 #include "./run_params.hpp"
 #include "./experiment_report.hpp"
@@ -19,7 +23,6 @@ public:
     using cell_state_t = CellStateT;
     using standard_grid_t = cellato::memory::grids::standard::grid<cell_state_t>;
     
-    // Constant margin size for all reference implementations
     constexpr static int margin = 1;
     
     reference_impl_manager() = default;
@@ -41,51 +44,89 @@ public:
     }
     
 private:
+    /**
+     * @brief The main method for a single run, now streamlined to handle only
+     * common setup and result processing logic.
+     */
     std::tuple<double, std::string> run_round(int round, const run_params& params, 
                                               const std::vector<cell_state_t>& initial_state) {
-        if (round < params.warmup_rounds) {
-            std::cerr << "\nWarmup round: " << round << "\n";
-        }
-        else {
-            std::cerr << "\nRound: " << round - params.warmup_rounds << "\n";
-        }
+        // --- 1. Common Setup ---
+        log_round_start(round, params);
         
-        // Create standard grid and add margins
         standard_grid_t grid(params.x_size, params.y_size);
         std::copy(initial_state.begin(), initial_state.end(), grid.data());
 
-        // Initialize the runner with padded grid
         runner_t runner;
         runner.init(grid.data(), params);
         
+        // --- 2. Device-Specific Execution & Timing ---
+        double duration_ms = 0.0;
         if (params.device == "CUDA") {
-            runner.init_cuda();
-        }
-        
-        // Run the appropriate version based on device
-        auto start_time = std::chrono::high_resolution_clock::now();
-        
-        if (params.device == "CUDA") {
-            runner.run_on_cuda(params.steps);
+            duration_ms = time_cuda_run(runner, params);
         } else {
-            runner.run(params.steps);
+            duration_ms = time_cpu_run(runner, params);
         }
         
-        auto end_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> execution_time = end_time - start_time;
-        
-        // Fetch results and remove margins
+        // --- 3. Common Result Processing ---
         auto result = runner.fetch_result();
-        
-        // Create a new standard grid from the result
         standard_grid_t result_grid(grid.x_size_physical(), grid.y_size_physical());
         std::copy(result.begin(), result.end(), result_grid.data());
         
-        
-        // Calculate checksum from result
         std::string checksum = result_grid.get_checksum();
 
-        return { execution_time.count(), checksum };
+        return { duration_ms, checksum };
+    }
+
+    /**
+     * @brief Handles CUDA-specific initialization, execution, and timing.
+     * @return The execution time in milliseconds.
+     */
+    double time_cuda_run(runner_t& runner, const run_params& params) {
+        runner.init_cuda(); // Perform CUDA-specific initialization
+
+        cudaEvent_t start, stop;
+        CUCH(cudaEventCreate(&start));
+        CUCH(cudaEventCreate(&stop));
+
+        CUCH(cudaEventRecord(start));
+        runner.run_on_cuda(params.steps);
+        CUCH(cudaEventRecord(stop));
+
+        CUCH(cudaEventSynchronize(stop));
+
+        float milliseconds = 0;
+        CUCH(cudaEventElapsedTime(&milliseconds, start, stop));
+
+        CUCH(cudaEventDestroy(start));
+        CUCH(cudaEventDestroy(stop));
+
+        CUCH(cudaDeviceSynchronize());
+
+        return static_cast<double>(milliseconds);
+    }
+
+    /**
+     * @brief Handles CPU-specific execution and timing.
+     * @return The execution time in milliseconds.
+     */
+    double time_cpu_run(runner_t& runner, const run_params& params) {
+        const auto start_time = std::chrono::high_resolution_clock::now();
+        runner.run(params.steps);
+        const auto end_time = std::chrono::high_resolution_clock::now();
+        
+        const std::chrono::duration<double, std::milli> duration = end_time - start_time;
+        return duration.count();
+    }
+
+    /**
+     * @brief Helper to log the start of a round.
+     */
+    void log_round_start(int round, const run_params& params) {
+        if (round < params.warmup_rounds) {
+            std::cerr << "\nWarmup round: " << round << "\n";
+        } else {
+            std::cerr << "\nRound: " << round - params.warmup_rounds << "\n";
+        }
     }
 };
 
