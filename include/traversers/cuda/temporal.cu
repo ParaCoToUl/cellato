@@ -157,16 +157,16 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
     }
     
     // Hot compilation
-    // using temporal_steps_options = std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24>;
-    // using tile_y_options         = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
-    // using block_x_options        = std::integer_sequence<idx_type, 32>;
-    // using block_y_options        = std::integer_sequence<idx_type, 2, 4, 8, 16>;
+    using temporal_steps_options = std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24>;
+    using tile_y_options         = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
+    using block_x_options        = std::integer_sequence<idx_type, 32>;
+    using block_y_options        = std::integer_sequence<idx_type, 2, 4, 8, 16>;
     
     // Verification compilation
-    using temporal_steps_options = std::integer_sequence<idx_type, 4, 8, 12, 20>;
-    using tile_y_options         = std::integer_sequence<idx_type, 8, 32>;
-    using block_x_options        = std::integer_sequence<idx_type, 32>;
-    using block_y_options        = std::integer_sequence<idx_type, 2, 4>;
+    // using temporal_steps_options = std::integer_sequence<idx_type, 4, 8, 12, 20>;
+    // using tile_y_options         = std::integer_sequence<idx_type, 8, 32>;
+    // using block_x_options        = std::integer_sequence<idx_type, 32>;
+    // using block_y_options        = std::integer_sequence<idx_type, 2, 4>;
 
     // Fast compilation
     // using temporal_steps_options = std::integer_sequence<idx_type, 4>;

@@ -5,7 +5,20 @@ import numpy as np
 
 # --- 1. Data Loading ---
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from abstractions.results_abstractions import CSVLoader, AUTOMATA
+from abstractions.results_abstractions import CSVLoader
+
+AUTOMATA=[
+    "game-of-life",
+    "forest-fire",
+    "wire",
+    "greenberg-hastings",
+    "brian",
+    "cyclic",
+    "traffic",
+    "hpp",
+    "maze",
+    "critters"
+]
 
 path_to_csv = "../results/16k-hot-results.csv"
 size=16384
@@ -161,5 +174,5 @@ ax.legend(loc='upper left', bbox_to_anchor=(0.23, 0.98), borderaxespad=0., fonts
 fig.tight_layout() # This is important to ensure the larger labels fit
 
 # --- Saving ---
-plt.savefig('performance_graph.pdf', dpi=300, bbox_inches='tight')
+plt.savefig('figs/performance_graph.pdf', dpi=300, bbox_inches='tight')
 print("Graph successfully saved as performance_graph.pdf!")

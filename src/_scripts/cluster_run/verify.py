@@ -1,4 +1,4 @@
-import cuda_test
+import _scripts.cluster_run.run_all as run_all
 import sys
 import re
 
@@ -14,14 +14,14 @@ PRECISIONS = [32, 64]
 TEMPORAL_STEPS = [4, 8, 12, 20]
 TEMPORAL_TILE_SIZES_Y = [8, 32]
 
-AUTOMATA_TO_TEST = cuda_test.AUTOMATA_TO_TEST
+AUTOMATA_TO_TEST = run_all.AUTOMATA_TO_TEST
 
 # --- Color Codes (imported from cuda_test) ---
-GREY_COLOR = cuda_test.GREY_COLOR
-RESET_COLOR = cuda_test.RESET_COLOR
-RED_COLOR = cuda_test.RED_COLOR
-GREEN_COLOR = cuda_test.GREEN_COLOR
-YELLOW_COLOR = cuda_test.YELLOW_COLOR
+GREY_COLOR = run_all.GREY_COLOR
+RESET_COLOR = run_all.RESET_COLOR
+RED_COLOR = run_all.RED_COLOR
+GREEN_COLOR = run_all.GREEN_COLOR
+YELLOW_COLOR = run_all.YELLOW_COLOR
 
 # --- Helper Functions ---
 
@@ -86,7 +86,7 @@ def run_and_validate(impl_name, params_str, executable, header_keys):
 
     # 2. Construct and run the baseline implementation with identical parameters
     baseline_params_str = (
-        f"--automaton {test_results['automaton']} --seed {cuda_test.SEED} --device {cuda_test.DEVICE} "
+        f"--automaton {test_results['automaton']} --seed {run_all.SEED} --device {run_all.DEVICE} "
         f"--reference_impl baseline --x_size {x_size} --y_size {y_size} --steps {steps} "
         f"--rounds 1 --warmup_rounds 0" # Use minimal rounds for a quick baseline check
     )
@@ -117,14 +117,14 @@ def run_and_validate(impl_name, params_str, executable, header_keys):
 # --- Main Script Logic ---
 
 def main():
-    executable = cuda_test.Executable()
+    executable = run_all.Executable()
     header = executable.get_csv_header()
     header_keys = header.strip().split(',')
     
     print(f"{YELLOW_COLOR}Starting correctness validation...{RESET_COLOR}")
     print("-" * 80)
 
-    base_tc = cuda_test.TestCase().with_device(cuda_test.DEVICE).with_elem_count(GRID_SIZE).with_steps(STEPS)
+    base_tc = run_all.TestCase().with_device(run_all.DEVICE).with_elem_count(GRID_SIZE).with_steps(STEPS)
 
     for automaton in AUTOMATA_TO_TEST:
         tc_automaton = base_tc.clone().with_automaton(automaton)
@@ -134,21 +134,21 @@ def main():
             tc_block = tc_automaton.clone().with_cuda_block_size_y(y_block)
 
             # Standard (non-bitpacked) implementation
-            run_and_validate("Standard", cuda_test.StandardImplementation.params(tc_block), executable, header_keys)
+            run_and_validate("Standard", run_all.StandardImplementation.params(tc_block), executable, header_keys)
             
             for precision in PRECISIONS:
                 tc_prec = tc_block.clone().with_precision(precision)
 
                 # Bit-packed implementations
-                run_and_validate("BitArray", cuda_test.BitArrayImplementation.params(tc_prec), executable, header_keys)
-                run_and_validate("BitPlanes", cuda_test.BitPlanesImplementation.params(tc_prec), executable, header_keys)
-                run_and_validate("TiledBitPlanes", cuda_test.TiledBitPlanesImplementation.params(tc_prec), executable, header_keys)
+                run_and_validate("BitArray", run_all.BitArrayImplementation.params(tc_prec), executable, header_keys)
+                run_and_validate("BitPlanes", run_all.BitPlanesImplementation.params(tc_prec), executable, header_keys)
+                run_and_validate("TiledBitPlanes", run_all.TiledBitPlanesImplementation.params(tc_prec), executable, header_keys)
 
                 # Temporal implementations
                 for temporal_steps in TEMPORAL_STEPS:
                     tc_tsteps = tc_prec.clone().with_temporal_steps(temporal_steps)
 
-                    max_y_tile = cuda_test.biggest_temporal_tile_size_for_automata[precision][automaton]
+                    max_y_tile = run_all.biggest_temporal_tile_size_for_automata[precision][automaton]
                     
                     if max_y_tile is None:
                         continue
@@ -161,15 +161,15 @@ def main():
                         
                         try:
                             # Temporal Linear (BitPlanes layout)
-                            _, eff_y = cuda_test.TemporalLinearImplementation.get_effective_xy_block_size(tc_final)
+                            _, eff_y = run_all.TemporalLinearImplementation.get_effective_xy_block_size(tc_final)
                             if eff_y > 0:
-                                params = cuda_test.TemporalLinearImplementation.params(tc_final)
+                                params = run_all.TemporalLinearImplementation.params(tc_final)
                                 run_and_validate("TemporalLinear", params, executable, header_keys)
                                 
                             # Temporal Tiled Bit Planes
-                            _, eff_y = cuda_test.TemporalTiledBitPlanesImplementation.get_effective_xy_block_size(tc_final)
+                            _, eff_y = run_all.TemporalTiledBitPlanesImplementation.get_effective_xy_block_size(tc_final)
                             if eff_y > 0:
-                                params = cuda_test.TemporalTiledBitPlanesImplementation.params(tc_final)
+                                params = run_all.TemporalTiledBitPlanesImplementation.params(tc_final)
                                 run_and_validate("TemporalTiledBitPlanes", params, executable, header_keys)
                         except Exception:
                             # Some parameter combinations are invalid and will throw an exception.

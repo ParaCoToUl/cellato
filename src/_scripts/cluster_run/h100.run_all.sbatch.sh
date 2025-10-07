@@ -6,7 +6,7 @@
 #SBATCH --mem=128GB            # memory
 #SBATCH --time=168:00:00       # time limit (HH:MM:SS)
 #SBATCH --gres=gpu:H100        # GPU resource
-#SBATCH -o ../__slurm__/job-%j.out        # output file (%j expands to job ID)
+#SBATCH -o ../__slurm__/h100_job-%j.out        # output file (%j expands to job ID)
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -22,7 +22,7 @@ ID=$(date +%Y%m%d-%H%M%S)
 # source /path/to/your/venv/bin/activate
 
 # Run the Python script from scripts folder regardless of where this sbatch is called from
-# cd "${SCRIPT_DIR}"
-python ./cuda_test.py > ./results/cuda_test_${ID}.csv
+mkdir -p ./results
+python ./run_all.py $@ > ./results/cuda_test_${ID}.csv
 
 echo "Job completed"

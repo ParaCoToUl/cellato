@@ -130,5 +130,5 @@ ax.legend(loc='upper left')
 fig.tight_layout()
 
 # --- Saving ---
-plt.savefig('linear_vs_tiled_throughput.pdf', dpi=300, bbox_inches='tight')
+plt.savefig('figs/linear_vs_tiled_throughput.pdf', dpi=300, bbox_inches='tight')
 print("Graph successfully saved as linear_vs_tiled_throughput.pdf")

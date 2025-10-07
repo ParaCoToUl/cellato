@@ -40,15 +40,15 @@ __global__ void traffic_kernel(const traffic_cell_state* current, traffic_cell_s
     
     traffic_cell_state cell_state = current[center_idx];
 
-    traffic_cell_state left_neighbor = current[idx.at(x-1, y)];
-    traffic_cell_state right_neighbor = current[idx.at(x+1, y)];
-
-    traffic_cell_state up_neighbor = current[idx.at(x, y-1)];
-    traffic_cell_state down_neighbor = current[idx.at(x, y+1)];
-    
     if (step % 2 == 0) {
+        traffic_cell_state left_neighbor = current[idx.at(x-1, y)];
+        traffic_cell_state right_neighbor = current[idx.at(x+1, y)];
+        
         next[center_idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
     } else {
+        traffic_cell_state up_neighbor = current[idx.at(x, y-1)];
+        traffic_cell_state down_neighbor = current[idx.at(x, y+1)];
+
         next[center_idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
     }
 }

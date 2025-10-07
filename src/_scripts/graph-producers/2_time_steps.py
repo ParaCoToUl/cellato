@@ -222,5 +222,5 @@ elif plot_config['plot_mode'] == 'subplots':
     ax1.legend()
 
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig('temporal_scaling_subplots.pdf', dpi=300)
+    plt.savefig('figs/temporal_scaling_subplots.pdf', dpi=300)
     print("Subplots graph saved as temporal_scaling_subplots.pdf")

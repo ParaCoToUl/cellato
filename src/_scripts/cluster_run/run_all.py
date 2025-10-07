@@ -4,13 +4,15 @@ import sys
 import subprocess
 import time
 
-EXE_PATH = "bin/cellato"
+EXE_PATH = "bin_stable/cellato"
 
-ROUNDS = 1         # Number of measurement rounds
+ROUNDS = 3         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds
 
 SEED = 42
 DEVICE = "CUDA"
+
+group_number = int(sys.argv[1] if len(sys.argv) > 1 else "-1")
 
 # GRID_SIZES = [x ** 2 for x in [4096, 8192, 16384, 32768]]
 # STEPS =                       [1024,  256,   128,    64]
@@ -21,19 +23,29 @@ TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a singl
 PRECISIONS = [32, 64]
 TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24]
 
-AUTOMATA_TO_TEST = [
+
+ALL_AUTOMATA = [
     "critters",
     "traffic",
     "hpp",
     "game-of-life",
+    "cyclic",
+
     "brian",
     "maze",
     "forest-fire",
     "wire",
     "greenberg-hastings",
-    "cyclic",
 ]
 
+if group_number == -1:
+    print ("Running all automata", file=sys.stderr)
+    AUTOMATA_TO_TEST = ALL_AUTOMATA
+else:
+    print (f"Running group number: {group_number}", file=sys.stderr)
+    AUTOMATA_TO_TEST = ALL_AUTOMATA[(group_number * 5): (group_number * 5 + 5)]
+
+print (f"Automata to test: {AUTOMATA_TO_TEST}", file=sys.stderr)
 
 AUTOMATA_bits = {
     "game-of-life": 1,
