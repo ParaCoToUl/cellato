@@ -22,6 +22,7 @@ PRECISIONS = [32, 64]
 TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24]
 
 AUTOMATA_TO_TEST = [
+    "hpp",
     "game-of-life",
     "brian",
     "maze",

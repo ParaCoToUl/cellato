@@ -14,18 +14,7 @@ PRECISIONS = [32, 64]
 TEMPORAL_STEPS = [4, 8, 12, 20]
 TEMPORAL_TILE_SIZES_Y = [8, 32]
 
-AUTOMATA_TO_TEST = [
-    "game-of-life",
-    "brian",
-    "maze",
-    "critters",
-    "forest-fire",
-    "wire",
-    "traffic",
-    "greenberg-hastings",
-    "hpp",
-    "cyclic",
-]
+AUTOMATA_TO_TEST = cuda_test.AUTOMATA_TO_TEST
 
 # --- Color Codes (imported from cuda_test) ---
 GREY_COLOR = cuda_test.GREY_COLOR
