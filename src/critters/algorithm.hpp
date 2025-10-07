@@ -22,10 +22,10 @@ using toggled_rotated = if_< p<margolus_180_neighbor, equals, alive> >::then_< d
 using toggled = if_< p<current_state, equals, alive> >::then_< dead >::else_< alive >;
 
 using critters_algorithm =
-    if_< has_2_alive_in_block >::then_<
-        current_state 
-    >::elif_< has_3_alive_in_block >::then_<
+    if_< has_3_alive_in_block >::then_<
         toggled_rotated
+    >::elif_< has_2_alive_in_block >::then_<
+        current_state 
     >::else_<
         toggled
     >;

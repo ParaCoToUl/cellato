@@ -182,10 +182,11 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, 
     }
 };
 
-template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
-struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating_neighborhood>, cell_ptr_type> {
+template <typename cell_type, typename cell_ptr_type, auto CellStateValue>
+struct evaluator<cell_type, count_neighbors<
+    state_constant<CellStateValue>, margolus_alternating_neighborhood>,
+    cell_ptr_type> {
     static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
-        auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
         auto parity = state.time_step % 2;
         auto x_parity = (state.position.x) % 2;
@@ -205,15 +206,11 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
             else { y_coords[0] = 0; y_coords[1] = 1; }
         }
 
-        auto get_cell = [](state_t<cell_type, cell_ptr_type> state, idx_type x_offset, idx_type y_offset) {
-            return state.grid[state.idx(state.position.x + x_offset, state.position.y + y_offset)];
-        };
-
         return (
-            (get_cell(state, x_coords[0], y_coords[0]) == target_value) +
-            (get_cell(state, x_coords[0], y_coords[1]) == target_value) +
-            (get_cell(state, x_coords[1], y_coords[0]) == target_value) +
-            (get_cell(state, x_coords[1], y_coords[1]) == target_value)
+            (state.grid[state.idx(state.position.x + x_coords[0], state.position.y + y_coords[0])] == CellStateValue) +
+            (state.grid[state.idx(state.position.x + x_coords[0], state.position.y + y_coords[1])] == CellStateValue) +
+            (state.grid[state.idx(state.position.x + x_coords[1], state.position.y + y_coords[0])] == CellStateValue) +
+            (state.grid[state.idx(state.position.x + x_coords[1], state.position.y + y_coords[1])] == CellStateValue)
         );
     }
 };
@@ -226,26 +223,23 @@ struct evaluator<cell_type, margolus_180_neighbor, cell_ptr_type> {
         auto x_parity = state.position.x % 2;
         auto y_parity = state.position.y % 2;
 
-        int x_coords[2], y_coords[2];
+        int dx_opposite, dy_opposite;
 
         if (parity == 0) {
-            if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; } 
-            else { x_coords[0] = -1; x_coords[1] = 0; }
-            if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; }
-            else { y_coords[0] = -1; y_coords[1] = 0; }
-        } else {  // parity == 1
-            if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; } 
-            else { x_coords[0] = 0; x_coords[1] = 1; }
-            if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; }
-            else { y_coords[0] = 0; y_coords[1] = 1; }
+            if (x_parity == 0) { dx_opposite = 1; } 
+            else { dx_opposite = -1; }
+            
+            if (y_parity == 0) { dy_opposite = 1; } 
+            else { dy_opposite = -1; }
+        } else { // parity == 1
+            if (x_parity == 0) { dx_opposite = -1; } 
+            else { dx_opposite = 1; }
+            
+            if (y_parity == 0) { dy_opposite = -1; } 
+            else { dy_opposite = 1; }
         }
 
-        // The offset to the diagonal neighbor is the sum of the coordinate pairs.
-        int dx_opposite = x_coords[0] + x_coords[1];
-        int dy_opposite = y_coords[0] + y_coords[1];
-
         // Get and return the state of the diagonally opposite cell.
-        // The "toggling" is handled later by the algorithm's AST.
         return state.grid[state.idx(
             state.position.x + dx_opposite, 
             state.position.y + dy_opposite

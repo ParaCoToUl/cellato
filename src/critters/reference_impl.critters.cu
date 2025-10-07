@@ -51,15 +51,25 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
     
     critters_cell_state next_state;
 
-    if (live_cells_in_block == 2) {
-        // Rule 1: No change. The block remains the same.
-        next_state = own_state;
-    } else if (live_cells_in_block == 3) {
-        // Rule 3: Flip and rotate 180 degrees.
+    if (live_cells_in_block == 3) {
+        // Rule: Flip and rotate 180 degrees.
         // The new state is the FLIPPED state of the DIAGONAL neighbor.
 
-        int dx_opposite = x_coords[0] + x_coords[1];
-        int dy_opposite = y_coords[0] + y_coords[1];
+        int dx_opposite, dy_opposite;
+
+        if (step_parity == 0) {
+            if (x_parity == 0) { dx_opposite = 1; } 
+            else { dx_opposite = -1; }
+            
+            if (y_parity == 0) { dy_opposite = 1; } 
+            else { dy_opposite = -1; }
+        } else { // step_parity == 1
+            if (x_parity == 0) { dx_opposite = -1; } 
+            else { dx_opposite = 1; }
+            
+            if (y_parity == 0) { dy_opposite = -1; } 
+            else { dy_opposite = 1; }
+        }
         
         int opposite_idx = idx.at(x + dx_opposite, y + dy_opposite);
         critters_cell_state opposite_state = current[opposite_idx];
@@ -67,8 +77,12 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
         next_state = (opposite_state == critters_cell_state::alive) 
                      ? critters_cell_state::dead 
                      : critters_cell_state::alive;
+
+    } else if (live_cells_in_block == 2) {
+        // Rule: No change. The block remains the same.
+        next_state = own_state;
     } else {
-        // Rule 2 (covers counts 0, 1, and 4): Flip the state in place.
+        // Rule (covers counts 0, 1, and 4): Flip the state in place.
         next_state = (own_state == critters_cell_state::alive) 
                      ? critters_cell_state::dead 
                      : critters_cell_state::alive;
