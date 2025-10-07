@@ -23,7 +23,7 @@ using namespace cellato::ast;
 using namespace cellato::memory;
 
 template <typename cell_type, typename Expression, typename cell_ptr_type = cell_type*>
-struct evaluator {};
+struct evaluator;
 
 template <typename cell_type, typename cell_ptr_type = cell_type*>
 using state_t = grids::point_in_grid<cell_ptr_type>;
@@ -44,18 +44,16 @@ struct evaluator<cell_type, state_constant<Value>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Condition, typename Then, typename Else>
 struct evaluator<cell_type, if_then_else<Condition, Then, Else>, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
-        if (evaluator<cell_type, Condition, cell_ptr_type>::evaluate(state)) {
-            return evaluator<cell_type, Then, cell_ptr_type>::evaluate(state);
-        } else {
-            return evaluator<cell_type, Else, cell_ptr_type>::evaluate(state);
-        }
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
+        return (evaluator<cell_type, Condition, cell_ptr_type>::evaluate(state))
+            ? evaluator<cell_type, Then, cell_ptr_type>::evaluate(state)
+            : evaluator<cell_type, Else, cell_ptr_type>::evaluate(state);
     }
 };
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, bit_and_<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) &
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -63,7 +61,7 @@ struct evaluator<cell_type, bit_and_<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, plus<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) +
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -71,7 +69,7 @@ struct evaluator<cell_type, plus<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, modulo<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) %
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -79,7 +77,7 @@ struct evaluator<cell_type, modulo<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, bit_or_<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) |
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -88,7 +86,7 @@ struct evaluator<cell_type, bit_or_<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Value>
 struct evaluator<cell_type, not_<Value>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return !evaluator<cell_type, Value, cell_ptr_type>::evaluate(state);
     }
 };
@@ -96,7 +94,7 @@ struct evaluator<cell_type, not_<Value>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, and_<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) && 
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -104,7 +102,7 @@ struct evaluator<cell_type, and_<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, or_<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) || 
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -112,7 +110,7 @@ struct evaluator<cell_type, or_<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, equals<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) == 
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -120,7 +118,7 @@ struct evaluator<cell_type, equals<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, greater_than<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) > 
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -128,7 +126,7 @@ struct evaluator<cell_type, greater_than<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, less_than<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) < 
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -136,7 +134,7 @@ struct evaluator<cell_type, less_than<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename Left, typename Right>
 struct evaluator<cell_type, not_equals<Left, Right>, cell_ptr_type> {
-    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return evaluator<cell_type, Left, cell_ptr_type>::evaluate(state) != 
                evaluator<cell_type, Right, cell_ptr_type>::evaluate(state);
     }
@@ -144,18 +142,18 @@ struct evaluator<cell_type, not_equals<Left, Right>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, idx_type x_offset, idx_type y_offset>
 struct evaluator<cell_type, neighbor_at<x_offset, y_offset>, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         return state.grid[state.idx(
             state.position.x + x_offset,
             state.position.y + y_offset)];
     }
 };
 
-template <typename cell_type, typename cell_ptr_type, typename Value, idx_type bit_idx>
+template <typename cell_type, typename cell_ptr_type, typename Value, int bit_idx>
 struct evaluator<cell_type, has_bit_set<Value, bit_idx>, cell_ptr_type> {
     CUDA_CALLABLE static auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         auto val = evaluator<cell_type, Value, cell_ptr_type>::evaluate(state);
-        return (val & (1 << bit_idx)) != 0;
+        return (val & ((decltype(val))1 << bit_idx)) != 0;
     }
 };
 
@@ -172,7 +170,7 @@ struct evaluator<cell_type, alternate_algorithms<Even, Odd>, cell_ptr_type> {
 
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
 struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, cell_ptr_type> {
-    static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
         return [target_value, state, x = state.position.x, y = state.position.y, x_size = state.properties.x_size]<std::size_t... I> (std::index_sequence<I...>) {
@@ -186,7 +184,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, moore_8_neighbors>, 
 
 template <typename cell_type, typename cell_ptr_type, typename CellStateValue>
 struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating_neighborhood>, cell_ptr_type> {
-    static CUDA_CALLABLE int evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         auto target_value = evaluator<cell_type, CellStateValue, cell_ptr_type>::evaluate(state);
 
         auto parity = state.time_step % 2;
@@ -222,7 +220,7 @@ struct evaluator<cell_type, count_neighbors<CellStateValue, margolus_alternating
 
 template <typename cell_type, typename cell_ptr_type>
 struct evaluator<cell_type, margolus_180_neighbor, cell_ptr_type> {
-    static CUDA_CALLABLE cell_type evaluate(state_t<cell_type, cell_ptr_type> state) {
+    static CUDA_CALLABLE auto evaluate(state_t<cell_type, cell_ptr_type> state) {
         // Determine the 2x2 block this cell belongs to.
         auto parity = state.time_step % 2;
         auto x_parity = state.position.x % 2;

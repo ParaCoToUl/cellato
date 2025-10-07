@@ -98,7 +98,11 @@ struct _evaluator_impl<params, if_then_else<Condition, Then, Else>> {
         auto masked_then = then_part.mask_out_columns(condition);
         auto masked_else = else_part.mask_out_columns(~condition);
 
-        return masked_then.get_ored(masked_else);
+        if constexpr (requires { masked_then.get_ored(masked_else); }) {
+            return masked_then.get_ored(masked_else);
+        } else {
+            return masked_then | masked_else;
+        }
     }
 };
 
@@ -112,7 +116,11 @@ struct _evaluator_impl<params, bit_and_<Left, Right>> {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
-        return left.get_anded(right);
+        if constexpr (requires { left.get_anded(right); }) {
+            return left.get_anded(right);
+        } else {
+            return left & right;
+        }
     }
 };
 
@@ -126,7 +134,11 @@ struct _evaluator_impl<params, bit_or_<Left, Right>> {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
-        return left.get_ored(right);
+        if constexpr (requires { left.get_ored(right); }) {
+            return left.get_ored(right);
+        } else {
+            return left | right;
+        }
     }
 };
 
@@ -140,7 +152,11 @@ struct _evaluator_impl<params, plus<Left, Right>> {
         auto left = evaluator_t<Left>::evaluate(state);
         auto right = evaluator_t<Right>::evaluate(state);
 
-        return left.get_added(right);
+        if constexpr (requires { left.get_added(right); }) {
+            return left.get_added(right);
+        } else {
+            return left + right;
+        }
     }
 };
 

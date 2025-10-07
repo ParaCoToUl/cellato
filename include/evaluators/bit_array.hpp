@@ -173,14 +173,14 @@ struct _impl_evaluator<grid_t, bit_or_<Left, Right>, subcell_offset> {
 
 template <typename grid_t, typename Value, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, not_<Value>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return !_impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, and_<Left, Right>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) && 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
     }
@@ -188,7 +188,7 @@ struct _impl_evaluator<grid_t, and_<Left, Right>, subcell_offset> {
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, or_<Left, Right>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) || 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
     }
@@ -197,7 +197,7 @@ struct _impl_evaluator<grid_t, or_<Left, Right>, subcell_offset> {
 // Comparison operators
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, equals<Left, Right>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) == 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
     }
@@ -205,7 +205,7 @@ struct _impl_evaluator<grid_t, equals<Left, Right>, subcell_offset> {
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, not_equals<Left, Right>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) != 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
     }
@@ -213,7 +213,7 @@ struct _impl_evaluator<grid_t, not_equals<Left, Right>, subcell_offset> {
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, greater_than<Left, Right>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) > 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
     }
@@ -221,7 +221,7 @@ struct _impl_evaluator<grid_t, greater_than<Left, Right>, subcell_offset> {
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, less_than<Left, Right>, subcell_offset> {
-    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) < 
                _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
     }
