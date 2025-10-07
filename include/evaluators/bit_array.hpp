@@ -5,6 +5,7 @@
 #include "../memory/interface.hpp"
 #include "../memory/idx_type.hpp"
 #include <cstddef>
+#include <cstdint>
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE __host__ __device__
@@ -100,6 +101,8 @@ struct evaluator {
 };
 
 
+using one_cell_int = std::int32_t;
+
 // Implement specific expression evaluators below
 
 // Constants
@@ -113,11 +116,10 @@ struct _impl_evaluator<grid_t, constant<Value>, subcell_offset> {
 // State constants
 template <typename grid_t, typename state_type, state_type Value, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, state_constant<Value>, subcell_offset> {
-    using store_type = typename grid_t::store_type;
     using dictionary_t = typename grid_t::states_dict_t;
 
-    CUDA_CALLABLE static store_type evaluate(state_t<grid_t> /* state */) {
-        constexpr store_type index = dictionary_t::state_to_index(Value);
+    CUDA_CALLABLE static one_cell_int evaluate(state_t<grid_t> /* state */) {
+        constexpr one_cell_int index = static_cast<one_cell_int>(dictionary_t::state_to_index(Value));
         return index;
     }
 };
@@ -252,16 +254,14 @@ struct _impl_evaluator<grid_t, alternate_algorithms<Even, Odd>, subcell_offset> 
 // Neighborhood access
 template <typename grid_t, idx_type x_offset, idx_type y_offset, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> {
-    using store_type = typename grid_t::store_type;
-    
-
-    CUDA_CALLABLE static store_type evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         constexpr auto cells_per_word = grid_t::cells_per_word;
 
         idx_type x = state.position.x * cells_per_word + x_offset + subcell_offset;
         idx_type y = state.position.y + y_offset;
 
-        return indexer::get_cell_at(state, x, y);
+        auto cell = indexer::get_cell_at(state, x, y);
+        return static_cast<one_cell_int>(cell);
     }
 };
 
@@ -353,8 +353,7 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
     template <idx_type x_offset, idx_type y_offset>
     using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
 
-    using store_type = typename grid_t::store_type;
-    CUDA_CALLABLE static store_type get_cell_at(state_t<grid_t> state, idx_type x_offset, idx_type y_offset) {
+    CUDA_CALLABLE static one_cell_int get_cell_at(state_t<grid_t> state, idx_type x_offset, idx_type y_offset) {
         if (x_offset == 0) {
             if (y_offset == 0) {
                 return cell_at< 0,  0>::evaluate(state);
@@ -386,9 +385,7 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
 template <typename grid_t, idx_type subcell_offset>
 struct _impl_evaluator<grid_t, margolus_180_neighbor, subcell_offset> {
 
-    using store_type = typename grid_t::store_type;
-
-    CUDA_CALLABLE static store_type evaluate(state_t<grid_t> state) {
+    CUDA_CALLABLE static one_cell_int evaluate(state_t<grid_t> state) {
         // Determine the absolute original coordinates of the specific sub-cell.
         constexpr auto cells_per_word = grid_t::cells_per_word;
         idx_type x_original = indexer::get_x(state, state.position.x * cells_per_word + subcell_offset);
@@ -428,7 +425,7 @@ struct _impl_evaluator<grid_t, margolus_180_neighbor, subcell_offset> {
     template <idx_type x_offset, idx_type y_offset>
     using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
 
-    CUDA_CALLABLE static store_type get_cell_at(state_t<grid_t> state, idx_type x_offset, idx_type y_offset) {
+    CUDA_CALLABLE static one_cell_int get_cell_at(state_t<grid_t> state, idx_type x_offset, idx_type y_offset) {
         if (x_offset == 0) {
             if (y_offset == 0) {
                 return cell_at< 0,  0>::evaluate(state);
