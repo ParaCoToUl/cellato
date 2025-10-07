@@ -26,8 +26,9 @@ struct properties {
     idx_type y_size;
 
     CUDA_CALLABLE idx_type idx(idx_type x, idx_type y) const {
-        auto x_real = (x + x_size) % x_size;
-        auto y_real = (y + y_size) % y_size;
+        const auto x_real = (x + x_size) % x_size;
+        const auto y_real = (y + y_size) % y_size;
+
         return y_real * x_size + x_real;
     }
 };
