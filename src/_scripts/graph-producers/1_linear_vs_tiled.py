@@ -20,7 +20,11 @@ AUTOMATA=[
     "critters"
 ]
 
-path_to_csv = "../results/16k-hot-results.csv"
+if len(sys.argv) > 1:
+    path_to_csv = sys.argv[1]
+else:
+    raise Exception("Please provide the path to the CSV file as a command-line argument.")
+
 size=16384
 loader = CSVLoader(path_to_csv)
 size_group = loader.get_groups_by_sizes([size**2])[size**2]

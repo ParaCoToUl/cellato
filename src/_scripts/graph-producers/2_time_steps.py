@@ -20,7 +20,11 @@ AUTOMATA=[
     "critters"
 ]
 
-path_to_csv = "../results/16k-hot-results.csv"
+if len(sys.argv) > 1:
+    path_to_csv = sys.argv[1]
+else:
+    raise Exception("Please provide the path to the CSV file as a command-line argument.")
+
 size=16384
 time_steps = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24]
 loader = CSVLoader(path_to_csv)
@@ -30,11 +34,11 @@ print(f"Total results for size {size}x{size}: {len(size_group)}")
 # 🆕 Define separate baselines
 baseline_linear = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'} 
 
-# baseline_tiled = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
-# baseline_labels = ['Single Step Linear Bit Planes (1x)', 'Single Step Tiled Bit Planes (1x)']
+baseline_tiled = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
+baseline_labels = ['Single Step Linear Bit Planes (1x)', 'Single Step Tiled Bit Planes (1x)']
 
-baseline_tiled = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
-baseline_labels = ['Single Step Linear Bit Planes (1x)', 'Single Step Linear Bit Planes (1x)']
+# baseline_tiled = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
+# baseline_labels = ['Single Step Linear Bit Planes (1x)', 'Single Step Linear Bit Planes (1x)']
 
 one_step_linear = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
 one_step_tiled = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
