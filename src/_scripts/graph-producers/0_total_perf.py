@@ -9,15 +9,15 @@ from abstractions.results_abstractions import CSVLoader
 
 AUTOMATA=[
     "game-of-life",
+    "maze",
+    "brian",
     "forest-fire",
     "wire",
     "excitable",
-    "brian",
     "cyclic",
-    "traffic",
     "fluid",
-    "maze",
-    "critters"
+    "critters",
+    "traffic",
 ]
 
 if len(sys.argv) > 2 and sys.argv[2].endswith(('.png', '.pdf')):
@@ -146,11 +146,12 @@ for i, impl in enumerate(implementations):
 
 # --- Styling and Customization ---
 # Applying the new font sizes from plot_config
-ax.set_ylabel(y_axis_label, fontsize=plot_config['axis_label_fontsize']) # <-- MODIFIED
-# ax.set_title(plot_config['title'], fontsize=plot_config['title_fontsize']) # <-- MODIFIED
+ax.set_ylabel(y_axis_label, fontsize=plot_config['axis_label_fontsize'])
+# ax.set_title(plot_config['title'], fontsize=plot_config['title_fontsize'])
 ax.set_xticks(x)
-ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=plot_config['tick_label_fontsize']) # <-- MODIFIED
-ax.tick_params(axis='y', labelsize=plot_config['tick_label_fontsize']) # <-- NEW: Set Y-axis tick label size
+# ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=plot_config['tick_label_fontsize'])
+ax.set_xticklabels(labels, fontsize=plot_config['tick_label_fontsize'])
+ax.tick_params(axis='y', labelsize=plot_config['tick_label_fontsize'])
 ax.set_yscale(plot_config['y_axis_scale'])
 ax.grid(axis='y', linestyle='--', alpha=0.7)
 
@@ -165,18 +166,18 @@ if plot_config['add_data_labels']:
     for impl, bars in bar_containers.items():
         label_format = '%.1fx' if plot_config['y_axis_mode'] == 'speedup' else '%d'
         ax.bar_label(bars, fmt=label_format,
-                     padding=plot_config['label_padding'],
-                     fontsize=plot_config['data_label_fontsize'], # <-- MODIFIED (renamed key)
-                     bbox=bbox_props,
-                     rotation=plot_config['label_rotation'])
+                         padding=plot_config['label_padding'],
+                         fontsize=plot_config['data_label_fontsize'],
+                         bbox=bbox_props,
+                         rotation=plot_config['label_rotation'])
 
 if plot_config['show_baseline_line'] and plot_config['y_axis_mode'] == 'speedup':
     current_ylim = ax.get_ylim()
     ax.set_ylim(bottom=min(1.0, current_ylim[0]), top=current_ylim[1] * 1.3)
 
-# Apply the legend font size
-ax.legend(loc='upper left', bbox_to_anchor=(0.23, 0.98), borderaxespad=0., fontsize=plot_config['legend_fontsize']) # <-- MODIFIED
-fig.tight_layout() # This is important to ensure the larger labels fit
+# Apply the legend font size with two columns
+ax.legend(loc='upper center', ncol=2, fontsize=plot_config['legend_fontsize'])
+fig.tight_layout()
 
 # --- Saving ---
 plt.savefig(output_path, dpi=300, bbox_inches='tight')

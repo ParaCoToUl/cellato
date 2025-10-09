@@ -9,15 +9,15 @@ from abstractions.results_abstractions import CSVLoader
 
 AUTOMATA=[
     "game-of-life",
+    "maze",
+    "brian",
     "forest-fire",
     "wire",
     "excitable",
-    "brian",
     "cyclic",
-    "traffic",
     "fluid",
-    "maze",
-    "critters"
+    "critters",
+    "traffic",
 ]
 
 if len(sys.argv) > 2 and sys.argv[2].endswith(('.png', '.pdf')):
@@ -95,13 +95,13 @@ impl_display_names = {
 data = {impl: [] for impl in implementations}
 
 # 🆕 Y-axis is now throughput. The label and data calculation are changed.
-y_axis_label = "Throughput (Giga Cell Updates Per Second)"
+y_axis_label = "Throughput (10$^{12}$ Cell Updates Per Second)"
 for automaton in AUTOMATA:
     for impl in implementations:
         time_in_ps = bests_by_automaton[automaton][impl]
         # 🆕 Convert time to throughput for the bar heights
-        throughput_gcups = 1000 / time_in_ps if time_in_ps > 0 else 0
-        data[impl].append(throughput_gcups)
+        throughput_tcups = 1 / time_in_ps if time_in_ps > 0 else 0
+        data[impl].append(throughput_tcups)
 
 # --- Plotting ---
 fig, ax = plt.subplots(figsize=plot_config['figure_size'])
@@ -122,7 +122,8 @@ for impl in implementations:
 ax.set_ylabel(y_axis_label)
 # ax.set_title(plot_config['title'])
 ax.set_xticks(x)
-ax.set_xticklabels(labels, rotation=45, ha="right")
+# ax.set_xticklabels(labels, rotation=45, ha="right")
+ax.set_xticklabels(labels)
 ax.set_yscale(plot_config['y_axis_scale'])
 ax.grid(axis='y', linestyle='--', alpha=0.7)
 

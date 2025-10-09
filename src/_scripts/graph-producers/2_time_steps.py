@@ -9,15 +9,15 @@ from abstractions.results_abstractions import CSVLoader
 
 AUTOMATA=[
     "game-of-life",
+    "maze",
+    "brian",
     "forest-fire",
     "wire",
     "excitable",
-    "brian",
     "cyclic",
-    "traffic",
     "fluid",
-    "maze",
-    "critters"
+    "critters",
+    "traffic",
 ]
 
 if len(sys.argv) > 2 and sys.argv[2].endswith(('.png', '.pdf')):
@@ -36,7 +36,7 @@ print(f"Total results for size {size}x{size}: {len(size_group)}")
 baseline_linear = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'} 
 
 baseline_tiled = {'traverser': 'simple', 'evaluator': 'tiled_bit_planes', 'layout': 'tiled_bit_planes'}
-baseline_labels = ['Single Step Linear Bit Planes (1x)', 'Single Step Tiled Bit Planes (1x)']
+baseline_labels = ['Single Step \nLinear Bit Planes (1x)', 'Single Step \nTiled Bit Planes (1x)']
 
 # baseline_tiled = {'traverser': 'simple', 'evaluator': 'bit_planes', 'layout': 'bit_planes'}
 # baseline_labels = ['Single Step Linear Bit Planes (1x)', 'Single Step Linear Bit Planes (1x)']
@@ -207,21 +207,29 @@ elif plot_config['plot_mode'] == 'subplots':
                              color=style['color'], 
                              linestyle=style['linestyle'])
 
-    # Common styling for both subplots
+# Common styling for both subplots
     for i, ax in enumerate([ax1, ax2]):
         ax.set_xlabel("Temporal Steps")
         ax.set_xticks(x_values)
         ax.grid(True, which='both', linestyle='--', linewidth=0.5)
-        
+
         if plot_config['y_axis_mode'] == 'speedup':
             ax.axhline(y=1, color='red', linestyle='--', linewidth=1.2)
-            ax.text(x=ax.get_xlim()[1] * 0.98,
-                    y=1.01,
+            
+            # Define properties for the text's background box
+            bbox_props = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.7)
+
+            # Place the text at the left, below the line, with the background
+            ax.text(x=x_values[0] + 0.1,  # Position slightly right of the y-axis
+                    y=0.85,                 # Position just below the line (y=1)
                     s=baseline_labels[i],
                     color='red',
-                    ha='right',
-                    va='bottom',
-                    fontsize=9)
+                    ha='left',              # Horizontally align to the left
+                    va='top',               # Vertically align to the top
+                    fontsize=9,
+                    bbox=bbox_props)        # Apply the background box
+
+
             
     ax1.set_ylabel(y_axis_label)
     ax1.legend()
