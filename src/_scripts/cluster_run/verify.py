@@ -1,4 +1,4 @@
-import _scripts.cluster_run.run_all as run_all
+import run_all as run_all
 import sys
 import re
 

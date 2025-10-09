@@ -4,7 +4,7 @@ import sys
 import subprocess
 import time
 
-EXE_PATH = "bin_stable/cellato"
+EXE_PATH = "bin/cellato"
 
 ROUNDS = 5         # Number of measurement rounds
 WARMUP = 1         # Number of warmup rounds

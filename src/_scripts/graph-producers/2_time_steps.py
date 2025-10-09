@@ -20,10 +20,11 @@ AUTOMATA=[
     "critters"
 ]
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 2 and sys.argv[2].endswith(('.png', '.pdf')):
     path_to_csv = sys.argv[1]
+    output_path = sys.argv[2]
 else:
-    raise Exception("Please provide the path to the CSV file as a command-line argument.")
+    raise Exception("Please provide the path to the CSV file and the output path as command-line arguments.")
 
 size=16384
 time_steps = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24]
@@ -226,5 +227,5 @@ elif plot_config['plot_mode'] == 'subplots':
     ax1.legend()
 
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig('figs/temporal_scaling_subplots.pdf', dpi=300)
-    print("Subplots graph saved as temporal_scaling_subplots.pdf")
+    plt.savefig(output_path, dpi=300)
+    print(f"Subplots graph saved as {output_path}")

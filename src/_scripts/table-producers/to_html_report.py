@@ -5,7 +5,12 @@ from abstractions.table_printer import TablePrinter
 from abstractions.results_abstractions import CSVLoader, IMPLEMENTATIONS, BITS_USED
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-FILE_WITH_DATA_PATH = f'{script_dir}/../results/grid-search-results.csv'
+
+if len(sys.argv) < 2:
+    print("Usage: python to_html_report.py <path_to_csv_file>")
+    sys.exit(1)
+
+FILE_WITH_DATA_PATH = sys.argv[1]
 
 def generate_html_table(size, automaton_groups, loader):
     title = f"CUDA Performance Comparison - {int(size**0.5)}x{int(size**0.5)} Grid"
@@ -196,7 +201,7 @@ def generate_detailed_runs_tables(size_groups, loader):
     html += "</div></div></div>"
     return html
 
-def generate_report(csv_path, output_path):
+def generate_report(csv_path, output_writer):
     # Load template
     template_path = os.path.join(os.path.dirname(__file__), 'report-template.html')
     with open(template_path, 'r') as f:
@@ -223,17 +228,16 @@ def generate_report(csv_path, output_path):
     html_content = html_content.replace("<!-- DETAILED_RUNS_PLACEHOLDER -->", detailed_runs_html)
     
     # Write to file
-    with open(output_path, 'w') as f:
-        f.write(html_content)
+    output_writer.write(html_content)
     
-    print(f"HTML report generated at {output_path}")
+    print(f"HTML report generated", file=sys.stderr)
 
 def main():
     # Get CSV file path from command line or use default
     csv_file = sys.argv[1] if len(sys.argv) > 1 else FILE_WITH_DATA_PATH
     
     # Get output file path or use default
-    output_file = sys.argv[2] if len(sys.argv) > 2 else 'performance_report.html'
+    output_file = sys.stdout
     
     generate_report(csv_file, output_file)
 

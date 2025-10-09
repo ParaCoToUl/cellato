@@ -20,10 +20,11 @@ AUTOMATA=[
     "critters"
 ]
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 2 and sys.argv[2].endswith(('.png', '.pdf')):
     path_to_csv = sys.argv[1]
+    output_path = sys.argv[2]
 else:
-    raise Exception("Please provide the path to the CSV file as a command-line argument.")
+    raise Exception("Please provide the path to the CSV file and the output path as command-line arguments.")
 
 size=16384
 loader = CSVLoader(path_to_csv)
@@ -74,7 +75,7 @@ automaton_names = {
 scale = 0.9
 plot_config = {
     'y_axis_mode': 'speedup',
-    'y_axis_scale': 'log',
+    'y_axis_scale': 'log', # possible values: 'linear', 'log'
     'figure_size': (16*scale, 6*scale),
     'bar_width': 0.2,
     'title': f'Performance Comparison for {size}x{size} Grid',
@@ -107,7 +108,7 @@ plot_config = {
 # --- Data Preparation ---
 labels = [automaton_names.get(a, a) for a in AUTOMATA]
 implementations = ['baseline', 'bit_array', 'bit_planes', 'temporal']
-impl_display_names = {'baseline': 'Baseline', 'bit_array': 'Bit Array', 'bit_planes': 'Bit Planes', 'temporal': 'Temporal'}
+impl_display_names = {'baseline': 'Baseline', 'bit_array': 'Bit-packing', 'bit_planes': 'Bit Planes', 'temporal': 'Temporal'}
 data = {}
 
 if not plot_config['show_baseline_bar']:
@@ -178,5 +179,5 @@ ax.legend(loc='upper left', bbox_to_anchor=(0.23, 0.98), borderaxespad=0., fonts
 fig.tight_layout() # This is important to ensure the larger labels fit
 
 # --- Saving ---
-plt.savefig('figs/performance_graph.pdf', dpi=300, bbox_inches='tight')
-print("Graph successfully saved as performance_graph.pdf!")
+plt.savefig(output_path, dpi=300, bbox_inches='tight')
+print(f"Graph successfully saved as {output_path}!")

@@ -7,8 +7,12 @@ from abstractions.results_abstractions import IMPLEMENTATIONS, BITS_USED, RunRes
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 def main():
+    if len(sys.argv) < 2:
+        print("Usage: python show_result_table.py <path_to_csv_file>")
+        sys.exit(1)
+
     # Get CSV file path from command line or use default
-    file = sys.argv[1] if len(sys.argv) > 1 else f'{script_dir}/../results/grid-search-results.csv'
+    file = sys.argv[1]
 
     # Load and process data
     loader = CSVLoader(file)

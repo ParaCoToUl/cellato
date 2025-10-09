@@ -20,10 +20,11 @@ AUTOMATA=[
     "critters"
 ]
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 2 and sys.argv[2].endswith(('.png', '.pdf')):
     path_to_csv = sys.argv[1]
+    output_path = sys.argv[2]
 else:
-    raise Exception("Please provide the path to the CSV file as a command-line argument.")
+    raise Exception("Please provide the path to the CSV file and the output path as command-line arguments.")
 
 size=16384
 loader = CSVLoader(path_to_csv)
@@ -134,5 +135,5 @@ ax.legend(loc='upper left')
 fig.tight_layout()
 
 # --- Saving ---
-plt.savefig('figs/linear_vs_tiled_throughput.pdf', dpi=300, bbox_inches='tight')
-print("Graph successfully saved as linear_vs_tiled_throughput.pdf")
+plt.savefig(output_path, dpi=300, bbox_inches='tight')
+print(f"Graph successfully saved as {output_path}")

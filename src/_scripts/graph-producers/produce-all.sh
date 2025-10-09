@@ -1,8 +1,20 @@
 #!/bin/bash
 
 script_dir=$(dirname "$0")
-csv=$script_dir/../results/_h100_res.csv
+base_dir=$script_dir/../../../results
 
-python ./0_total_perf.py $csv
-python ./1_linear_vs_tiled.py $csv
-python ./2_time_steps.py $csv
+CSVs=($base_dir/H100/h100.csv $base_dir/A100/a100.csv)
+out_types=("png" "pdf")
+
+for csv in "${CSVs[@]}"; do
+ for out_type in "${out_types[@]}"; do
+   out_file="${csv%.*}_total_perf.${out_type}"
+   python $script_dir/0_total_perf.py      $csv $out_file
+   
+   out_file="${csv%.*}_linear_vs_tiled.${out_type}"
+   python $script_dir/1_linear_vs_tiled.py $csv $out_file
+
+   out_file="${csv%.*}_time_steps.${out_type}"
+   python $script_dir/2_time_steps.py      $csv $out_file
+ done
+done
