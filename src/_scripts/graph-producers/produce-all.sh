@@ -3,7 +3,7 @@
 script_dir=$(dirname "$0")
 base_dir=$script_dir/../../../results
 
-CSVs=($base_dir/H100/h100.csv $base_dir/A100/a100.csv)
+CSVs=($base_dir/H100/_h100.csv $base_dir/A100/_a100.csv)
 out_types=("png" "pdf")
 
 for csv in "${CSVs[@]}"; do
