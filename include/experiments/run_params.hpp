@@ -21,7 +21,7 @@ struct run_params {
     int y_size = 0;
     int steps = 0;
 
-    int precision = 0;
+    int word_size = 0;
 
     int x_tile_size = 0;
     int y_tile_size = 0;
@@ -53,7 +53,7 @@ struct run_params {
         os << "  Grid Size: (" << x_size << ", " << y_size << ")\n";
         os << "  Steps: " << steps << "\n";
         os << "  Print: " << (print ? "true" : "false") << "\n";
-        os << "  Precision: " << precision << "\n";
+        os << "  Word Size: " << word_size << "\n";
         os << "  Rounds: " << rounds << "\n";
         os << "  Warmup Rounds: " << warmup_rounds << "\n";
         os << "  Seed: " << seed << "\n";
@@ -71,7 +71,7 @@ struct run_params {
     }
 
     static std::string csv_header() {
-        return "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,precision,temporal_steps,temporal_tile_size_y";
+        return "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,word_size,temporal_steps,temporal_tile_size_y";
     }
 
     std::string csv_line() const {
@@ -91,7 +91,7 @@ struct run_params {
                std::to_string(cuda_block_size_x) + "," +
                std::to_string(cuda_block_size_y) + "," +
                std::to_string(seed) + "," +
-               std::to_string(precision) + "," +
+               std::to_string(word_size) + "," +
                std::to_string(temporal_steps) + "," +
                std::to_string(temporal_tile_size_y);
     }

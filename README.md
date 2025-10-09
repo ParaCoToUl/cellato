@@ -100,7 +100,7 @@ $> ./bin/cellato \
   --traverser simple \
   --evaluator bit_planes \
   --layout bit_planes \
-  --precision 32
+  --word_size 32
   --x_size 4096 --y_size 4096 \
   --steps 1000 \
   --cuda_block_size_x 32 --cuda_block_size_y 8
@@ -124,7 +124,7 @@ Options:
   --rounds <N>                 Number of benchmarking rounds
   --warmup_rounds <N>          Number of warmup rounds
   --steps <N>                  Number of CA time steps
-  --precision <32|64>          Word precision used by the `bit array`, `bit planes` and `tiled_bit_planes`
+  --word_size <32|64>          Word word_size used by the `bit array`, `bit planes` and `tiled_bit_planes`
   --seed <N>                   RNG seed for initialization
   --print                      Print grid state after each step
   --print_csv_header           Emit CSV header line
@@ -138,13 +138,13 @@ Options:
 
 ### ✨ Supported Evaluator / Layout / Traverser Combinations
 
-Note that that a specific implementation is uniquely identified by the triplet of options `--traverser`, `--evaluator` and `--layout`. However not arbitrary combination is allowed. For the CUDA (`--device CUDA`) and `32`/`64`-bit precision (`--precision (32|64)`) we have implemented the following.
+Note that that a specific implementation is uniquely identified by the triplet of options `--traverser`, `--evaluator` and `--layout`. However not arbitrary combination is allowed. For the CUDA (`--device CUDA`) and `32`/`64`-bit word_size (`--word_size (32|64)`) we have implemented the following.
 
 | Implementation | Traverser | Evaluator | Layout | Notes |
 | --- | --- | --- | --- | --- |
 | Baseline | | | | As baseline does not uses a Cellato it has none of the mention options set. Instead it is invoked with the option `--reference_impl baseline`. |
 | Cellato Standard | `simple` | `standard` | `standard` | The implementation uses a the standard encoding to represent states of an automaton (`enum type`) and the CUDA kernel evaluates one cell per CUDA thread. |
-| Bit Packed Representation | `simple` | `bit_array` | `bit_array` | This implementation uses a well known "bit packing" technique i.e. many states are packed into one machine word. The number that fit depends both on the `--automaton` in question and the `--precision` of the machine word used. |
+| Bit Packed Representation | `simple` | `bit_array` | `bit_array` | This implementation uses a well known "bit packing" technique i.e. many states are packed into one machine word. The number that fit depends both on the `--automaton` in question and the `--word_size` of the machine word used. |
 | Linear Bit Planes | `simple` | `bit_planes` | `bit_planes` | An integer representation of a cell state is split into independent "bit planes". These cells are then processed in vectorized manner (for details see the affiliated paper). |
 | Tiled Bit Planes | `simple` | `tiled_bit_planes` | `tiled_bit_planes` | Similar to the Linear Bit Planes, but one machine word does not encode a row of consecutive cells - as in the previous case - but a small 8x8 (or 8x4) tile. |
 | Temporal Bit Planes (Linear) | `temporal` | `bit_planes` | `bit_planes` | Implementation of temporal blocking. The number of steps is set using `--temporal_steps` option and the size of temporal block is set using `--temporal_tile_size_y` - the `x` dimension of the temporal block is fixed to `32`. |
@@ -156,11 +156,11 @@ Note that that a specific implementation is uniquely identified by the triplet o
 | --- | --- |
 | Baseline | The grid X (`--x_size`) and Y (`--y_size`) dimensions **must** be be divisible by the CUDA thread block `X` (`--cuda_block_size_x`) and `Y` (`--cuda_block_size_y`) respectively. |
 | Cellato standard | Same limitations as for *Baseline* |
-| Bit Packed Representation | Defining the `k` as a number of cells in a machine word (`k = precision // bits_per_automaton_state`).<br> The grid size `X` (`--x_size`) **must** be divisible by the thread block size `X` (`--cuda_block_size_x`) times `k`. <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). |
-| Linear Bit Planes | The grid size `X` (`--x_size`) **must** be divisible by the `--precision` times cuda thread block block size `X` (`--cuda_block_size_x`). <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). |
-| Tiled Bit Planes | The grid size `X` (`--x_size`) **must** be divisible by `8` times cuda thread block block size `X` (`--cuda_block_size_x`). <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`) times `4` or `8` for `--precision 32` and `--precision 64` respectively. |
-| Temporal Bit Planes (Linear) | Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * --temporal_steps`. <br> The grid size `X` (`--x_size`) **must** be divisible by `30` (which is warp size `32` minus the halo of `2`) times `--precision`. <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y`. <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps`. <br> The thread block size X `--cuda_block_size_x` **must** be 32. |
-| Temporal Bit Planes (Tiled) | Defining the `effective_temporal_size_X` as `32 - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)`. <br> Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)` for `--precision 64` and `ceil(4 / --time_steps)` for `--precision 32`.  <br> The grid size `X` (`--x_size`) **must** be divisible by `effective_temporal_size_X` <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y` <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps` <br> The thread block size X `--cuda_block_size_x` **must** be 32. |
+| Bit Packed Representation | Defining the `k` as a number of cells in a machine word (`k = word_size // bits_per_automaton_state`).<br> The grid size `X` (`--x_size`) **must** be divisible by the thread block size `X` (`--cuda_block_size_x`) times `k`. <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). |
+| Linear Bit Planes | The grid size `X` (`--x_size`) **must** be divisible by the `--word_size` times cuda thread block block size `X` (`--cuda_block_size_x`). <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). |
+| Tiled Bit Planes | The grid size `X` (`--x_size`) **must** be divisible by `8` times cuda thread block block size `X` (`--cuda_block_size_x`). <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`) times `4` or `8` for `--word_size 32` and `--word_size 64` respectively. |
+| Temporal Bit Planes (Linear) | Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * --temporal_steps`. <br> The grid size `X` (`--x_size`) **must** be divisible by `30` (which is warp size `32` minus the halo of `2`) times `--word_size`. <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y`. <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps`. <br> The thread block size X `--cuda_block_size_x` **must** be 32. |
+| Temporal Bit Planes (Tiled) | Defining the `effective_temporal_size_X` as `32 - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)`. <br> Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)` for `--word_size 64` and `ceil(4 / --time_steps)` for `--word_size 32`.  <br> The grid size `X` (`--x_size`) **must** be divisible by `effective_temporal_size_X` <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y` <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps` <br> The thread block size X `--cuda_block_size_x` **must** be 32. |
 
 ⚠️ **IMPORTANT NOTE**: The temporal blocking traverser requires the `--temporal_steps`, `--temporal_tile_size_y`, and `--cuda_block_size_y` parameters to be known at **compile-time**. Specific values for **verification** and **benchmarking** are already configured. You can use them by running `make COMPILE_TO_VERIFY` or `make COMPILE_TO_BENCHMARK`. If you need to use custom values, you must directly edit the [`temporal.cu`](./include/traversers/cuda/temporal.cu) kernel file. The section that needs modification is clearly marked within the source code.
 
@@ -178,7 +178,7 @@ $> ./bin/cellato \
 $> ./bin/cellato \
   --evaluator bit_array \
   --layout bit_array \
-  --precision 32 \
+  --word_size 32 \
   --traverser simple \
   [other options…]
 
@@ -186,7 +186,7 @@ $> ./bin/cellato \
 $> ./bin/cellato \
   --evaluator bit_planes \
   --layout bit_planes \
-  --precision 32 \
+  --word_size 32 \
   --traverser simple \
   [other options…]
 
@@ -194,7 +194,7 @@ $> ./bin/cellato \
 $> ./bin/cellato \
   --evaluator tiled_bit_planes \
   --layout tiled_bit_planes \
-  --precision 32 \
+  --word_size 32 \
   --traverser simple \
   [other options…]
 
@@ -202,7 +202,7 @@ $> ./bin/cellato \
 $> ./bin/cellato \
   --evaluator bit_planes \
   --layout bit_planes \
-  --precision 32 \
+  --word_size 32 \
   --traverser temporal \
   [other options…]
 
@@ -210,7 +210,7 @@ $> ./bin/cellato \
 $> ./bin/cellato \
   --evaluator tiled_bit_planes \
   --layout tiled_bit_planes \
-  --precision 32 \
+  --word_size 32 \
   --traverser temporal \
   [other options…]
 

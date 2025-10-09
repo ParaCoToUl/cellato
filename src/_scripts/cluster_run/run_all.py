@@ -19,8 +19,8 @@ group_number = int(sys.argv[1] if len(sys.argv) > 1 else "-1")
 GRID_SIZES = [x ** 2 for x in [16384]]
 STEPS =                       [128]
 Y_BLOCK_SIZES = [2, 4, 8, 16, 32]
-TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a single bit automaton using 32-bit precision
-PRECISIONS = [32, 64]
+TEMPORAL_TILE_SIZES_Y = [8, 16, 32, 64, 128] # 256 is too large even for a single bit automaton using 32-bit word_size
+WORD_SIZES = [32, 64]
 TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24]
 
 
@@ -136,7 +136,7 @@ class TestCase:
 
         self.cuda_block_size_y = None
         
-        self.precision = None
+        self.word_size = None
         
         self.temporal_steps = None
         self.temporal_tile_size_y = None
@@ -170,8 +170,8 @@ class TestCase:
     def with_cuda_block_size_y(self, block_size_y):
         return self.with_attr("cuda_block_size_y", block_size_y)
 
-    def with_precision(self, precision):
-        return self.with_attr("precision", precision)
+    def with_word_size(self, word_size):
+        return self.with_attr("word_size", word_size)
     
     def with_temporal_steps(self, temporal_steps):
         return self.with_attr("temporal_steps", temporal_steps)
@@ -226,13 +226,13 @@ class BitArrayImplementation:
         x_block = 32
         y_block = tc.cuda_block_size_y
 
-        cells_per_word = tc.precision // AUTOMATA_bits[tc.automaton]
+        cells_per_word = tc.word_size // AUTOMATA_bits[tc.automaton]
 
         x_divisor = x_block * cells_per_word
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_block).get_xy()
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --evaluator bit_array --layout bit_array --precision {tc.precision} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --evaluator bit_array --layout bit_array --word_size {tc.word_size} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
     
 
 class BitPlanesImplementation:
@@ -241,12 +241,12 @@ class BitPlanesImplementation:
         x_block = 32
         y_block = tc.cuda_block_size_y
 
-        cells_per_word = tc.precision
+        cells_per_word = tc.word_size
         x_divisor = x_block * cells_per_word 
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_block).get_xy()
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --evaluator bit_planes --layout bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --evaluator bit_planes --layout bit_planes --word_size {tc.word_size} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
     
 
 class TiledBitPlanesImplementation:
@@ -256,14 +256,14 @@ class TiledBitPlanesImplementation:
         y_block = tc.cuda_block_size_y
 
         cells_per_word_in_x = 8
-        cells_per_word_in_y = tc.precision // cells_per_word_in_x
+        cells_per_word_in_y = tc.word_size // cells_per_word_in_x
 
         x_divisor = x_block * cells_per_word_in_x
         y_divisor = y_block * cells_per_word_in_y
 
         x, y = Dims().with_elem_count(tc.elem_count).x_divisible_by(x_divisor).y_divisible_by(y_divisor).get_xy()
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser simple --layout tiled_bit_planes --evaluator tiled_bit_planes --word_size {tc.word_size} --x_size {x} --y_size {y} --steps {tc.steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y}"
 
 class TemporalLinearImplementation:
     @staticmethod
@@ -271,7 +271,7 @@ class TemporalLinearImplementation:
         effective_temporal_tile_size_x, effective_temporal_tile_size_y \
             = TemporalLinearImplementation.get_effective_xy_block_size(tc)
 
-        x_word_tile_size = tc.precision
+        x_word_tile_size = tc.word_size
         y_word_tile_size = 1
 
         x_divisor = effective_temporal_tile_size_x * x_word_tile_size
@@ -281,7 +281,7 @@ class TemporalLinearImplementation:
 
         divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout bit_planes --evaluator bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout bit_planes --evaluator bit_planes --word_size {tc.word_size} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
 
     @staticmethod
     def get_effective_xy_block_size(tc: TestCase):
@@ -290,7 +290,7 @@ class TemporalLinearImplementation:
             temporal_tile_size_y = tc.temporal_tile_size_y,
             temporal_steps = tc.temporal_steps,
             average_halo_radius = average_halo_radii[tc.automaton],
-            x_word_tile_size = tc.precision,
+            x_word_tile_size = tc.word_size,
             y_word_tile_size = 1
         )
 
@@ -301,7 +301,7 @@ class TemporalTiledBitPlanesImplementation:
             = TemporalTiledBitPlanesImplementation.get_effective_xy_block_size(tc)
 
         x_word_tile_size = 8
-        y_word_tile_size = tc.precision // x_word_tile_size
+        y_word_tile_size = tc.word_size // x_word_tile_size
 
         x_divisor = effective_temporal_tile_size_x * x_word_tile_size
         y_divisor = effective_temporal_tile_size_y * y_word_tile_size
@@ -310,7 +310,7 @@ class TemporalTiledBitPlanesImplementation:
 
         divisible_steps = tc.steps - (tc.steps % tc.temporal_steps)
 
-        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --precision {tc.precision} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
+        return f"--automaton {tc.automaton} --seed {SEED} --device {tc.device} --traverser temporal --layout tiled_bit_planes --evaluator tiled_bit_planes --word_size {tc.word_size} --x_size {x} --y_size {y} --steps {divisible_steps} --rounds {tc.rounds} --warmup_rounds {tc.warmup_rounds} --cuda_block_size_y {tc.cuda_block_size_y} --temporal_tile_size_y {tc.temporal_tile_size_y} --temporal_steps {tc.temporal_steps}"
 
     @staticmethod
     def get_effective_xy_block_size(tc: TestCase):
@@ -320,7 +320,7 @@ class TemporalTiledBitPlanesImplementation:
             temporal_steps = tc.temporal_steps,
             average_halo_radius = average_halo_radii[tc.automaton],
             x_word_tile_size = 8,
-            y_word_tile_size = tc.precision // 8
+            y_word_tile_size = tc.word_size // 8
         )
 
 class ParamsGenerator:
@@ -355,16 +355,16 @@ class ParamsGenerator:
 
             all.append(ReferenceImplementation.params(passed_tc))
             all.append(StandardImplementation.params(passed_tc))
-            all.extend(self._generate_with_precision(passed_tc))
+            all.extend(self._generate_with_word_size(passed_tc))
 
         return all
 
 
-    def _generate_with_precision(self, tc: TestCase):
+    def _generate_with_word_size(self, tc: TestCase):
         all = []
 
-        for precision in PRECISIONS:
-            passed_tc = tc.with_precision(precision)
+        for word_size in WORD_SIZES:
+            passed_tc = tc.with_word_size(word_size)
 
             all.append(BitArrayImplementation.params(passed_tc))
             all.append(BitPlanesImplementation.params(passed_tc))
@@ -386,7 +386,7 @@ class ParamsGenerator:
     def _generate_with_temporal_tile_size_y(self, tc: TestCase):
         all = []
 
-        temporal_tile_size_y = biggest_temporal_tile_size_for_automata[tc.precision][tc.automaton]
+        temporal_tile_size_y = biggest_temporal_tile_size_for_automata[tc.word_size][tc.automaton]
 
         passed_tc = tc.with_temporal_tile_size_y(temporal_tile_size_y)
         

@@ -17,7 +17,7 @@ should_remove="${1:-}"
 
 SRUN="srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:L40"
 
-size_and_stuff="--precision 32 --x_size 1024 --y_size 1024 --steps 100 --rounds 7 --warmup_rounds 4 --cuda_block_size_y 4"
+size_and_stuff="--word_size 32 --x_size 1024 --y_size 1024 --steps 100 --rounds 7 --warmup_rounds 4 --cuda_block_size_y 4"
 
 args=(
     "--automaton brian --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"

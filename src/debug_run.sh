@@ -56,14 +56,14 @@ device="CUDA"
 # type="tiled_bit_planes"
 # device="CUDA"
 
-args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --precision 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 2 --warmup_rounds 0 --cuda_block_size_y 8 --temporal_tile_size_y 16 --temporal_steps 4"
+args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traverser} --evaluator ${type} --layout ${type} --word_size 64 --x_size ${x_size} --y_size ${y_size} --steps ${steps} --rounds 2 --warmup_rounds 0 --cuda_block_size_y 8 --temporal_tile_size_y 16 --temporal_steps 4"
 
 # baseline
 # args="--reference_impl baseline --automaton ${automaton} --seed 42 --device ${device} --x_size ${x_size} --y_size ${y_size} --steps ${steps} --cuda_block_size_y 4 --rounds 1 --warmup_rounds 1"
 
 
 # Game of Life with standard grid on CUDA
-# args="--automaton wire --precision 64 \
+# args="--automaton wire --word_size 64 \
 # --device CUDA --layout tiled_bit_planes --traverser simple --evaluator tiled_bit_planes \
 # --warmup_rounds 1 --rounds 3 \
 # --steps 1000 --x_size 8192 --y_size 8192"
@@ -75,7 +75,7 @@ args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traver
 #args="--automaton wire --device CUDA --layout bit_array --traverser spacial_blocking --x_tile_size 8 --y_tile_size 8 --steps 200 --x_size 4096 --y_size 4096"
 
 # Greenberg automaton on CPU with bit_planes
-#args="--automaton excitable --device CPU --layout bit_planes --evaluator bit_planes --steps 150 --x_size 512 --y_size 512 --precision 64"
+#args="--automaton excitable --device CPU --layout bit_planes --evaluator bit_planes --steps 150 --x_size 512 --y_size 512 --word_size 64"
 
 # Game of Life on CPU for comparison with CUDA
 #args="--automaton game_of_life --device CPU --layout standard --steps 100 --x_size 1024 --y_size 1024"

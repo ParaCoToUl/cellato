@@ -108,7 +108,7 @@ namespace on_cuda {
                        params.device == CUDA_OPT &&
                        params.evaluator == "bit_array" &&
                        params.layout == "bit_array" &&
-                       params.precision == sizeof(store_word_type) * 8;
+                       params.word_size == sizeof(store_word_type) * 8;
             }
         };
 
@@ -136,7 +136,7 @@ namespace on_cuda {
                        params.device == CUDA_OPT &&
                        params.evaluator == "bit_planes" &&
                        params.layout == "bit_planes" &&
-                       params.precision == sizeof(grid_store_word_t) * 8;
+                       params.word_size == sizeof(grid_store_word_t) * 8;
             }
         };
 
@@ -164,7 +164,7 @@ namespace on_cuda {
                        params.device == CUDA_OPT &&
                        params.evaluator == "tiled_bit_planes" &&
                        params.layout == "tiled_bit_planes" &&
-                       params.precision == sizeof(grid_store_word_t) * 8;
+                       params.word_size == sizeof(grid_store_word_t) * 8;
             }
         };
 
@@ -192,7 +192,7 @@ namespace on_cuda {
                        params.device == CUDA_OPT &&
                        params.evaluator == "tiled_bit_planes" &&
                        params.layout == "tiled_bit_planes" &&
-                       params.precision == sizeof(grid_store_word_t) * 8;
+                       params.word_size == sizeof(grid_store_word_t) * 8;
             }
         };
 
@@ -220,7 +220,7 @@ namespace on_cuda {
                        params.device == CUDA_OPT &&
                        params.evaluator == "bit_planes" &&
                        params.layout == "bit_planes" &&
-                       params.precision == sizeof(grid_store_word_t) * 8;
+                       params.word_size == sizeof(grid_store_word_t) * 8;
             }
         };
     };
@@ -283,7 +283,7 @@ namespace on_cpu {
                        params.device == CPU_OPT &&
                        params.evaluator == "bit_array" &&
                        params.layout == "bit_array" &&
-                       params.precision == sizeof(store_word_type) * 8;
+                       params.word_size == sizeof(store_word_type) * 8;
             }
         };
 
@@ -311,7 +311,7 @@ namespace on_cpu {
                        params.device == CPU_OPT &&
                        params.evaluator == "bit_planes" &&
                        params.layout == "bit_planes" &&
-                       params.precision == sizeof(grid_store_word_t) * 8;
+                       params.word_size == sizeof(grid_store_word_t) * 8;
             }
         };
 
@@ -339,7 +339,7 @@ namespace on_cpu {
                        params.device == CPU_OPT &&
                        params.evaluator == "tiled_bit_planes" &&
                        params.layout == "tiled_bit_planes" &&
-                       params.precision == sizeof(grid_store_word_t) * 8;
+                       params.word_size == sizeof(grid_store_word_t) * 8;
             }
         };
     };

@@ -10,7 +10,7 @@ STEPS = 128
 
 # Define the parameter space to check
 Y_BLOCK_SIZES = [2, 4]
-PRECISIONS = [32, 64]
+WORD_SIZES = [32, 64]
 TEMPORAL_STEPS = [4, 8, 12, 20]
 TEMPORAL_TILE_SIZES_Y = [8, 32]
 
@@ -39,13 +39,13 @@ def get_run_info(params_string):
     automaton = re.search(r'--automaton\s+(\S+)', params_string)
     evaluator = re.search(r'--evaluator\s+(\S+)', params_string)
     layout = re.search(r'--layout\s+(\S+)', params_string)
-    precision = re.search(r'--precision\s+(\S+)', params_string)
+    word_size = re.search(r'--word_size\s+(\S+)', params_string)
     temp_steps = re.search(r'--temporal_steps\s+(\S+)', params_string)
     
     if automaton: parts.append(f"Automaton: {automaton.group(1)}")
     if evaluator: parts.append(f"Eval: {evaluator.group(1)}")
     if layout: parts.append(f"Layout: {layout.group(1)}")
-    if precision: parts.append(f"Prec: {precision.group(1)}")
+    if word_size: parts.append(f"Prec: {word_size.group(1)}")
     if temp_steps: parts.append(f"T-Steps: {temp_steps.group(1)}")
 
     return ", ".join(parts)
@@ -136,8 +136,8 @@ def main():
             # Standard (non-bitpacked) implementation
             run_and_validate("Standard", run_all.StandardImplementation.params(tc_block), executable, header_keys)
             
-            for precision in PRECISIONS:
-                tc_prec = tc_block.clone().with_precision(precision)
+            for word_size in WORD_SIZES:
+                tc_prec = tc_block.clone().with_word_size(word_size)
 
                 # Bit-packed implementations
                 run_and_validate("BitArray", run_all.BitArrayImplementation.params(tc_prec), executable, header_keys)
@@ -148,7 +148,7 @@ def main():
                 for temporal_steps in TEMPORAL_STEPS:
                     tc_tsteps = tc_prec.clone().with_temporal_steps(temporal_steps)
 
-                    max_y_tile = run_all.biggest_temporal_tile_size_for_automata[precision][automaton]
+                    max_y_tile = run_all.biggest_temporal_tile_size_for_automata[word_size][automaton]
                     
                     if max_y_tile is None:
                         continue

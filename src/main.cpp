@@ -283,7 +283,7 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
     };
 
     std::vector<std::string> optional {
-        "print", "precision", "x_tile_size", "y_tile_size",
+        "print", "word_size", "x_tile_size", "y_tile_size",
         "seed", "rounds", "warmup_rounds", "print_csv_header",
         "reference_impl", "cuda_block_size_x", "cuda_block_size_y",
         "temporal_steps", "temporal_tile_size_y"
@@ -291,7 +291,7 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
 
     if (parser.exists("evaluator")) {
         if (parser.get("evaluator") == "bit_planes" || parser.get("evaluator") == "bit_array") {
-            required.push_back("precision");
+            required.push_back("word_size");
         }
     }
 
@@ -334,7 +334,7 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
         .y_size = std::stoi(parser.get("y_size")),
         .steps = std::stoi(parser.get("steps")),
 
-        .precision = parser.exists("precision") ? std::stoi(parser.get("precision")) : 0,
+        .word_size = parser.exists("word_size") ? std::stoi(parser.get("word_size")) : 0,
         
         .x_tile_size = parser.exists("x_tile_size") ? std::stoi(parser.get("x_tile_size")) : 0,
         .y_tile_size = parser.exists("y_tile_size") ? std::stoi(parser.get("y_tile_size")) : 0,
@@ -376,7 +376,7 @@ void print_usage() {
     std::cout << "  --rounds <number>               Number of rounds to run\n";
     std::cout << "  --warmup_rounds <number>        Number of warmup rounds to run\n";
     std::cout << "  --steps <number>                Number of steps to run\n";
-    std::cout << "  --precision <number>            Precision for floating-point calculations (32, 64)\n";
+    std::cout << "  --word_size <number>            word_size for floating-point calculations (32, 64)\n";
     std::cout << "  --seed <number>                 Random seed for initialization\n";
     std::cout << "  --print                         Print the grid after each step\n";
     std::cout << "  --reference_impl                Use reference implementation for the automaton\n";
