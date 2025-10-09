@@ -13,7 +13,7 @@
 #error "Halide is not enabled, this source file should not be compiled."
 #endif // ENABLE_HALIDE
 
-namespace halide::greenberg {
+namespace halide::excitable {
 
 using real_runner = common::real_runner_interface;
 
@@ -47,6 +47,6 @@ private:
     std::unique_ptr<real_runner> real_runner_;
 };
 
-} // namespace halide::greenberg
+} // namespace halide::excitable
 
 #endif // HALIDE_GREENBERG_RUNNER_HPP

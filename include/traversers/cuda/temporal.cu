@@ -155,30 +155,33 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
     if constexpr (mode == _run_mode::VERBOSE) {
         call_callback(0, current);
     }
+
+    // Has to be fixed to 32 because of warp size
+    using cuda_th_block_x_opts        = std::integer_sequence<idx_type, 32>;
     
+    // Others can be adjusted:
+
     // Hot compilation
-    using temporal_steps_options = std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24>;
-    using tile_y_options         = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
-    using block_x_options        = std::integer_sequence<idx_type, 32>;
-    using block_y_options        = std::integer_sequence<idx_type, 2, 4, 8, 16>;
+    // using temporal_steps_opts        = std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24>;
+    // using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
+    // using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 2, 4, 8, 16>;
     
-    // Verification compilation
-    // using temporal_steps_options = std::integer_sequence<idx_type, 4, 8, 12, 20>;
-    // using tile_y_options         = std::integer_sequence<idx_type, 8, 32>;
-    // using block_x_options        = std::integer_sequence<idx_type, 32>;
-    // using block_y_options        = std::integer_sequence<idx_type, 2, 4>;
+    // Verification compilation (for <repo root>/src/_scripts/cluster_run/verify.py script)
+    // using temporal_steps_opts        = std::integer_sequence<idx_type, 4, 8, 12, 20>;
+    // using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 32>;
+    // using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 2, 4>;
 
     // Fast compilation
-    // using temporal_steps_options = std::integer_sequence<idx_type, 4>;
-    // using tile_y_options         = std::integer_sequence<idx_type, 32>;
-    // using block_x_options        = std::integer_sequence<idx_type, 32>;
-    // using block_y_options        = std::integer_sequence<idx_type, 8>;
+    using temporal_steps_opts        = std::integer_sequence<idx_type, 4>;
+    using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 32>;
+    using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 8>;
 
     cellato::generic_dispatcher::call<
-        temporal_steps_options,
-        tile_y_options,
-        block_x_options,
-        block_y_options
+        temporal_steps_opts,
+        temporal_block_size_Y_opts, 
+        
+        cuda_th_block_x_opts,
+        cuda_th_block_y_opts
     >(
         [&]<
             idx_type temporal_steps, idx_type temporal_tile_size_y,
@@ -271,7 +274,7 @@ auto traverser<evaluator_type, grid_type, average_halo_radius>::fetch_result() -
 #include "../../../src/game_of_life/cuda_instantiations.cuh"
 #include "../../../src/fire/cuda_instantiations.cuh"
 #include "../../../src/wire/cuda_instantiations.cuh"
-#include "../../../src/greenberg/cuda_instantiations.cuh"
+#include "../../../src/excitable/cuda_instantiations.cuh"
 #include "../../../src/brian/cuda_instantiations.cuh"
 #include "../../../src/maze/cuda_instantiations.cuh"
 #include "../../../src/hpp/cuda_instantiations.cuh"

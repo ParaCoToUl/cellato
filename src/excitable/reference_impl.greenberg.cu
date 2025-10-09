@@ -3,11 +3,11 @@
 #include "traversers/cuda_utils.cuh"
 #include "../_shared/indexing.hpp"
 
-namespace greenberg::reference {
+namespace excitable::reference {
 using namespace ::reference::indexing;
 
 // CUDA kernel for Greenberg-Hastings Model (single step)
-__global__ void greenberg_kernel(const ghm_cell_state* current, ghm_cell_state* next, 
+__global__ void excitable_kernel(const ghm_cell_state* current, ghm_cell_state* next, 
                                 int width, int height) {
     // Calculate thread indices, adjusting for margins
     int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
@@ -87,7 +87,7 @@ void runner::run_kernel(int steps) {
     // Run steps iterations
     for (int i = 0; i < steps; i++) {
         // Launch kernel for one step
-        greenberg_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
+        excitable_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
         
         // Swap pointers for next iteration
         ghm_cell_state* temp = d_current;
@@ -96,4 +96,4 @@ void runner::run_kernel(int steps) {
     }
 }
 
-} // namespace greenberg::reference
+} // namespace excitable::reference

@@ -46,7 +46,7 @@ OBJ_DIR = ../bin
 BIN_DIR = ../bin
 DEP_DIR = ../_deps
 VENDOR_DIR = ../vendor
-CUDA_DIRS = ../include/evaluators ../include/traversers/cuda ./game_of_life ./greenberg ./wire ./fire ./brian ./maze ./hpp ./critters ./traffic ./cyclic
+CUDA_DIRS = ../include/evaluators ../include/traversers/cuda ./game_of_life ./excitable ./wire ./fire ./brian ./maze ./hpp ./critters ./traffic ./cyclic
 TEST_DIR = $(SRC_DIR)
 
 # Source and object files
@@ -72,7 +72,7 @@ LIBS += -lkokkoscore $(CUDA_DRIVER_LIB)
 KOKKOS_RUNNERS := \
 	game_of_life \
 	fire \
-	greenberg \
+	excitable \
 	wire \
 	brian \
 	maze \
@@ -100,7 +100,7 @@ EXTRA_OBJS += $(addprefix $(OBJ_DIR)/halide_, \
 	critters_runner.o \
 	cyclic_runner.o \
 	fire_runner.o \
-	greenberg_runner.o \
+	excitable_runner.o \
 	hpp_runner.o \
 	maze_runner.o \
 	traffic_runner.o \
@@ -116,8 +116,8 @@ DEPENDENCIES += install_gridtools
 INCLUDE_DIRS += $(GRIDTOOLS_HOME_INCLUDE:%=-I%)
 # LIB_DIRS += $(GRIDTOOLS_HOME_LIB:%=-L%)
 # LIBS += -lgridtools
-EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CUDA_runner.o # $(OBJ_DIR)/gridtools_fire_CUDA_runner.o $(OBJ_DIR)/gridtools_greenberg_CUDA_runner.o $(OBJ_DIR)/gridtools_wire_CUDA_runner.o
-EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CPU_runner.o # $(OBJ_DIR)/gridtools_fire_CPU_runner.o $(OBJ_DIR)/gridtools_greenberg_CPU_runner.o $(OBJ_DIR)/gridtools_wire_CPU_runner.o
+EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CUDA_runner.o # $(OBJ_DIR)/gridtools_fire_CUDA_runner.o $(OBJ_DIR)/gridtools_excitable_CUDA_runner.o $(OBJ_DIR)/gridtools_wire_CUDA_runner.o
+EXTRA_OBJS += $(OBJ_DIR)/gridtools_game_of_life_CPU_runner.o # $(OBJ_DIR)/gridtools_fire_CPU_runner.o $(OBJ_DIR)/gridtools_excitable_CPU_runner.o $(OBJ_DIR)/gridtools_wire_CPU_runner.o
 
 $(OBJ_DIR)/gridtools_%_CUDA_runner.o: $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.cu $(SRC_DIR)/_relwork/gridtools/gridtools_%_runner.inl | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(DEFINES) $(GRIDTOOLS_HOME_INCLUDE:%=-I%)

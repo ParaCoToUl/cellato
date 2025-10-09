@@ -1,20 +1,20 @@
-#include "greenberg/runner.hpp"
+#include "excitable/runner.hpp"
 
 #include "Kokkos_Core.hpp"
 
-#include "../../greenberg/algorithm.hpp"
+#include "../../excitable/algorithm.hpp"
 #include "detail/view_runner_base.hpp"
 
 #include <cstdint>
 
-namespace kokkos::greenberg {
+namespace kokkos::excitable {
 
 namespace {
 
-struct greenberg_runner_impl : public detail::view_runner_base<real_runner, greenberg_runner_impl, std::uint8_t> {
-    using runner_base = detail::view_runner_base<real_runner, greenberg_runner_impl, std::uint8_t>;
+struct excitable_runner_impl : public detail::view_runner_base<real_runner, excitable_runner_impl, std::uint8_t> {
+    using runner_base = detail::view_runner_base<real_runner, excitable_runner_impl, std::uint8_t>;
     using value_type = typename runner_base::value_type;
-    using cell_state = ::greenberg::ghm_cell_state;
+    using cell_state = ::excitable::ghm_cell_state;
 
     static constexpr const char* cpu_label() { return "GreenbergStepCPU"; }
     static constexpr const char* cuda_label() { return "GreenbergStepCUDA"; }
@@ -75,7 +75,7 @@ struct greenberg_runner_impl : public detail::view_runner_base<real_runner, gree
 } // namespace
 
 std::unique_ptr<real_runner> create_runner() {
-    return std::make_unique<greenberg_runner_impl>();
+    return std::make_unique<excitable_runner_impl>();
 }
 
-} // namespace kokkos::greenberg
+} // namespace kokkos::excitable

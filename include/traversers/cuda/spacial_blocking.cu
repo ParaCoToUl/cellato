@@ -115,7 +115,7 @@ auto traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::fetch_resul
 #include "../../../src/game_of_life/cuda_instantiations.cuh"
 #include "../../../src/fire/cuda_instantiations.cuh"
 #include "../../../src/wire/cuda_instantiations.cuh"
-#include "../../../src/greenberg/cuda_instantiations.cuh"
+#include "../../../src/excitable/cuda_instantiations.cuh"
 #include "../../../src/brian/cuda_instantiations.cuh"
 #include "../../../src/maze/cuda_instantiations.cuh"
 #include "../../../src/hpp/cuda_instantiations.cuh"

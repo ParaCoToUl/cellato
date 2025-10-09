@@ -3,7 +3,7 @@
 
 #include "core/ast.hpp"
 
-namespace greenberg {
+namespace excitable {
 using namespace cellato::ast;
 
 // Define 8 states: 0 (quiescent), 1 (excited), 2-7 (refractory)

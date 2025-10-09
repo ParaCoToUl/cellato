@@ -1,30 +1,30 @@
-#include "greenberg/runner.hpp"
+#include "excitable/runner.hpp"
 
 #include "Halide.h"
 
 #include "common/runner_base.hpp"
 
-#include "../../greenberg/algorithm.hpp"
+#include "../../excitable/algorithm.hpp"
 
-namespace halide::greenberg {
+namespace halide::excitable {
 
 namespace {
 
-class greenberg_runner final : public common::runner_base {
+class excitable_runner final : public common::runner_base {
 public:
     void build_pipeline(const cellato::run::run_params&) override {
         using Halide::Expr;
         auto clamped = clamped_grid();
         auto& out = result();
 
-        const Expr quiescent = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::quiescent));
-        const Expr excited = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::excited));
-        const Expr refractory_1 = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::refractory_1));
-        const Expr refractory_2 = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::refractory_2));
-        const Expr refractory_3 = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::refractory_3));
-        const Expr refractory_4 = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::refractory_4));
-        const Expr refractory_5 = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::refractory_5));
-        const Expr refractory_6 = Halide::cast<int>(common::to_int(::greenberg::ghm_cell_state::refractory_6));
+        const Expr quiescent = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::quiescent));
+        const Expr excited = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::excited));
+        const Expr refractory_1 = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::refractory_1));
+        const Expr refractory_2 = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::refractory_2));
+        const Expr refractory_3 = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::refractory_3));
+        const Expr refractory_4 = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::refractory_4));
+        const Expr refractory_5 = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::refractory_5));
+        const Expr refractory_6 = Halide::cast<int>(common::to_int(::excitable::ghm_cell_state::refractory_6));
 
         auto is_excited = [&](const Expr& value) {
             return Halide::cast<int>(value == excited);
@@ -55,7 +55,7 @@ public:
 } // namespace
 
 std::unique_ptr<real_runner> create_runner() {
-    return std::make_unique<greenberg_runner>();
+    return std::make_unique<excitable_runner>();
 }
 
-} // namespace halide::greenberg
+} // namespace halide::excitable

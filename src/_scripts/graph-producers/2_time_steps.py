@@ -11,7 +11,7 @@ AUTOMATA=[
     "game-of-life",
     "forest-fire",
     "wire",
-    "greenberg-hastings",
+    "excitable",
     "brian",
     "cyclic",
     "traffic",
@@ -96,7 +96,7 @@ print("Finished processing data. Starting plot generation.")
 # --- 2. Plotting Phase ---
 automaton_names = {
     "game-of-life": "GoL", "forest-fire": "fire", "wire": "wire",
-    "greenberg-hastings": "excitable", "brian": "brian", "cyclic": "cyclic",
+    "excitable": "excitable", "brian": "brian", "cyclic": "cyclic",
     "traffic": "traffic", "hpp": "fluid", "maze": "maze", "critters": "critters"
 }
 

@@ -27,7 +27,7 @@ Cellular automata (CA) are discrete computational models widely used to simulate
 │   ├── game_of_life/    ← Game of Life example
 │   ├── fire/            ← Forest Fire example
 │   ├── wire/            ← Wireworld example
-│   ├── greenberg/       ← Greenberg–Hastings example
+│   ├── excitable/       ← Greenberg–Hastings example
 │   ├── .../             ← ... remaining 6 automata
 │   └── _scripts/        ← Benchmark & plotting scripts
 └── results/             ← Benchmark outputs (CSV, PNG, PDF)
@@ -40,12 +40,12 @@ Cellular automata (CA) are discrete computational models widely used to simulate
 | **Game of Life**       | `GoL`        | Conway’s binary grid (Moore neighborhood)               | [`src/game_of_life`](./src/game_of_life) |
 | **Forest Fire**        | `fire`       | Spread of forest fire simulation (von Neumann)          | [`src/fire`](./src/fire)                 |
 | **WireWorld**          | `wire`       | Digital circuit simulator (4 states)                    | [`src/wire`](./src/wire)                 |
-| **Greenberg–Hastings** | `excitable`  | Excitable medium with refractory states                 | [`src/greenberg`](./src/greenberg)       |
+| **Greenberg–Hastings** | `excitable`  | excitable medium with refractory states                 | [`src/excitable`](./src/excitable)       |
 | **Maze**               | `GoL`        | Maze generating CA                                      | [`src/maze`](./src/maze)                 |
 | **Brian's Brain**      | `brian`      | Gama of life cousin with 3 states                       | [`src/brian`](./src/brian)               |
 | **Cyclic**             | `cyclic`     | Modeling of excitable medium (32 states)                | [`src/cyclic`](./src/cyclic)             |
 | **Fluid Simulation**   | `fluid`      | The Hardy–Pomeau–Pazzis (HPP) model                     | [`src/hpp`](./src/hpp)                   |
-| **Critters**           | `critters`   | Reversible automaton with a Margolus block neighborhood | [`src/greenberg`](./src/greenberg)       |
+| **Critters**           | `critters`   | Reversible automaton with a Margolus block neighborhood | [`src/excitable`](./src/excitable)       |
 | **Traffic**            | `traffic`    | A traffic simulation using 2 different cars             | [`src/traffic`](./src/traffic)           |
 
 ## 🛠️ Core Cellato Components
@@ -113,7 +113,7 @@ cd cellato
 ```bash
 Usage: ./cellato [options]
 Options:
-  --automaton <name>           Name of the automaton to run (game-of-life, forest-fire, wire, greenberg-hastings)
+  --automaton <name>           Name of the automaton to run (game-of-life, forest-fire, wire, excitable)
   --device <CPU|CUDA>          Execution device
   --traverser <name>           Traversal strategy (simple, temporal)
   --evaluator <name>           Evaluator type (standard, bit_array, bit_planes, tiled_bit_planes)
@@ -244,7 +244,7 @@ Due to limitation discussed earlier the grid sizes cannot be precisely same in e
 $> python ./src/_scripts/cluster_run/verify.py
 
 Running all automata
-Automata to test: ['critters', 'traffic', 'hpp', 'game-of-life', 'cyclic', 'brian', 'maze', 'forest-fire', 'wire', 'greenberg-hastings']
+Automata to test: ['critters', 'traffic', 'hpp', 'game-of-life', 'cyclic', 'brian', 'maze', 'forest-fire', 'wire', 'excitable']
 Starting correctness validation...
 --------------------------------------------------------------------------------
 

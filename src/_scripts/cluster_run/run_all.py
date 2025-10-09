@@ -35,7 +35,7 @@ ALL_AUTOMATA = [
     "maze",
     "forest-fire",
     "wire",
-    "greenberg-hastings",
+    "excitable",
 ]
 
 if group_number == -1:
@@ -55,7 +55,7 @@ AUTOMATA_bits = {
     "forest-fire": 2,
     "wire": 2,
     "traffic": 2,
-    "greenberg-hastings": 3,
+    "excitable": 3,
     "hpp": 4,
     "cyclic": 5,
 }
@@ -68,7 +68,7 @@ average_halo_radii = {
     "forest-fire": 1.0,
     "wire": 1.0,
     "traffic": 1.0,
-    "greenberg-hastings": 1.0,
+    "excitable": 1.0,
     "hpp": 1.0,
     "cyclic": 1.0,
 }
@@ -83,7 +83,7 @@ biggest_temporal_tile_size_for_automata = {
         "forest-fire": 64,
         "wire": 64,
         "traffic": 64,
-        "greenberg-hastings": 64,
+        "excitable": 64,
         "hpp": 32,
         "cyclic": 32,
     },
@@ -95,7 +95,7 @@ biggest_temporal_tile_size_for_automata = {
         "forest-fire": 32,
         "wire": 32,
         "traffic": 32,
-        "greenberg-hastings": 32,
+        "excitable": 32,
         "hpp": 16,
         "cyclic": 16,
     }

@@ -7,7 +7,7 @@
 #include "experiments/run_params.hpp"
 #include "./algorithm.hpp"
 
-namespace greenberg {
+namespace excitable {
 
 struct ghm_random_init {
     static std::vector<ghm_cell_state> init(cellato::run::run_params& params) {

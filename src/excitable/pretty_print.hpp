@@ -4,7 +4,7 @@
 #include "memory/standard_grid.hpp"
 #include "./algorithm.hpp"
 
-namespace greenberg {
+namespace excitable {
 
 using print_config = cellato::memory::grids::standard::print_config<ghm_cell_state>;
 

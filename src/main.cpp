@@ -16,7 +16,7 @@
 #include "game_of_life/pretty_print.hpp"
 #include "game_of_life/config.hpp"
 #include "fire/config.hpp"
-#include "greenberg/config.hpp"
+#include "excitable/config.hpp"
 #include "wire/config.hpp"
 #include "brian/config.hpp"
 #include "maze/config.hpp"
@@ -34,7 +34,7 @@
 #ifdef ENABLE_KOKKOS
 #include "_relwork/kokkos/game_of_life/runner.hpp"
 #include "_relwork/kokkos/fire/runner.hpp"
-#include "_relwork/kokkos/greenberg/runner.hpp"
+#include "_relwork/kokkos/excitable/runner.hpp"
 #include "_relwork/kokkos/brian/runner.hpp"
 #include "_relwork/kokkos/maze/runner.hpp"
 #include "_relwork/kokkos/hpp/runner.hpp"
@@ -47,14 +47,14 @@
 #ifdef ENABLE_GRIDTOOLS
 #include "_relwork/gridtools/game_of_life/runner.hpp" 
 // #include "_relwork/gridtools/fire/runner.hpp"
-// #include "_relwork/gridtools/greenberg/runner.hpp"
+// #include "_relwork/gridtools/excitable/runner.hpp"
 // #include "_relwork/gridtools/wire/runner.hpp"
 #endif // ENABLE_GRIDTOOLS
 
 #ifdef ENABLE_HALIDE
 #include "_relwork/halide/game_of_life/runner.hpp"
 #include "_relwork/halide/fire/runner.hpp"
-#include "_relwork/halide/greenberg/runner.hpp"
+#include "_relwork/halide/excitable/runner.hpp"
 #include "_relwork/halide/wire/runner.hpp"
 #include "_relwork/halide/brian/runner.hpp"
 #include "_relwork/halide/maze/runner.hpp"
@@ -94,8 +94,8 @@ private:
                 return run_reference_for_automaton<game_of_life::config>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
                 return run_reference_for_automaton<fire::config>(params);
-            } else if (params.automaton == "greenberg-hastings") {
-                return run_reference_for_automaton<greenberg::config>(params);
+            } else if (params.automaton == "excitable") {
+                return run_reference_for_automaton<excitable::config>(params);
             } else if (params.automaton == "wire") {
                 return run_reference_for_automaton<wire::config>(params);
             } else if (params.automaton == "brian") {
@@ -128,8 +128,8 @@ private:
                 return run_relwork<game_of_life::config, gridtools::game_of_life::runner>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
                 // return run_relwork<fire::config, gridtools::fire::runner>(params);
-            } else if (params.automaton == "greenberg-hastings") {
-                // return run_relwork<greenberg::config, gridtools::greenberg::runner>(params);
+            } else if (params.automaton == "excitable") {
+                // return run_relwork<excitable::config, gridtools::excitable::runner>(params);
             } else if (params.automaton == "wire") {
                 // return run_relwork<wire::config, gridtools::wire::runner>(params);
             }
@@ -147,8 +147,8 @@ private:
                 return run_relwork<game_of_life::config, kokkos::game_of_life::runner>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
                 return run_relwork<fire::config, kokkos::fire::runner>(params);
-            } else if (params.automaton == "greenberg-hastings") {
-                return run_relwork<greenberg::config, kokkos::greenberg::runner>(params);
+            } else if (params.automaton == "excitable") {
+                return run_relwork<excitable::config, kokkos::excitable::runner>(params);
             } else if (params.automaton == "wire") {
                 return run_relwork<wire::config, kokkos::wire::runner>(params);
             } else if (params.automaton == "brian") {
@@ -178,8 +178,8 @@ private:
                 return run_relwork<game_of_life::config, halide::game_of_life::runner>(params);
             } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
                 return run_relwork<fire::config, halide::fire::runner>(params);
-            } else if (params.automaton == "greenberg-hastings") {
-                return run_relwork<greenberg::config, halide::greenberg::runner>(params);
+            } else if (params.automaton == "excitable") {
+                return run_relwork<excitable::config, halide::excitable::runner>(params);
             } else if (params.automaton == "wire") {
                 return run_relwork<wire::config, halide::wire::runner>(params);
             } else if (params.automaton == "brian") {
@@ -410,7 +410,7 @@ int main(int argc, char* argv[]) {
     using _game_of_life_ = game_of_life::config;
     using _fire_ = fire::config;
     using _wire_ = wire::config;
-    using _greenberg_ = greenberg::config;
+    using _excitable_ = excitable::config;
     using _brian_ = brian::config;
     using _maze_ = maze::config;
     using _hpp_ = hpp::config;
@@ -445,7 +445,7 @@ int main(int argc, char* argv[]) {
         cases_for(_game_of_life_),
         cases_for(_fire_),
         cases_for(_wire_),
-        cases_for(_greenberg_),
+        cases_for(_excitable_),
         cases_for(_brian_),
         cases_for(_maze_),
         cases_for(_hpp_),

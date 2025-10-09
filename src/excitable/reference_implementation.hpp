@@ -10,7 +10,7 @@
 #include "traversers/cuda_utils.cuh"
 #include "../_shared/indexing.hpp"
 
-namespace greenberg::reference {
+namespace excitable::reference {
 using namespace ::reference::indexing;
 
 struct runner {
@@ -164,6 +164,6 @@ private:
     void run_kernel(int steps);
 };
 
-} // namespace greenberg::reference
+} // namespace excitable::reference
 
 #endif // GREENBERG_REFERENCE_IMPLEMENTATION_HPP

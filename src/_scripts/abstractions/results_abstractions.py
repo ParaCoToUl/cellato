@@ -24,7 +24,7 @@ BITS_USED = {
     "game-of-life": f"       {TablePrinter.COLORS.YELLOW}1 bit{TablePrinter.COLORS.RESET}",
     "forest-fire": f"        {TablePrinter.COLORS.YELLOW}2 bits{TablePrinter.COLORS.RESET}",
     "wire": f"               {TablePrinter.COLORS.YELLOW}2 bits{TablePrinter.COLORS.RESET}",
-    "greenberg-hastings": f" {TablePrinter.COLORS.YELLOW}3 bits{TablePrinter.COLORS.RESET}",
+    "excitable": f" {TablePrinter.COLORS.YELLOW}3 bits{TablePrinter.COLORS.RESET}",
     "brian": f"              {TablePrinter.COLORS.YELLOW}2 bit{TablePrinter.COLORS.RESET}",
     "cyclic": f"             {TablePrinter.COLORS.YELLOW}5 bits{TablePrinter.COLORS.RESET}",
     "traffic": f"            {TablePrinter.COLORS.YELLOW}2 bits{TablePrinter.COLORS.RESET}",

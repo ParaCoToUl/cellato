@@ -7,11 +7,11 @@
 #include "./reference_implementation.hpp"
 #include "memory/state_dictionary.hpp"
 
-namespace greenberg {
+namespace excitable {
 
 struct config {
     
-    static constexpr char name[] = "greenberg-hastings";
+    static constexpr char name[] = "excitable";
 
     static constexpr double average_halo_radius = 1.0;
 
