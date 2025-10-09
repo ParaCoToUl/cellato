@@ -70,21 +70,21 @@ All core headers live in [`include/`](./include/). Key components:
 
 ```bash
 # Clone & enter
-git clone (REMOVED TO PRESERVE AUTHOR ANONYMITY REMOVED TO PRESERVE AUTHOR ANONYMITY DURING REVIEW)
-cd cellato
+$> git clone (REMOVED TO PRESERVE AUTHOR ANONYMITY REMOVED TO PRESERVE AUTHOR ANONYMITY DURING REVIEW)
+$> cd cellato
 
 # Build Cellato and the `baseline` reference implementation
-(cd src && make)
+$> (cd src && make)
 
 # Run the CLI test harness
-./bin/cellato <options>
+$> ./bin/cellato <options>
 ```
 
 ### ▶️ Running Examples
 
 ```bash
 # Game of Life on CPU, standard layout
-./bin/cellato \
+$> ./bin/cellato \
   --automaton game-of-life \
   --device CPU \
   --traverser simple \
@@ -94,7 +94,7 @@ cd cellato
   --steps 100
 
 # Game of Life on CUDA with bit-planes
-./bin/cellato \
+$> ./bin/cellato \
   --automaton game-of-life \
   --device CUDA \
   --traverser simple \
@@ -159,21 +159,23 @@ Note that that a specific implementation is uniquely identified by the triplet o
 | Bit Packed Representation | Defining the `k` as a number of cells in a machine word (`k = precision // bits_per_automaton_state`).<br> The grid size `X` (`--x_size`) **must** be divisible by the thread block size `X` (`--cuda_block_size_x`) times `k`. <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). |
 | Linear Bit Planes | The grid size `X` (`--x_size`) **must** be divisible by the `--precision` times cuda thread block block size `X` (`--cuda_block_size_x`). <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). |
 | Tiled Bit Planes | The grid size `X` (`--x_size`) **must** be divisible by `8` times cuda thread block block size `X` (`--cuda_block_size_x`). <br> The grid size `Y` (`--y_size`) **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`) times `4` or `8` for `--precision 32` and `--precision 64` respectively. |
-| Temporal Bit Planes (Linear) | Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * --temporal_steps`. <br> The grid size `X` (`--x_size`) **must** be divisible by `30` (which is warp size `32` minus the halo of `2`) times `--precision`. <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y`. <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps`. |
-| Temporal Bit Planes (Tiled) | Defining the `effective_temporal_size_X` as `32 - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)`. <br> Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)` for `--precision 64` and `ceil(4 / --time_steps)` for `--precision 32`.  <br> The grid size `X` (`--x_size`) **must** be divisible by `effective_temporal_size_X` <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y` <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps` |
+| Temporal Bit Planes (Linear) | Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * --temporal_steps`. <br> The grid size `X` (`--x_size`) **must** be divisible by `30` (which is warp size `32` minus the halo of `2`) times `--precision`. <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y`. <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps`. <br> The thread block size X `--cuda_block_size_x` **must** be 32. |
+| Temporal Bit Planes (Tiled) | Defining the `effective_temporal_size_X` as `32 - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)`. <br> Defining the `effective_temporal_size_Y` as `--temporal_tile_size_y - 2 * word_halo` where `word_halo_x` is `ceil(8 / --time_steps)` for `--precision 64` and `ceil(4 / --time_steps)` for `--precision 32`.  <br> The grid size `X` (`--x_size`) **must** be divisible by `effective_temporal_size_X` <br> The grid size `Y` (`--y_size`) **must** be divisible by `effective_temporal_size_Y` <br> The `--temporal_tile_size_y` **must** be divisible by the thread block size `Y` (`--cuda_block_size_y`). <br> The total simulation steps (`--steps`) must be divisible by the `--temporal_steps` <br> The thread block size X `--cuda_block_size_x` **must** be 32. |
+
+⚠️ **IMPORTANT NOTE**: The temporal blocking traverser requires the `--temporal_steps`, `--temporal_tile_size_y`, and `--cuda_block_size_y` parameters to be known at **compile-time**. Specific values for **verification** and **benchmarking** are already configured. You can use them by running `make COMPILE_TO_VERIFY` or `make COMPILE_TO_BENCHMARK`. If you need to use custom values, you must directly edit the [`temporal.cu`](./include/traversers/cuda/temporal.cu) kernel file. The section that needs modification is clearly marked within the source code.
 
 #### 🧩 Examples for each combination
 
 ```bash
 # ▶️ Standard layout + evaluator
-./bin/cellato \
+$> ./bin/cellato \
   --evaluator standard \
   --layout standard \
   --traverser simple \
   [other options…]
 
 # ▶️ Bit-array layout + evaluator (32-bit)
-./bin/cellato \
+$> ./bin/cellato \
   --evaluator bit_array \
   --layout bit_array \
   --precision 32 \
@@ -181,7 +183,7 @@ Note that that a specific implementation is uniquely identified by the triplet o
   [other options…]
 
 # ▶️ Bit-planes layout + evaluator (32-bit)
-./bin/cellato \
+$> ./bin/cellato \
   --evaluator bit_planes \
   --layout bit_planes \
   --precision 32 \
@@ -189,7 +191,7 @@ Note that that a specific implementation is uniquely identified by the triplet o
   [other options…]
 
 # ▶️ Tiled bit-planes layout + evaluator (32-bit)
-./bin/cellato \
+$> ./bin/cellato \
   --evaluator tiled_bit_planes \
   --layout tiled_bit_planes \
   --precision 32 \
@@ -197,7 +199,7 @@ Note that that a specific implementation is uniquely identified by the triplet o
   [other options…]
 
 # ▶️ Temporal bit-planes layout + evaluator (32-bit)
-./bin/cellato \
+$> ./bin/cellato \
   --evaluator bit_planes \
   --layout bit_planes \
   --precision 32 \
@@ -205,7 +207,7 @@ Note that that a specific implementation is uniquely identified by the triplet o
   [other options…]
 
 # ▶️ Temporal tiled bit-planes layout + evaluator (32-bit)
-./bin/cellato \
+$> ./bin/cellato \
   --evaluator tiled_bit_planes \
   --layout tiled_bit_planes \
   --precision 32 \
@@ -218,27 +220,44 @@ Note that that a specific implementation is uniquely identified by the triplet o
 
 ## 📊 Scripts & Benchmarks
 
-Reproduce paper results via scripts in `src/_scripts/`.
+First, you'll need to compile the project for benchmarking. Note that this initial compilation can take **up to an hour**, as it builds all temporal blocking variants required for the tests.
 
 ```bash
-# Generate raw CSV data
-python ./src/_scripts/cluster_run/run_all.py > results.csv
+$> cd src
+$> make COMPILE_TO_BENCHMARK
+```
 
-# Detailed table in ASCI
-python src/_scripts/table-producers/show_result_table.py results.csv
+Once compilation is complete, you can use the following scripts located in the `src/_scripts/` directory to reproduce the results from the paper.
 
-# HTML Detailed table - includes also the best hyper params information
-python src/_scripts/table-producers/to_html_report.py results.csv > report.html
+```bash
+# Measure all the variants producing CSV file `results.csv`
+$> python ./src/_scripts/cluster_run/run_all.py > results.csv
 
-# Graphs from the paper (last argument is the name of the output file {.png | .pdf})
-python src/_scripts/graph-producers/0_total_perf.py      results.csv   total_perf.pdf
-python src/_scripts/graph-producers/1_linear_vs_tiled.py results.csv   linear_vs_tiled.pdf
-python src/_scripts/graph-producers/2_time_steps.py      results.csv   time_steps.pdf
+# Generate a detailed results table in ASCII format
+$> python ./src/_scripts/table-producers/show_result_table.py results.csv
+
+# Generate an HTML report with detailed results, including hyperparameter information
+$> python ./src/_scripts/table-producers/to_html_report.py results.csv > report.html
+
+# Generate the graphs presented in the paper
+# The final argument specifies the output file name (e.g., .png, .pdf)
+$> python ./src/_scripts/graph-producers/0_total_perf.py      results.csv   total_perf.pdf
+$> python ./src/_scripts/graph-producers/1_linear_vs_tiled.py results.csv   linear_vs_tiled.pdf
+$> python ./src/_scripts/graph-producers/2_time_steps.py      results.csv   time_steps.pdf
 ```
 
 ### ✅ Verification
 
-Due to limitation discussed earlier the grid sizes cannot be precisely same in each of the benchmarks. Consequently the check sums produced by the `run_all.py` cannot be compared. For the test of the validity use a script [./src/_scripts/cluster_run/verify.py](./src/_scripts/cluster_run/verify.py):
+Due to certain implementation constraints, grid sizes may differ slightly across benchmarks. As a result, the checksums produced by `run_all.py` are not directly comparable for validation.
+
+To verify the correctness of the implementations, you must first perform a quick, specialized compilation. This step configures the specific temporal blocking values that the verification script requires.
+
+```bash
+$> cd src
+$> make COMPILE_TO_VERIFY
+```
+
+Now you can run the verification script:
 
 ``` bash
 $> python ./src/_scripts/cluster_run/verify.py
@@ -255,11 +274,21 @@ Starting correctness validation...
 ...
 ```
 
+⚠️ Please note that the script will skip some tests, as certain parameter combinations are not valid for all automaton types.
+
 ---
 
 ## 📈 Results
 
-We have performed an extensive testing of out bit planes methods. The results are in the [./results](./results/) folder which contain two sub-folders for the H100 GPU and A100 GPU. The respective `.csv` contains full measurements ([_h100.csv](./results/H100/_h100.csv), [_a100.csv](./results/A100/_a100.csv)). Both subdirectories also contain graphs generated from the respective `.csv` files and the `.html` report tables. Lastly, the [./results/H100/grid-search-results.csv](./results/H100/grid-search-results.csv) contain data from the initial grid search.
+We have performed a comprehensive evaluation of our bit-plane methods. The complete results are available in the [`./results/`](./results/) directory, which contains separate subdirectories for the **H100** and **A100** GPUs.
+
+Each subdirectory includes:
+
+* The full set of measurements in a `.csv` file ([`_h100.csv`](./results/H100/_h100.csv) and [`_a100.csv`](./results/A100/_a100.csv)).
+* Graphs generated from the performance data.
+* Detailed HTML report tables.
+
+Additionally, the raw data from our initial hyperparameter grid search can be found in [`./results/H100/grid-search-results.csv`](./results/H100/grid-search-results.csv).
 
 ---
 

@@ -161,20 +161,35 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
     
     // Others can be adjusted:
 
-    // Hot compilation
-    // using temporal_steps_opts        = std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24>;
-    // using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
-    // using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 2, 4, 8, 16>;
-    
-    // Verification compilation (for <repo root>/src/_scripts/cluster_run/verify.py script)
-    // using temporal_steps_opts        = std::integer_sequence<idx_type, 4, 8, 12, 20>;
-    // using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 32>;
-    // using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 2, 4>;
+    // For the full benchmarking
+    #ifdef BENCHMARK_COMPILE
+    using temporal_steps_opts        = std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24>;
+    using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
+    using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 2, 4, 8, 16>;
+    #endif
 
-    // Fast compilation
+    // Verification compilation (for <repo root>/src/_scripts/cluster_run/verify.py script)
+    #ifdef VERIFICATION_COMPILE
+    using temporal_steps_opts        = std::integer_sequence<idx_type, 4, 8, 12, 20>;
+    using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 32>;
+    using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 2, 4>;
+    #endif
+
+    // Custom compilation -- FOR USER EDITS
+    #ifndef BENCHMARK_COMPILE
+    #ifndef VERIFICATION_COMPILE
+
+    // possible values for --temporal_steps
     using temporal_steps_opts        = std::integer_sequence<idx_type, 4>;
+
+    // possible values for --temporal_tile_size_y
     using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 32>;
+    
+    // possible values for --cuda_block_size_y
     using cuda_th_block_y_opts       = std::integer_sequence<idx_type, 8>;
+    
+    #endif
+    #endif
 
     cellato::generic_dispatcher::call<
         temporal_steps_opts,

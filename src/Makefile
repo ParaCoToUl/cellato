@@ -20,6 +20,13 @@ ENABLE_HALIDE = OFF
 ENABLE_GRIDTOOLS = OFF
 HALIDE_SYSTEMWIDE = OFF
 
+DEFINES =
+ifeq ($(BUILD_TYPE), BENCHMARK)
+    DEFINES += -DBENCHMARK_COMPILE
+else ifeq ($(BUILD_TYPE), VERIFICATION)
+    DEFINES += -DVERIFICATION_COMPILE
+endif
+
 KOKKOS_HOME_INCLUDE = $(DEP_DIR)/kokkos-install/include
 KOKKOS_HOME_LIB = $(DEP_DIR)/kokkos-install/lib ${DEP_DIR}/kokkos-install/lib64
 
@@ -128,6 +135,16 @@ endif
 
 # Rules
 all: directories $(TARGET) $(TEST_TARGET)
+
+benchmark:
+	@$(MAKE) -j$(shell nproc) all BUILD_TYPE=BENCHMARK
+
+verify:
+	@$(MAKE) -j$(shell nproc) all BUILD_TYPE=VERIFICATION
+
+COMPILE_TO_BENCHMARK: benchmark
+COMPILE_TO_VERIFY: verify
+
 
 directories:
 	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
