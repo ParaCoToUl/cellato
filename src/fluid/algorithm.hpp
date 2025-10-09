@@ -3,7 +3,7 @@
 
 #include "core/ast.hpp"
 
-namespace hpp {
+namespace fluid {
 using namespace cellato::ast;
 
 using hpp_cell_state = int;
@@ -59,6 +59,6 @@ using horizontal_result = if_< just_horizontal_collision >::then_<
 
 using hpp_algorithm = p< vertical_result, bit_or_, horizontal_result >;
 
-} // namespace hpp
+} // namespace fluid
 
 #endif // HPP_ALGORITHM_HPP

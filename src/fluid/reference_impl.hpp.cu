@@ -4,12 +4,12 @@
 #include "traversers/cuda_utils.cuh"
 #include "../_shared/indexing.hpp"
 
-namespace hpp::reference {
+namespace fluid::reference {
 using namespace ::reference::indexing;
 
 namespace {
 
-// CUDA kernel for Forest hpp (single step)
+// CUDA kernel for Forest fluid (single step)
 __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next, 
                             int width, int height) {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -88,4 +88,4 @@ void runner::run_kernel(int steps) {
     }
 }
 
-} // namespace hpp::reference
+} // namespace fluid::reference

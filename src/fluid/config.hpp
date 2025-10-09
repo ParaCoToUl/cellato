@@ -7,11 +7,11 @@
 #include "./reference_implementation.hpp"
 #include "memory/state_dictionary.hpp"
 
-namespace hpp {
+namespace fluid {
 
 struct config {
 
-    static constexpr char name[] = "hpp";
+    static constexpr char name[] = "fluid";
 
     static constexpr double average_halo_radius = 1.0;
 

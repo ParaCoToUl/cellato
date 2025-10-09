@@ -1,7 +1,7 @@
 #ifndef HPP_CUDA_INSTANTIATIONS_CUH
 #define HPP_CUDA_INSTANTIATIONS_CUH
 
-#define AUTOMATON_NAMESPACE hpp
+#define AUTOMATON_NAMESPACE fluid
 
 #include "./config.hpp"
 #include "../_shared/cuda_instantiation_template.cuh"

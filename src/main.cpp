@@ -20,7 +20,7 @@
 #include "wire/config.hpp"
 #include "brian/config.hpp"
 #include "maze/config.hpp"
-#include "hpp/config.hpp"
+#include "fluid/config.hpp"
 #include "critters/config.hpp"
 #include "cyclic/config.hpp"
 #include "traffic/config.hpp"
@@ -37,7 +37,7 @@
 #include "_relwork/kokkos/excitable/runner.hpp"
 #include "_relwork/kokkos/brian/runner.hpp"
 #include "_relwork/kokkos/maze/runner.hpp"
-#include "_relwork/kokkos/hpp/runner.hpp"
+#include "_relwork/kokkos/fluid/runner.hpp"
 #include "_relwork/kokkos/critters/runner.hpp"
 #include "_relwork/kokkos/cyclic/runner.hpp"
 #include "_relwork/kokkos/traffic/runner.hpp"
@@ -58,7 +58,7 @@
 #include "_relwork/halide/wire/runner.hpp"
 #include "_relwork/halide/brian/runner.hpp"
 #include "_relwork/halide/maze/runner.hpp"
-#include "_relwork/halide/hpp/runner.hpp"
+#include "_relwork/halide/fluid/runner.hpp"
 #include "_relwork/halide/critters/runner.hpp"
 #include "_relwork/halide/cyclic/runner.hpp"
 #include "_relwork/halide/traffic/runner.hpp"
@@ -102,8 +102,8 @@ private:
                 return run_reference_for_automaton<brian::config>(params);
             } else if (params.automaton == "maze") {
                 return run_reference_for_automaton<maze::config>(params);
-            } else if (params.automaton == "hpp") {
-                return run_reference_for_automaton<hpp::config>(params);
+            } else if (params.automaton == "fluid") {
+                return run_reference_for_automaton<fluid::config>(params);
             } else if (params.automaton == "critters") {
                 return run_reference_for_automaton<critters::config>(params);
             } else if (params.automaton == "cyclic") {
@@ -155,8 +155,8 @@ private:
                 return run_relwork<brian::config, kokkos::brian::runner>(params);
             } else if (params.automaton == "maze") {
                 return run_relwork<maze::config, kokkos::maze::runner>(params);
-            } else if (params.automaton == "hpp") {
-                return run_relwork<hpp::config, kokkos::hpp::runner>(params);
+            } else if (params.automaton == "fluid") {
+                return run_relwork<fluid::config, kokkos::fluid::runner>(params);
             } else if (params.automaton == "critters") {
                 return run_relwork<critters::config, kokkos::critters::runner>(params);
             } else if (params.automaton == "cyclic") {
@@ -186,8 +186,8 @@ private:
                 return run_relwork<brian::config, halide::brian::runner>(params);
             } else if (params.automaton == "maze") {
                 return run_relwork<maze::config, halide::maze::runner>(params);
-            } else if (params.automaton == "hpp") {
-                return run_relwork<hpp::config, halide::hpp::runner>(params);
+            } else if (params.automaton == "fluid") {
+                return run_relwork<fluid::config, halide::fluid::runner>(params);
             } else if (params.automaton == "critters") {
                 return run_relwork<critters::config, halide::critters::runner>(params);
             } else if (params.automaton == "cyclic") {
@@ -413,7 +413,7 @@ int main(int argc, char* argv[]) {
     using _excitable_ = excitable::config;
     using _brian_ = brian::config;
     using _maze_ = maze::config;
-    using _hpp_ = hpp::config;
+    using _hpp_ = fluid::config;
     using _critters_ = critters::config;
     using _cyclic_ = cyclic::config;
     using _traffic_ = traffic::config;

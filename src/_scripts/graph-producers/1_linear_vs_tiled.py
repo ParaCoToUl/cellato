@@ -15,7 +15,7 @@ AUTOMATA=[
     "brian",
     "cyclic",
     "traffic",
-    "hpp",
+    "fluid",
     "maze",
     "critters"
 ]
@@ -63,7 +63,7 @@ print("Finished processing data. Starting plot generation.")
 automaton_names = {
     "game-of-life": "GoL", "forest-fire": "fire", "wire": "wire",
     "excitable": "excitable", "brian": "brian", "cyclic": "cyclic",
-    "traffic": "traffic", "hpp": "fluid", "maze": "maze", "critters": "critters"
+    "traffic": "traffic", "fluid": "fluid", "maze": "maze", "critters": "critters"
 }
 
 # ⚙️ Graph Configuration

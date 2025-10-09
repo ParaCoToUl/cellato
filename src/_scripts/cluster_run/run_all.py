@@ -27,7 +27,7 @@ TEMPORAL_STEPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24]
 ALL_AUTOMATA = [
     "critters",
     "traffic",
-    "hpp",
+    "fluid",
     "game-of-life",
     "cyclic",
 
@@ -56,7 +56,7 @@ AUTOMATA_bits = {
     "wire": 2,
     "traffic": 2,
     "excitable": 3,
-    "hpp": 4,
+    "fluid": 4,
     "cyclic": 5,
 }
 
@@ -69,7 +69,7 @@ average_halo_radii = {
     "wire": 1.0,
     "traffic": 1.0,
     "excitable": 1.0,
-    "hpp": 1.0,
+    "fluid": 1.0,
     "cyclic": 1.0,
 }
 
@@ -84,7 +84,7 @@ biggest_temporal_tile_size_for_automata = {
         "wire": 64,
         "traffic": 64,
         "excitable": 64,
-        "hpp": 32,
+        "fluid": 32,
         "cyclic": 32,
     },
     64: {
@@ -96,7 +96,7 @@ biggest_temporal_tile_size_for_automata = {
         "wire": 32,
         "traffic": 32,
         "excitable": 32,
-        "hpp": 16,
+        "fluid": 16,
         "cyclic": 16,
     }
 }

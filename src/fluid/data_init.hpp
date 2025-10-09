@@ -6,7 +6,7 @@
 
 #include "experiments/run_params.hpp"
 
-namespace hpp {
+namespace fluid {
 
 struct hpp_random_init {
     static std::vector<hpp_cell_state> init(cellato::run::run_params& params) {

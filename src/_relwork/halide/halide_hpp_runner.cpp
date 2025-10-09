@@ -1,12 +1,12 @@
-#include "hpp/runner.hpp"
+#include "fluid/runner.hpp"
 
 #include "Halide.h"
 
 #include "common/runner_base.hpp"
 
-#include "../../hpp/algorithm.hpp"
+#include "../../fluid/algorithm.hpp"
 
-namespace halide::hpp {
+namespace halide::fluid {
 
 namespace {
 
@@ -17,10 +17,10 @@ public:
         auto clamped = clamped_grid();
         auto& out = result();
 
-        const Expr TOP = Halide::cast<int>(::hpp::TOP);
-        const Expr BOTTOM = Halide::cast<int>(::hpp::BOTTOM);
-        const Expr LEFT = Halide::cast<int>(::hpp::LEFT);
-        const Expr RIGHT = Halide::cast<int>(::hpp::RIGHT);
+        const Expr TOP = Halide::cast<int>(::fluid::TOP);
+        const Expr BOTTOM = Halide::cast<int>(::fluid::BOTTOM);
+        const Expr LEFT = Halide::cast<int>(::fluid::LEFT);
+        const Expr RIGHT = Halide::cast<int>(::fluid::RIGHT);
 
         Expr top_neighbor = clamped(x, y - 1);
         Expr bottom_neighbor = clamped(x, y + 1);
@@ -66,4 +66,4 @@ std::unique_ptr<real_runner> create_runner() {
     return std::make_unique<hpp_runner>();
 }
 
-} // namespace halide::hpp
+} // namespace halide::fluid

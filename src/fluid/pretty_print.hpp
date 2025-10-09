@@ -4,7 +4,7 @@
 #include "memory/standard_grid.hpp"
 #include "./algorithm.hpp"
 
-namespace hpp {
+namespace fluid {
 
 using print_config = cellato::memory::grids::standard::print_config<hpp_cell_state>;
 

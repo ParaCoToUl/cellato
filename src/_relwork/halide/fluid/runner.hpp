@@ -1,8 +1,5 @@
-#ifndef KOKKOS_HPP_RUNNER_HPP
-#define KOKKOS_HPP_RUNNER_HPP
-
-#include <cstddef>
-#include <cstdint>
+#ifndef HALIDE_HPP_RUNNER_HPP
+#define HALIDE_HPP_RUNNER_HPP
 
 #include <memory>
 #include <stdexcept>
@@ -10,27 +7,20 @@
 
 #include "experiments/run_params.hpp"
 
-#ifndef ENABLE_KOKKOS
-#error "Kokkos is not enabled, this source file should not be compiled."
-#endif // ENABLE_KOKKOS
+#include "../common/runner_interface.hpp"
 
-namespace kokkos::hpp {
+#ifndef ENABLE_HALIDE
+#error "Halide is not enabled, this source file should not be compiled."
+#endif // ENABLE_HALIDE
 
-struct real_runner {
-    using value_type = std::uint8_t;
+namespace halide::fluid {
 
-    virtual ~real_runner() = default;
-
-    virtual void init(int* grid,
-                      const cellato::run::run_params& params) = 0;
-    virtual void run(int steps) = 0;
-    virtual std::vector<int> fetch_result() = 0;
-};
+using real_runner = common::real_runner_interface;
 
 std::unique_ptr<real_runner> create_runner();
 
 struct runner {
-    using value_type = std::uint8_t;
+    using value_type = real_runner::value_type;
 
     void init(int* grid,
               const cellato::run::run_params& params) {
@@ -57,6 +47,6 @@ private:
     std::unique_ptr<real_runner> real_runner_;
 };
 
-} // namespace kokkos::hpp
+} // namespace halide::fluid
 
-#endif // KOKKOS_HPP_RUNNER_HPP
+#endif // HALIDE_HPP_RUNNER_HPP

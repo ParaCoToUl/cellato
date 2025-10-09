@@ -44,7 +44,7 @@ Cellular automata (CA) are discrete computational models widely used to simulate
 | **Maze**               | `GoL`        | Maze generating CA                                      | [`src/maze`](./src/maze)                 |
 | **Brian's Brain**      | `brian`      | Gama of life cousin with 3 states                       | [`src/brian`](./src/brian)               |
 | **Cyclic**             | `cyclic`     | Modeling of excitable medium (32 states)                | [`src/cyclic`](./src/cyclic)             |
-| **Fluid Simulation**   | `fluid`      | The Hardy–Pomeau–Pazzis (HPP) model                     | [`src/hpp`](./src/hpp)                   |
+| **Fluid Simulation**   | `fluid`      | The Hardy–Pomeau–Pazzis (HPP) model                     | [`src/fluid`](./src/fluid)                   |
 | **Critters**           | `critters`   | Reversible automaton with a Margolus block neighborhood | [`src/excitable`](./src/excitable)       |
 | **Traffic**            | `traffic`    | A traffic simulation using 2 different cars             | [`src/traffic`](./src/traffic)           |
 
@@ -244,7 +244,7 @@ Due to limitation discussed earlier the grid sizes cannot be precisely same in e
 $> python ./src/_scripts/cluster_run/verify.py
 
 Running all automata
-Automata to test: ['critters', 'traffic', 'hpp', 'game-of-life', 'cyclic', 'brian', 'maze', 'forest-fire', 'wire', 'excitable']
+Automata to test: ['critters', 'traffic', 'fluid', 'game-of-life', 'cyclic', 'brian', 'maze', 'forest-fire', 'wire', 'excitable']
 Starting correctness validation...
 --------------------------------------------------------------------------------
 

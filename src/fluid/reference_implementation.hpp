@@ -10,7 +10,7 @@
 #include "traversers/cuda_utils.cuh"
 #include "../_shared/indexing.hpp"
 
-namespace hpp::reference {
+namespace fluid::reference {
 using namespace ::reference::indexing;
 
 struct runner {
@@ -157,6 +157,6 @@ private:
     void run_kernel(int steps);
 };
 
-} // namespace hpp::reference
+} // namespace fluid::reference
 
 #endif // HPP_REFERENCE_IMPLEMENTATION_HPP

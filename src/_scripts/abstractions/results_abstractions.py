@@ -28,7 +28,7 @@ BITS_USED = {
     "brian": f"              {TablePrinter.COLORS.YELLOW}2 bit{TablePrinter.COLORS.RESET}",
     "cyclic": f"             {TablePrinter.COLORS.YELLOW}5 bits{TablePrinter.COLORS.RESET}",
     "traffic": f"            {TablePrinter.COLORS.YELLOW}2 bits{TablePrinter.COLORS.RESET}",
-    "hpp": f"                {TablePrinter.COLORS.YELLOW}4 bits{TablePrinter.COLORS.RESET}",
+    "fluid": f"                {TablePrinter.COLORS.YELLOW}4 bits{TablePrinter.COLORS.RESET}",
     "maze": f"               {TablePrinter.COLORS.YELLOW}1 bit{TablePrinter.COLORS.RESET}",
     "critters": f"           {TablePrinter.COLORS.YELLOW}1 bit{TablePrinter.COLORS.RESET}",
 }

@@ -106,7 +106,7 @@ auto  traverser<evaluator_type, grid_type>::fetch_result() -> grid_t {
 #include "../../../src/excitable/cuda_instantiations.cuh"
 #include "../../../src/brian/cuda_instantiations.cuh"
 #include "../../../src/maze/cuda_instantiations.cuh"
-#include "../../../src/hpp/cuda_instantiations.cuh"
+#include "../../../src/fluid/cuda_instantiations.cuh"
 #include "../../../src/critters/cuda_instantiations.cuh"
 #include "../../../src/traffic/cuda_instantiations.cuh"
 #include "../../../src/cyclic/cuda_instantiations.cuh"

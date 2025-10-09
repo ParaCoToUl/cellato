@@ -80,15 +80,15 @@ args=(
     "--automaton excitable --seed 42 --device CPU --reference_impl halide $size_and_stuff"
     # "--automaton excitable --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
 
-    "--automaton hpp --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
-    "--automaton hpp --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
-    "--automaton hpp --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
-    # "--automaton hpp --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
+    "--automaton fluid --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton fluid --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"
+    "--automaton fluid --seed 42 --device CUDA --reference_impl halide $size_and_stuff"
+    # "--automaton fluid --seed 42 --device CUDA --reference_impl gridtools $size_and_stuff"
 
-    "--automaton hpp --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
-    "--automaton hpp --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
-    "--automaton hpp --seed 42 --device CPU --reference_impl halide $size_and_stuff"
-    # "--automaton hpp --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
+    "--automaton fluid --seed 42 --device CPU --traverser simple --evaluator standard --layout standard $size_and_stuff"
+    "--automaton fluid --seed 42 --device CPU --reference_impl kokkos $size_and_stuff"
+    "--automaton fluid --seed 42 --device CPU --reference_impl halide $size_and_stuff"
+    # "--automaton fluid --seed 42 --device CPU --reference_impl gridtools $size_and_stuff"
 
     "--automaton maze --seed 42 --device CUDA --traverser simple --evaluator standard --layout standard $size_and_stuff"
     "--automaton maze --seed 42 --device CUDA --reference_impl kokkos $size_and_stuff"

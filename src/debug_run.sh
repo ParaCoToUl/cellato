@@ -17,7 +17,7 @@ script_dir=$(dirname "$0")
 # automaton="cyclic"
 # automaton="forest-fire"
 automaton="critters"
-# automaton="hpp"
+# automaton="fluid"
 
 # x_size=$((8*4))
 # y_size=$((8*4))

@@ -46,7 +46,7 @@ OBJ_DIR = ../bin
 BIN_DIR = ../bin
 DEP_DIR = ../_deps
 VENDOR_DIR = ../vendor
-CUDA_DIRS = ../include/evaluators ../include/traversers/cuda ./game_of_life ./excitable ./wire ./fire ./brian ./maze ./hpp ./critters ./traffic ./cyclic
+CUDA_DIRS = ../include/evaluators ../include/traversers/cuda ./game_of_life ./excitable ./wire ./fire ./brian ./maze ./fluid ./critters ./traffic ./cyclic
 TEST_DIR = $(SRC_DIR)
 
 # Source and object files
@@ -76,7 +76,7 @@ KOKKOS_RUNNERS := \
 	wire \
 	brian \
 	maze \
-	hpp \
+	fluid \
 	critters \
 	cyclic \
 	traffic
