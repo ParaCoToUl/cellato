@@ -179,7 +179,7 @@ elif plot_config['plot_mode'] == 'subplots':
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=plot_config['figure_size'], sharey=True)
     # fig.suptitle('Effect of Temporal Blocking by Automaton')
 
-    colors = plt.cm.get_cmap('tab10', len(AUTOMATA))
+    colors = plt.get_cmap('tab10', len(AUTOMATA))
     linestyles = ['-', '--', ':', '-.']
     
     automaton_styles = {}
