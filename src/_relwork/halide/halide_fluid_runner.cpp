@@ -10,7 +10,7 @@ namespace halide::fluid {
 
 namespace {
 
-class hpp_runner final : public common::runner_base {
+class fluid_runner final : public common::runner_base {
 public:
     void build_pipeline(const cellato::run::run_params&) override {
         using Halide::Expr;
@@ -63,7 +63,7 @@ public:
 } // namespace
 
 std::unique_ptr<real_runner> create_runner() {
-    return std::make_unique<hpp_runner>();
+    return std::make_unique<fluid_runner>();
 }
 
 } // namespace halide::fluid

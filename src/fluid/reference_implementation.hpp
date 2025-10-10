@@ -1,5 +1,5 @@
-#ifndef HPP_REFERENCE_IMPLEMENTATION_HPP
-#define HPP_REFERENCE_IMPLEMENTATION_HPP
+#ifndef FLUID_REFERENCE_IMPLEMENTATION_HPP
+#define FLUID_REFERENCE_IMPLEMENTATION_HPP
 
 #include <vector>
 #include <cstddef>
@@ -17,7 +17,7 @@ struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
-    void init(const hpp_cell_state* grid,
+    void init(const fluid_cell_state* grid,
               const cellato::run::run_params& params = cellato::run::run_params()) {
 
         _x_size = params.x_size;
@@ -44,7 +44,7 @@ struct runner {
     }
 
     void init_cuda() {
-        const size_t grid_size = _x_size * _y_size * sizeof(hpp_cell_state);
+        const size_t grid_size = _x_size * _y_size * sizeof(fluid_cell_state);
         
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
@@ -68,10 +68,10 @@ struct runner {
                     auto left_neighbor = _current_grid[idx.at(x-1, y)];
                     auto right_neighbor = _current_grid[idx.at(x+1, y)];
 
-                    constexpr hpp_cell_state TOP = 0b0001;
-                    constexpr hpp_cell_state BOTTOM = 0b0010;
-                    constexpr hpp_cell_state LEFT = 0b0100;
-                    constexpr hpp_cell_state RIGHT = 0b1000;
+                    constexpr fluid_cell_state TOP = 0b0001;
+                    constexpr fluid_cell_state BOTTOM = 0b0010;
+                    constexpr fluid_cell_state LEFT = 0b0100;
+                    constexpr fluid_cell_state RIGHT = 0b1000;
 
                     auto incoming_from_top = (top_neighbor & TOP);
                     auto incoming_from_bottom = (bottom_neighbor & BOTTOM);
@@ -84,7 +84,7 @@ struct runner {
                     auto combined_vertical_incoming = incoming_from_top | incoming_from_bottom;
                     auto combined_horizontal_incoming = incoming_from_left | incoming_from_right;
 
-                    hpp_cell_state result = 0;
+                    fluid_cell_state result = 0;
 
                     auto just_vertical_collision = vertical_collision_appears && !((incoming_from_left != 0) || (incoming_from_right != 0));
                     auto just_horizontal_collision = horizontal_collision_appears && !((incoming_from_top != 0) || (incoming_from_bottom != 0));
@@ -117,10 +117,10 @@ struct runner {
         run_kernel(steps);
     }
 
-    std::vector<hpp_cell_state> fetch_result() {
+    std::vector<fluid_cell_state> fetch_result() {
         if (d_current) {
             // Copy result back from device to host
-            const size_t grid_size = _x_size * _y_size * sizeof(hpp_cell_state);
+            const size_t grid_size = _x_size * _y_size * sizeof(fluid_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
             
             // Free CUDA memory
@@ -147,16 +147,16 @@ private:
     std::size_t _x_size, _y_size;
     int _block_size_x = 16;
     int _block_size_y = 16;
-    std::vector<hpp_cell_state> _current_grid;
-    std::vector<hpp_cell_state> _next_grid;
+    std::vector<fluid_cell_state> _current_grid;
+    std::vector<fluid_cell_state> _next_grid;
     
     // Device pointers
-    hpp_cell_state* d_current = nullptr;
-    hpp_cell_state* d_next = nullptr;
+    fluid_cell_state* d_current = nullptr;
+    fluid_cell_state* d_next = nullptr;
 
     void run_kernel(int steps);
 };
 
 } // namespace fluid::reference
 
-#endif // HPP_REFERENCE_IMPLEMENTATION_HPP
+#endif // FLUID_REFERENCE_IMPLEMENTATION_HPP

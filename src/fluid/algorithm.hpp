@@ -1,12 +1,12 @@
-#ifndef HPP_ALGORITHM_HPP
-#define HPP_ALGORITHM_HPP
+#ifndef FLUID_ALGORITHM_HPP
+#define FLUID_ALGORITHM_HPP
 
 #include "core/ast.hpp"
 
 namespace fluid {
 using namespace cellato::ast;
 
-using hpp_cell_state = int;
+using fluid_cell_state = int;
 
 constexpr int TOP_bit = 0, TOP = 1 << TOP_bit;
 constexpr int BOTTOM_bit = 1, BOTTOM = 1 << BOTTOM_bit;
@@ -57,8 +57,8 @@ using horizontal_result = if_< just_horizontal_collision >::then_<
         combined_horizontal_incoming
     >;
 
-using hpp_algorithm = p< vertical_result, bit_or_, horizontal_result >;
+using fluid_algorithm = p< vertical_result, bit_or_, horizontal_result >;
 
 } // namespace fluid
 
-#endif // HPP_ALGORITHM_HPP
+#endif // FLUID_ALGORITHM_HPP

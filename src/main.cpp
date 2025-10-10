@@ -413,7 +413,7 @@ int main(int argc, char* argv[]) {
     using _excitable_ = excitable::config;
     using _brian_ = brian::config;
     using _maze_ = maze::config;
-    using _hpp_ = fluid::config;
+    using _fluid_ = fluid::config;
     using _critters_ = critters::config;
     using _cyclic_ = cyclic::config;
     using _traffic_ = traffic::config;
@@ -448,7 +448,7 @@ int main(int argc, char* argv[]) {
         cases_for(_excitable_),
         cases_for(_brian_),
         cases_for(_maze_),
-        cases_for(_hpp_),
+        cases_for(_fluid_),
         cases_for(_critters_),
         cases_for(_cyclic_),
         cases_for(_traffic_)

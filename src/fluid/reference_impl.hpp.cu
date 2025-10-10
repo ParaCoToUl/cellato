@@ -10,7 +10,7 @@ using namespace ::reference::indexing;
 namespace {
 
 // CUDA kernel for Forest fluid (single step)
-__global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next, 
+__global__ void fluid_kernel(const fluid_cell_state* current, fluid_cell_state* next, 
                             int width, int height) {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
     const int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -23,10 +23,10 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
     const auto left_neighbor = current[idx.at(x-1, y)];
     const auto right_neighbor = current[idx.at(x+1, y)];
 
-    constexpr hpp_cell_state TOP = 0b0001;
-    constexpr hpp_cell_state BOTTOM = 0b0010;
-    constexpr hpp_cell_state LEFT = 0b0100;
-    constexpr hpp_cell_state RIGHT = 0b1000;
+    constexpr fluid_cell_state TOP = 0b0001;
+    constexpr fluid_cell_state BOTTOM = 0b0010;
+    constexpr fluid_cell_state LEFT = 0b0100;
+    constexpr fluid_cell_state RIGHT = 0b1000;
 
     const auto incoming_from_top = (top_neighbor & TOP);
     const auto incoming_from_bottom = (bottom_neighbor & BOTTOM);
@@ -39,7 +39,7 @@ __global__ void hpp_kernel(const hpp_cell_state* current, hpp_cell_state* next,
     const auto combined_vertical_incoming = incoming_from_top | incoming_from_bottom;
     const auto combined_horizontal_incoming = incoming_from_left | incoming_from_right;
 
-    hpp_cell_state result = 0;
+    fluid_cell_state result = 0;
 
     const auto just_vertical_collision = vertical_collision && (combined_horizontal_incoming == 0);
     const auto just_horizontal_collision = horizontal_collision && (combined_vertical_incoming == 0);
@@ -79,7 +79,7 @@ void runner::run_kernel(int steps) {
     // Run steps iterations
     for (int i = 0; i < steps; i++) {
         // Launch kernel for one step
-        hpp_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
+        fluid_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
         
         // Swap pointers for next iteration
         std::swap(d_current, d_next);

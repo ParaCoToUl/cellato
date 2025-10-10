@@ -11,12 +11,12 @@ namespace kokkos::fluid {
 
 namespace {
 
-struct hpp_runner_impl : public detail::view_runner_base<real_runner, hpp_runner_impl, std::uint8_t> {
-    using runner_base = detail::view_runner_base<real_runner, hpp_runner_impl, std::uint8_t>;
+struct fluid_runner_impl : public detail::view_runner_base<real_runner, fluid_runner_impl, std::uint8_t> {
+    using runner_base = detail::view_runner_base<real_runner, fluid_runner_impl, std::uint8_t>;
     using value_type = typename runner_base::value_type;
 
-    static constexpr const char* cpu_label() { return "HPPStepCPU"; }
-    static constexpr const char* cuda_label() { return "HPPStepCUDA"; }
+    static constexpr const char* cpu_label() { return "FluidStepCPU"; }
+    static constexpr const char* cuda_label() { return "FluidStepCUDA"; }
 
     template <typename ViewType>
     KOKKOS_INLINE_FUNCTION static value_type apply_rule(const ViewType& grid, int i, int j, int /*step*/) {
@@ -49,7 +49,7 @@ struct hpp_runner_impl : public detail::view_runner_base<real_runner, hpp_runner
 } // namespace
 
 std::unique_ptr<real_runner> create_runner() {
-    return std::make_unique<hpp_runner_impl>();
+    return std::make_unique<fluid_runner_impl>();
 }
 
 } // namespace kokkos::fluid

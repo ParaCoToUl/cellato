@@ -1,14 +1,14 @@
-#ifndef HPP_PRETTY_PRINT_HPP
-#define HPP_PRETTY_PRINT_HPP
+#ifndef FLUID_PRETTY_PRINT_HPP
+#define FLUID_PRETTY_PRINT_HPP
 
 #include "memory/standard_grid.hpp"
 #include "./algorithm.hpp"
 
 namespace fluid {
 
-using print_config = cellato::memory::grids::standard::print_config<hpp_cell_state>;
+using print_config = cellato::memory::grids::standard::print_config<fluid_cell_state>;
 
-struct hpp_pretty_print {
+struct fluid_pretty_print {
     static print_config get_config() {
         return print_config()
             // no bits set
@@ -37,4 +37,4 @@ struct hpp_pretty_print {
 
 }
 
-#endif // HPP_PRETTY_PRINT_HPP
+#endif // FLUID_PRETTY_PRINT_HPP

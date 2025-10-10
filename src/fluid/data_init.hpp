@@ -1,5 +1,5 @@
-#ifndef HPP_DATA_INIT_HPP
-#define HPP_DATA_INIT_HPP
+#ifndef FLUID_DATA_INIT_HPP
+#define FLUID_DATA_INIT_HPP
 
 #include <vector>
 #include <random>
@@ -8,12 +8,12 @@
 
 namespace fluid {
 
-struct hpp_random_init {
-    static std::vector<hpp_cell_state> init(cellato::run::run_params& params) {
-        std::vector<hpp_cell_state> initial_state(params.x_size * params.y_size);
+struct fluid_random_init {
+    static std::vector<fluid_cell_state> init(cellato::run::run_params& params) {
+        std::vector<fluid_cell_state> initial_state(params.x_size * params.y_size);
         
         // Probabilities for each cell state
-        std::vector<std::tuple<hpp_cell_state, double>> probabilities = {
+        std::vector<std::tuple<fluid_cell_state, double>> probabilities = {
             { 0, 1.0 / 16.0 },
             { 1, 1.0 / 16.0 },
             { 2, 1.0 / 16.0 },
@@ -45,4 +45,4 @@ struct hpp_random_init {
 
 }
 
-#endif // HPP_DATA_INIT_HPP
+#endif // FLUID_DATA_INIT_HPP

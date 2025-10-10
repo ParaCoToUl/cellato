@@ -108,7 +108,7 @@ EXTRA_OBJS += $(addprefix $(OBJ_DIR)/halide_, \
 	cyclic_runner.o \
 	fire_runner.o \
 	excitable_runner.o \
-	hpp_runner.o \
+	fluid_runner.o \
 	maze_runner.o \
 	traffic_runner.o \
 	wire_runner.o)

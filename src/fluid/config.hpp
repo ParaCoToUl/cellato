@@ -1,5 +1,5 @@
-#ifndef HPP_CONFIG_HPP
-#define HPP_CONFIG_HPP
+#ifndef FLUID_CONFIG_HPP
+#define FLUID_CONFIG_HPP
 
 #include "./algorithm.hpp"
 #include "./pretty_print.hpp"
@@ -15,20 +15,20 @@ struct config {
 
     static constexpr double average_halo_radius = 1.0;
 
-    using algorithm = hpp_algorithm;
+    using algorithm = fluid_algorithm;
     
-    using cell_state = hpp_cell_state;
+    using cell_state = fluid_cell_state;
     using state_dictionary = cellato::memory::grids::int_based_state_dictionary<4>;
 
-    using pretty_print = hpp_pretty_print;
+    using pretty_print = fluid_pretty_print;
 
     using reference_implementation = reference::runner;
 
     struct input {
-        using random = hpp_random_init;
+        using random = fluid_random_init;
     };
 };
 
 }
 
-#endif // HPP_CONFIG_HPP
+#endif // FLUID_CONFIG_HPP
