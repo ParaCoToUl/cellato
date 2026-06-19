@@ -16,8 +16,8 @@ using namespace ::reference::indexing;
 struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
-    
-    void init(const wire_cell_state* grid, 
+
+    void init(const wire_cell_state* grid,
               const cellato::run::run_params& params = cellato::run::run_params()) {
         _x_size = params.x_size;
         _y_size = params.y_size;
@@ -44,18 +44,18 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(wire_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
 
     void run(int steps) {
         indexer idx(_x_size, _y_size);
-        
+
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
@@ -64,7 +64,7 @@ struct runner {
                     const int center_idx = idx.at(x, y);
                     wire_cell_state current = _current_grid[center_idx];
                     wire_cell_state next = current;
-                    
+
                     if (current == wire_cell_state::empty) {
                         // Empty remains empty
                         next = wire_cell_state::empty;
@@ -79,7 +79,7 @@ struct runner {
                     }
                     else if (current == wire_cell_state::conductor) {
                         // Count electron heads in the Moore neighborhood using toroidal indexing
-                        int electron_head_count = 
+                        int electron_head_count =
                             (_current_grid[idx.at(x-1, y-1)] == wire_cell_state::electron_head) + // Top-left
                             (_current_grid[idx.at(x  , y-1)] == wire_cell_state::electron_head) + // Top
                             (_current_grid[idx.at(x+1, y-1)] == wire_cell_state::electron_head) + // Top-right
@@ -88,7 +88,7 @@ struct runner {
                             (_current_grid[idx.at(x-1, y+1)] == wire_cell_state::electron_head) + // Bottom-left
                             (_current_grid[idx.at(x  , y+1)] == wire_cell_state::electron_head) + // Bottom
                             (_current_grid[idx.at(x+1, y+1)] == wire_cell_state::electron_head);  // Bottom-right
-                        
+
                         // Conductor becomes electron head if exactly 1 or 2 neighboring cells are electron heads
                         if (electron_head_count == 1 || electron_head_count == 2) {
                             next = wire_cell_state::electron_head;
@@ -96,11 +96,11 @@ struct runner {
                             next = wire_cell_state::conductor;
                         }
                     }
-                    
+
                     _next_grid[center_idx] = next;
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -118,7 +118,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(wire_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -145,7 +145,7 @@ private:
     int _block_size_y = 16;
     std::vector<wire_cell_state> _current_grid;
     std::vector<wire_cell_state> _next_grid;
-    
+
     // Device pointers
     wire_cell_state* d_current = nullptr;
     wire_cell_state* d_next = nullptr;

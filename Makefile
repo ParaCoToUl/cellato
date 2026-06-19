@@ -1,6 +1,7 @@
 CXX = g++
 CXX_STD = c++20
 NVCC = nvcc
+PYTHON = python3
 CXXFLAGS = -std="$(CXX_STD)" -DNDEBUG -Wall -Wextra -Wpedantic -O3 -march=native -mtune=native
 NVCC_CC_BIN = $(shell which $(CXX))
 NVCCFLAGS = -std="$(CXX_STD)" -DNDEBUG -Wreorder -Wext-lambda-captures-this -O3 -arch=native -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin "$(NVCC_CC_BIN)" -Xcompiler -std="$(CXX_STD)",-Wall,-Wextra,-march=native,-mtune=native
@@ -21,6 +22,12 @@ endif
 # Directories
 OBJ_DIR = bin/obj
 BIN_DIR = bin
+GENERATED_CUDA_INSTANTIATION_DIR = $(BIN_DIR)/generated/cuda_instantiations
+GENERATED_CUDA_INSTANTIATION_MK = $(GENERATED_CUDA_INSTANTIATION_DIR)/cuda_instantiations.mk
+
+ifneq ($(MAKECMDGOALS),clean)
+-include $(GENERATED_CUDA_INSTANTIATION_MK)
+endif
 
 # Source and object files
 MAIN_SRC = src/app/main.cpp
@@ -31,7 +38,7 @@ TEST_OBJ = $(OBJ_DIR)/$(TEST_SRC:.cpp=.o)
 # CUDA source and object files
 GENERIC_CUDA_SRCS = $(wildcard src/cellato/traversers/cuda/*.cu)
 AUTOMATA_CUDA_SRCS = $(wildcard src/automata/*/*.cu)
-CUDA_SRCS = $(GENERIC_CUDA_SRCS) $(AUTOMATA_CUDA_SRCS)
+CUDA_SRCS = $(GENERIC_CUDA_SRCS) $(AUTOMATA_CUDA_SRCS) $(GENERATED_CUDA_INSTANTIATION_SRCS)
 CUDA_OBJS = $(patsubst %.cu,$(OBJ_DIR)/%.o,$(CUDA_SRCS))
 
 # Main targets
@@ -42,16 +49,22 @@ TEST_TARGET = $(BIN_DIR)/cellato_tests
 all: directories $(TARGET) $(TEST_TARGET)
 
 benchmark:
-	@$(MAKE) -j$(shell nproc) -B all BUILD_TYPE=BENCHMARK
+	@$(MAKE) -j4 -B all BUILD_TYPE=BENCHMARK
 
 verify:
-	@$(MAKE) -j$(shell nproc) -B all BUILD_TYPE=VERIFICATION
+	@$(MAKE) -j4 -B all BUILD_TYPE=VERIFICATION
 
 
 directories:
 	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 # Add directories dependency to object file creation rules
+$(GENERATED_CUDA_INSTANTIATION_MK): tools/generate_cuda_instantiations.py src/automata/registry.hpp src/cuda_instantiation/template.cuh | directories
+	$(PYTHON) tools/generate_cuda_instantiations.py --registry src/automata/registry.hpp --output-dir $(GENERATED_CUDA_INSTANTIATION_DIR) --make-fragment $@
+	@touch $@
+
+$(GENERATED_CUDA_INSTANTIATION_SRCS): $(GENERATED_CUDA_INSTANTIATION_MK)
+
 $(OBJ_DIR)/%.o: %.cpp | directories
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_DIRS) $(DEFINES)
@@ -61,7 +74,7 @@ $(OBJ_DIR)/%.o: %.cu | directories
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(INCLUDE_DIRS) $(DEFINES)
 
 # Create separate executables for main app and tests
-$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS)
+$(TARGET): $(MAIN_OBJ) $(CUDA_OBJS) | $(GENERATED_CUDA_INSTANTIATION_MK)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIB_DIRS) $(LIBS)
 
 $(TEST_TARGET): $(TEST_OBJ)

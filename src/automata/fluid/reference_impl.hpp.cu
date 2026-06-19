@@ -10,7 +10,7 @@ using namespace ::reference::indexing;
 namespace {
 
 // CUDA kernel for Forest fluid (single step)
-__global__ void fluid_kernel(const fluid_cell_state* current, fluid_cell_state* next, 
+__global__ void fluid_kernel(const fluid_cell_state* current, fluid_cell_state* next,
                             int width, int height) {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
     const int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -65,7 +65,7 @@ void runner::run_kernel(int steps) {
     if (!d_current || !d_next) {
         init_cuda();
     }
-    
+
     // Set up grid and block dimensions, accounting for margins
     const dim3 block_size(_block_size_x, _block_size_y);
 
@@ -73,14 +73,14 @@ void runner::run_kernel(int steps) {
     const auto _x_size_threads = _x_size;
     const auto _y_size_threads = _y_size;
 
-    const dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x, 
+    const dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x,
                  (_y_size_threads + block_size.y - 1) / block_size.y);
 
     // Run steps iterations
     for (int i = 0; i < steps; i++) {
         // Launch kernel for one step
         fluid_kernel<<<grid_dim, block_size>>>(d_current, d_next, _x_size, _y_size);
-        
+
         // Swap pointers for next iteration
         std::swap(d_current, d_next);
 

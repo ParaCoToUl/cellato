@@ -13,7 +13,7 @@
 namespace game_of_life::reference {
 using namespace ::reference::indexing;
 
-struct runner {            
+struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
@@ -44,19 +44,19 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(gol_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
-    
+
     void run(int steps) {
         indexer idx(_x_size, _y_size);
 
-        
+
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
@@ -75,7 +75,7 @@ struct runner {
                     // Apply Game of Life rules
                     gol_cell_state current = _current_grid[y * _x_size + x];
                     gol_cell_state next;
-                    
+
                     if (current == gol_cell_state::alive) {
                         // Live cell with fewer than 2 or more than 3 live neighbors dies
                         if (live_neighbors < 2 || live_neighbors > 3) {
@@ -93,11 +93,11 @@ struct runner {
                             next = gol_cell_state::dead;
                         }
                     }
-                    
+
                     _next_grid[y * _x_size + x] = next;
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -115,7 +115,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(gol_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -142,7 +142,7 @@ private:
     int _block_size_y = 16;
     std::vector<gol_cell_state> _current_grid;
     std::vector<gol_cell_state> _next_grid;
-    
+
     // Device pointers
     gol_cell_state* d_current = nullptr;
     gol_cell_state* d_next = nullptr;

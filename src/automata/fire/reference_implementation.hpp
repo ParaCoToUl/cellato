@@ -45,18 +45,18 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(fire_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
-    
+
     void run(int steps) {
         indexer idx(_x_size, _y_size);
-        
+
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
@@ -65,11 +65,11 @@ struct runner {
                     const int center_idx = idx.at(x, y);
                     fire_cell_state current = _current_grid[center_idx];
                     fire_cell_state next = current;
-                    
+
                     if (current == fire_cell_state::empty) {
                         // Empty remains empty
                         next = fire_cell_state::empty;
-                    } 
+                    }
                     else if (current == fire_cell_state::tree) {
                         // Tree catches fire if any von Neumann neighbor is on fire
                         // Use toroidal indexing for the 4 von Neumann neighbors
@@ -87,20 +87,20 @@ struct runner {
                     }
                     else if (current == fire_cell_state::ash) {
                         // Check if ash has fire neighbors using toroidal indexing
-                        bool has_fire_neighbor = 
+                        bool has_fire_neighbor =
                             _current_grid[idx.at(x, y-1)] == fire_cell_state::fire ||  // North
                             _current_grid[idx.at(x+1, y)] == fire_cell_state::fire ||  // East
                             _current_grid[idx.at(x, y+1)] == fire_cell_state::fire ||  // South
                             _current_grid[idx.at(x-1, y)] == fire_cell_state::fire;    // West
-                        
+
                         // Ash cell with fire neighbors remains ash, others become empty
                         next = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;
                     }
-                    
+
                     _next_grid[center_idx] = next;
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -118,7 +118,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(fire_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -145,7 +145,7 @@ private:
     int _block_size_y = 16;
     std::vector<fire_cell_state> _current_grid;
     std::vector<fire_cell_state> _next_grid;
-    
+
     // Device pointers
     fire_cell_state* d_current = nullptr;
     fire_cell_state* d_next = nullptr;

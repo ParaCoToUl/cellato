@@ -13,18 +13,7 @@
 #include "cellato/experiments/test_suites.hpp"
 #include "cellato/memory/grid_utils.hpp"
 
-#include "brian/config.hpp"
-#include "critters/config.hpp"
-#include "cyclic/config.hpp"
-#include "excitable/config.hpp"
-#include "fire/config.hpp"
-#include "fluid/config.hpp"
-#include "game_of_life/algorithm.hpp"
-#include "game_of_life/config.hpp"
-#include "game_of_life/pretty_print.hpp"
-#include "maze/config.hpp"
-#include "traffic/config.hpp"
-#include "wire/config.hpp"
+#include "automata/registry.hpp"
 
 #include "args_parser.hpp"
 
@@ -37,7 +26,7 @@ constexpr int default_cuda_block_size_x = 32;
 constexpr int default_cuda_block_size_y = 8;
 
 bool requires_word_size(const std::optional<std::string>& evaluator) {
-    return evaluator && (*evaluator == "bit_planes" || *evaluator == "bit_array");
+    return evaluator && (*evaluator == "bit_planes" || *evaluator == "bit_array" || *evaluator == "tiled_bit_planes");
 }
 
 bool requires_temporal_options(const std::optional<std::string>& traverser) {
@@ -159,6 +148,12 @@ private:
         return true;
     }
 };
+
+template <typename test_suite_list>
+struct switch_list;
+
+template <typename... all_test_suites>
+struct switch_list<cellato::utils::type_list<all_test_suites...>> : switch_<all_test_suites...> {};
 
 cellato::run::run_params get_params(int argc, char* argv[]) {
     input::parser parser{argc, argv};
@@ -293,54 +288,8 @@ int main(int argc, char* argv[]) {
         params.print_std();
     }
 
-    namespace test = cellato::run::test_suites;
-
-    using _game_of_life_ = game_of_life::config;
-    using _fire_ = fire::config;
-    using _wire_ = wire::config;
-    using _excitable_ = excitable::config;
-    using _brian_ = brian::config;
-    using _maze_ = maze::config;
-    using _fluid_ = fluid::config;
-    using _critters_ = critters::config;
-    using _cyclic_ = cyclic::config;
-    using _traffic_ = traffic::config;
-
-    // clang-format off
-#define cases_for(automaton) \
-        test::on_cpu::standard<automaton>, \
-        test::on_cpu::using_<std::uint32_t>::bit_array<automaton>, \
-        test::on_cpu::using_<std::uint64_t>::bit_array<automaton>, \
-        test::on_cpu::using_<std::uint32_t>::bit_planes<automaton>, \
-        test::on_cpu::using_<std::uint64_t>::bit_planes<automaton>, \
-        test::on_cpu::using_<std::uint32_t>::tiled_bit_planes<automaton>, \
-        test::on_cpu::using_<std::uint64_t>::tiled_bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint32_t>::tiled_bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint64_t>::tiled_bit_planes<automaton>, \
-        test::on_cuda::standard<automaton>, \
-        test::on_cuda::standard<automaton>::with_spatial_blocking<1, 1>, \
-        test::on_cuda::standard<automaton>::with_spatial_blocking<2, 1>, \
-        test::on_cuda::standard<automaton>::with_spatial_blocking<4, 1>, \
-        test::on_cuda::using_<std::uint32_t>::bit_array<automaton>, \
-        test::on_cuda::using_<std::uint64_t>::bit_array<automaton>, \
-        test::on_cuda::using_<std::uint32_t>::bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint64_t>::bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint32_t>::temporal_tiled_bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint64_t>::temporal_tiled_bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint32_t>::temporal_linear_bit_planes<automaton>, \
-        test::on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>
-
-    switch_<cases_for(_game_of_life_),
-            cases_for(_fire_),
-            cases_for(_wire_),
-            cases_for(_excitable_),
-            cases_for(_brian_),
-            cases_for(_maze_),
-            cases_for(_fluid_),
-            cases_for(_critters_),
-            cases_for(_cyclic_),
-            cases_for(_traffic_)>::run(params);
-    // clang-format on
+    using all_suites = cellato::run::test_suites::suites_for_all_t<cellato::automata::all>;
+    switch_list<all_suites>::run(params);
 
     return 0;
 }

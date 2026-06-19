@@ -1,3 +1,6 @@
+#ifndef CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_IMPL_CUH
+#define CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_IMPL_CUH
+
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <stdexcept>
@@ -29,14 +32,12 @@ __global__ void process_grid_kernel_blocked(
     for (int tile_y = 0; tile_y < Y_TILE_SIZE; tile_y++) {
         int y = base_y * Y_TILE_SIZE + tile_y;
 
-        // Skip if y is out of bounds or on the border
-        if (y <= 0 || y >= height - 1) continue;
+        if (y >= height) continue;
 
         for (int tile_x = 0; tile_x < X_TILE_SIZE; tile_x++) {
             int x = base_x * X_TILE_SIZE + tile_x;
 
-            // Skip if x is out of bounds or on the border
-            if (x <= 0 || x >= width - 1) continue;
+            if (x >= width) continue;
 
             // Process this cell
             cellato::memory::grids::point_in_grid state(input_data);
@@ -70,6 +71,10 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
         (height + blockDim.y * Y_TILE_SIZE - 1) / (blockDim.y * Y_TILE_SIZE)
     );
 
+    if constexpr (mode == _run_mode::VERBOSE) {
+        call_callback(0, current);
+    }
+
     for (int step = 0; step < steps; ++step) {
         auto input_data = current->data();
         auto output_data = next->data();
@@ -83,17 +88,14 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
         );
 
         if constexpr (mode == _run_mode::VERBOSE) {
-            call_callback(step, current);
+            call_callback(step + 1, next);
         }
 
         std::swap(current, next);
+        CUCH(cudaGetLastError());
     }
 
-    if (steps % 2 == 1) {
-        _final_grid = next;
-    } else {
-        _final_grid = current;
-    }
+    _final_grid = current;
 }
 
 template <typename evaluator_type, typename grid_type, int Y_TILE_SIZE, int X_TILE_SIZE>
@@ -108,19 +110,4 @@ auto traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::fetch_resul
 
 } // namespace cellato::traversers::cuda::spatial_blocking
 
-
-#define SPATIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS
-
-// Include necessary instantiations for all the cellular automata
-#include "game_of_life/cuda_instantiations.cuh"
-#include "fire/cuda_instantiations.cuh"
-#include "wire/cuda_instantiations.cuh"
-#include "excitable/cuda_instantiations.cuh"
-#include "brian/cuda_instantiations.cuh"
-#include "maze/cuda_instantiations.cuh"
-#include "fluid/cuda_instantiations.cuh"
-#include "critters/cuda_instantiations.cuh"
-#include "traffic/cuda_instantiations.cuh"
-#include "cyclic/cuda_instantiations.cuh"
-
-#undef SPATIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS
+#endif // CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_IMPL_CUH

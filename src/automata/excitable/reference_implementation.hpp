@@ -44,18 +44,18 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(ghm_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
 
     void run(int steps) {
         indexer idx(_x_size, _y_size);
-        
+
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
@@ -63,7 +63,7 @@ struct runner {
                     const int center_idx = idx.at(x, y);
                     ghm_cell_state current = _current_grid[center_idx];
                     ghm_cell_state next = current;
-                    
+
                     if (current == ghm_cell_state::quiescent) {
                         // Quiescent cell becomes excited if it has at least one excited neighbor
                         auto excited_count =
@@ -107,11 +107,11 @@ struct runner {
                         // Last refractory state returns to quiescent
                         next = ghm_cell_state::quiescent;
                     }
-                    
+
                     _next_grid[center_idx] = next;
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -129,7 +129,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(ghm_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -156,7 +156,7 @@ private:
     int _block_size_y = 16;
     std::vector<ghm_cell_state> _current_grid;
     std::vector<ghm_cell_state> _next_grid;
-    
+
     // Device pointers
     ghm_cell_state* d_current = nullptr;
     ghm_cell_state* d_next = nullptr;

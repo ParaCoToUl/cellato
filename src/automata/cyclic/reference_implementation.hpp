@@ -45,18 +45,18 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(cyclic_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
-    
+
     void run(int steps) {
         indexer idx(_x_size, _y_size);
-        
+
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
@@ -65,7 +65,7 @@ struct runner {
                     const int center_idx = idx.at(x, y);
                     cyclic_cell_state current = _current_grid[center_idx];
                     cyclic_cell_state next_state = current;
-                    
+
                     constexpr int states = cyclic::STATES;
 
                     int target_state = (current + 1) % states;
@@ -91,7 +91,7 @@ struct runner {
                     _next_grid[center_idx] = next_state;
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -109,7 +109,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(cyclic_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -136,7 +136,7 @@ private:
     int _block_size_y = 16;
     std::vector<cyclic_cell_state> _current_grid;
     std::vector<cyclic_cell_state> _next_grid;
-    
+
     // Device pointers
     cyclic_cell_state* d_current = nullptr;
     cyclic_cell_state* d_next = nullptr;

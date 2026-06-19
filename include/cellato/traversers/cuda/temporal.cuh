@@ -1,3 +1,6 @@
+#ifndef CELLATO_TRAVERSERS_CUDA_TEMPORAL_IMPL_CUH
+#define CELLATO_TRAVERSERS_CUDA_TEMPORAL_IMPL_CUH
+
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <stdexcept>
@@ -283,19 +286,4 @@ auto traverser<evaluator_type, grid_type, average_halo_radius>::fetch_result() -
 
 } // namespace cellato::traversers::cuda::temporal
 
-#define LINEAR_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
-#define TILED_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
-
-#include "game_of_life/cuda_instantiations.cuh"
-#include "fire/cuda_instantiations.cuh"
-#include "wire/cuda_instantiations.cuh"
-#include "excitable/cuda_instantiations.cuh"
-#include "brian/cuda_instantiations.cuh"
-#include "maze/cuda_instantiations.cuh"
-#include "fluid/cuda_instantiations.cuh"
-#include "critters/cuda_instantiations.cuh"
-#include "traffic/cuda_instantiations.cuh"
-#include "cyclic/cuda_instantiations.cuh"
-
-#undef LINEAR_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
-#undef TILED_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
+#endif // CELLATO_TRAVERSERS_CUDA_TEMPORAL_IMPL_CUH

@@ -45,15 +45,15 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(critters_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
-    
+
     void run(int steps) {
         indexer idx(_x_size, _y_size);
 
@@ -64,28 +64,28 @@ struct runner {
                     // Forest critters rules
                     const int center_idx = idx.at(x, y);
                     critters_cell_state current = _current_grid[center_idx];
-                    
+
                     int x_parity = x % 2;
                     int y_parity = y % 2;
                     int step_parity = step % 2;
-                    
+
                     int x_coords[2];
                     int y_coords[2];
-                    
+
                     if (step_parity == 0) {
-                        if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; } 
+                        if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; }
                         else { x_coords[0] = -1; x_coords[1] = 0; }
-                        
-                        if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; } 
+
+                        if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; }
                         else { y_coords[0] = -1; y_coords[1] = 0; }
                     } else { // step_parity == 1
-                        if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; } 
+                        if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; }
                         else { x_coords[0] = 0; x_coords[1] = 1; }
-                        
-                        if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; } 
+
+                        if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; }
                         else { y_coords[0] = 0; y_coords[1] = 1; }
                     }
-                    
+
                     // Count the total number of live cells in the 2x2 block
                     int live_cells_in_block = 0;
                     for (int dx_idx = 0; dx_idx < 2; dx_idx++) {
@@ -96,7 +96,7 @@ struct runner {
                             live_cells_in_block += (_current_grid[neighbor_idx] == critters_cell_state::alive) ? 1 : 0;
                         }
                     }
-                    
+
                     critters_cell_state next_state;
 
                     if (live_cells_in_block == 2) {
@@ -108,24 +108,24 @@ struct runner {
 
                         int dx_opposite = x_coords[0] + x_coords[1];
                         int dy_opposite = y_coords[0] + y_coords[1];
-                        
+
                         int opposite_idx = idx.at(x + dx_opposite, y + dy_opposite);
                         critters_cell_state opposite_state = _current_grid[opposite_idx];
 
-                        next_state = (opposite_state == critters_cell_state::alive) 
-                                    ? critters_cell_state::dead 
+                        next_state = (opposite_state == critters_cell_state::alive)
+                                    ? critters_cell_state::dead
                                     : critters_cell_state::alive;
                     } else {
                         // Rule 2 (covers counts 0, 1, and 4): Flip the state in place.
-                        next_state = (current == critters_cell_state::alive) 
-                                    ? critters_cell_state::dead 
+                        next_state = (current == critters_cell_state::alive)
+                                    ? critters_cell_state::dead
                                     : critters_cell_state::alive;
                     }
 
                     _next_grid[center_idx] = next_state;
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -143,7 +143,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(critters_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -170,7 +170,7 @@ private:
     int _block_size_y = 16;
     std::vector<critters_cell_state> _current_grid;
     std::vector<critters_cell_state> _next_grid;
-    
+
     // Device pointers
     critters_cell_state* d_current = nullptr;
     critters_cell_state* d_next = nullptr;

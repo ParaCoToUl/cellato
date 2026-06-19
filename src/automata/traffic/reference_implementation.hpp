@@ -45,15 +45,15 @@ struct runner {
 
     void init_cuda() {
         const size_t grid_size = _x_size * _y_size * sizeof(traffic_cell_state);
-        
+
         // Allocate device memory
         CUCH(cudaMalloc(&d_current, grid_size));
         CUCH(cudaMalloc(&d_next, grid_size));
-        
+
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
     }
-    
+
     template <traffic_cell_state movable, traffic_cell_state stationary>
     traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
         if (current_state == movable) {
@@ -62,14 +62,14 @@ struct runner {
             } else {
                 return movable; // Car stays if it can't move out
             }
-        } 
+        }
         else if (current_state == traffic_cell_state::empty) {
             if (incoming_neighbor == movable) {
                 return movable;
             } else {
                 return traffic_cell_state::empty; // Stays empty if no car moves in
             }
-        } 
+        }
         // Must be stationary car
         else {
             return stationary; // Stationary cars don't move
@@ -78,14 +78,14 @@ struct runner {
 
     void run(int steps) {
         indexer idx(_x_size, _y_size);
-        
+
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
                 for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
                     // Forest traffic rules
                     const int center_idx = idx.at(x, y);
-                    
+
                     traffic_cell_state cell_state = _current_grid[center_idx];
                     traffic_cell_state left_neighbor = _current_grid[idx.at(x-1, y)];
                     traffic_cell_state right_neighbor = _current_grid[idx.at(x+1, y)];
@@ -99,7 +99,7 @@ struct runner {
                     }
                 }
             }
-            
+
             // Swap grids
             _current_grid.swap(_next_grid);
         }
@@ -117,7 +117,7 @@ struct runner {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(traffic_cell_state);
             CUCH(cudaMemcpy(_current_grid.data(), d_current, grid_size, cudaMemcpyDeviceToHost));
-            
+
             // Free CUDA memory
             CUCH(cudaFree(d_current));
             CUCH(cudaFree(d_next));
@@ -144,7 +144,7 @@ private:
     int _block_size_y = 16;
     std::vector<traffic_cell_state> _current_grid;
     std::vector<traffic_cell_state> _next_grid;
-    
+
     // Device pointers
     traffic_cell_state* d_current = nullptr;
     traffic_cell_state* d_next = nullptr;
