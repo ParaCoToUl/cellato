@@ -192,7 +192,7 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_r
 
 #endif // LINEAR_TEMPORAL_CUDA_TRAVERSER_INSTANTIATIONS
 
-#ifdef SPACIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS
+#ifdef SPATIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS
 
 
 #define GRID_TYPE \
@@ -202,7 +202,7 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_r
         cellato::memory::grids::device::CPU \
     >
 #define TRAVERSER_TYPE \
-    cellato::traversers::cuda::spacial_blocking::traverser< \
+    cellato::traversers::cuda::spatial_blocking::traverser< \
         cellato::evaluators::bit_array::evaluator< \
             GRID_TYPE, AUTOMATON_NAMESPACE::config::algorithm>, \
         GRID_TYPE, \
@@ -210,8 +210,8 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::temporal::_r
     >
 
 template class TRAVERSER_TYPE;
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_blocking::_run_mode::QUIET>(int);
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_blocking::_run_mode::VERBOSE>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spatial_blocking::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spatial_blocking::_run_mode::VERBOSE>(int);
 
 #undef GRID_TYPE
 #undef TRAVERSER_TYPE
@@ -223,7 +223,7 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_bloc
         cellato::memory::grids::device::CPU \
     >
 #define TRAVERSER_TYPE \
-    cellato::traversers::cuda::spacial_blocking::traverser< \
+    cellato::traversers::cuda::spatial_blocking::traverser< \
         cellato::evaluators::bit_array::evaluator< \
             GRID_TYPE, AUTOMATON_NAMESPACE::config::algorithm>, \
         GRID_TYPE, \
@@ -231,8 +231,8 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_bloc
     >
 
 template class TRAVERSER_TYPE;
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_blocking::_run_mode::QUIET>(int);
-template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_blocking::_run_mode::VERBOSE>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spatial_blocking::_run_mode::QUIET>(int);
+template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spatial_blocking::_run_mode::VERBOSE>(int);
 
 #undef GRID_TYPE
 #undef TRAVERSER_TYPE
@@ -241,7 +241,7 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_bloc
 #define Y_TILE_SIZE 1
 
     #define X_TILE_SIZE 1
-    #include "spacial_blocking.cuh"
+    #include "spatial_blocking.cuh"
     #undef X_TILE_SIZE
 
 #undef Y_TILE_SIZE
@@ -249,7 +249,7 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_bloc
 #define Y_TILE_SIZE 2
 
     #define X_TILE_SIZE 1
-    #include "spacial_blocking.cuh"
+    #include "spatial_blocking.cuh"
     #undef X_TILE_SIZE
 
 #undef Y_TILE_SIZE
@@ -257,7 +257,7 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_bloc
 #define Y_TILE_SIZE 4
 
     #define X_TILE_SIZE 1
-    #include "spacial_blocking.cuh"
+    #include "spatial_blocking.cuh"
     #undef X_TILE_SIZE
 
 #undef Y_TILE_SIZE
@@ -265,9 +265,9 @@ template void TRAVERSER_TYPE::run_kernel<cellato::traversers::cuda::spacial_bloc
 #define Y_TILE_SIZE 8
 
     #define X_TILE_SIZE 1
-    #include "spacial_blocking.cuh"
+    #include "spatial_blocking.cuh"
     #undef X_TILE_SIZE
 
 #undef Y_TILE_SIZE
 
-#endif // SPACIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS
+#endif // SPATIAL_BLOCKING_CUDA_TRAVERSER_INSTANTIATIONS

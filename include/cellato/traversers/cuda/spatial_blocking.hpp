@@ -1,5 +1,5 @@
-#ifndef CELLATO_TRAVERSERS_CUDA_SPACIAL_BLOCKING_HPP
-#define CELLATO_TRAVERSERS_CUDA_SPACIAL_BLOCKING_HPP
+#ifndef CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_HPP
+#define CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_HPP
 
 #include <iostream>
 #include <utility>
@@ -11,7 +11,7 @@
 #include "../../experiments/run_params.hpp"
 #include "cellato/traversers/traverser_utils.hpp"
 
-namespace cellato::traversers::cuda::spacial_blocking {
+namespace cellato::traversers::cuda::spatial_blocking {
 
 using namespace cellato::traversers::utils;
 
@@ -34,7 +34,7 @@ class traverser {
   public:
     static constexpr bool is_CUDA = true;
 
-    
+
     traverser() : _final_grid(nullptr) {}
 
     void init(grid_t grid,
@@ -43,10 +43,10 @@ class traverser {
         _block_size_y = params.cuda_block_size_y;
 
         _input_grid = std::move(grid);
-        
+
         _input_grid_cuda = _input_grid.to_cuda();
         _intermediate_grid_cuda = _input_grid.to_cuda();
-        
+
         _final_grid = &_input_grid_cuda;
     }
 
@@ -54,7 +54,7 @@ class traverser {
 
     template <typename callback = no_callback>
     void run(int steps, callback&& callback_func = no_callback{}) {
-        
+
         if constexpr (!std::is_same_v<callback, no_callback>) {
             _callback_func = std::make_unique<_lambda_wrapper<callback>>(std::forward<callback>(callback_func));
             run_kernel<_run_mode::VERBOSE>(steps);
@@ -63,13 +63,13 @@ class traverser {
             run_kernel<_run_mode::QUIET>(steps);
         }
     }
-    
+
     grid_t fetch_result();
-    
+
 private:
     template <_run_mode mode>
     void run_kernel(int steps);
-    
+
     grid_t _input_grid;
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;
@@ -99,6 +99,6 @@ private:
     }
 };
 
-} // namespace cellato::traversers::cuda::spacial_blocking
+} // namespace cellato::traversers::cuda::spatial_blocking
 
-#endif // CELLATO_TRAVERSERS_CUDA_SPACIAL_BLOCKING_HPP
+#endif // CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_HPP

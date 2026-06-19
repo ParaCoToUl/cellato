@@ -72,7 +72,7 @@ args="--automaton ${automaton} --seed 42 --device ${device} --traverser ${traver
 #args="--automaton fire --device CUDA --layout bit_array --steps 50 --x_size 2048 --y_size 2048"
 
 # Wire automaton with bit_array grid and spatial blocking
-#args="--automaton wire --device CUDA --layout bit_array --traverser spacial_blocking --x_tile_size 8 --y_tile_size 8 --steps 200 --x_size 4096 --y_size 4096"
+#args="--automaton wire --device CUDA --layout bit_array --traverser spatial_blocking --x_tile_size 8 --y_tile_size 8 --steps 200 --x_size 4096 --y_size 4096"
 
 # Greenberg automaton on CPU with bit_planes
 #args="--automaton excitable --device CPU --layout bit_planes --evaluator bit_planes --steps 150 --x_size 512 --y_size 512 --word_size 64"

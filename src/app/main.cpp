@@ -42,7 +42,7 @@ struct switch_ {
             }
             return;
         }
-        
+
         bool any_executed = (call<all_test_suites>(params) || ...);
         if (!any_executed) {
             std::cerr << "No suitable test suite found for the given parameters." << std::endl;
@@ -83,17 +83,17 @@ private:
               typename runner_t = typename automaton_config::reference_implementation>
     static bool run_reference_for_automaton(cellato::run::run_params& params) {
         using cell_state_t = typename automaton_config::cell_state;
-        
+
         // Generate initial state using the automaton's random initializer
         auto initial_state = automaton_config::input::random::init(params);
-        
+
         // Run the reference implementation
         cellato::run::reference_impl_manager<runner_t, cell_state_t> manager;
         auto report = manager.run_experiment(params, initial_state);
-        
+
         REPORT << report.csv_line() << std::endl;
         report.pretty_print(LOG);
-        
+
         return true;
     }
 
@@ -115,7 +115,7 @@ private:
         );
 
         REPORT << report.csv_line() << std::endl;
-        
+
         report.pretty_print(LOG);
 
         return true;
@@ -198,13 +198,13 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
         .steps = std::stoi(parser.get("steps")),
 
         .word_size = parser.exists("word_size") ? std::stoi(parser.get("word_size")) : 0,
-        
+
         .x_tile_size = parser.exists("x_tile_size") ? std::stoi(parser.get("x_tile_size")) : 0,
         .y_tile_size = parser.exists("y_tile_size") ? std::stoi(parser.get("y_tile_size")) : 0,
 
         .temporal_steps = parser.exists("temporal_steps") ? std::stoi(parser.get("temporal_steps")) : 0,
         .temporal_tile_size_y = parser.exists("temporal_tile_size_y") ? std::stoi(parser.get("temporal_tile_size_y")) : 0,
-        
+
         .rounds = parser.exists("rounds") ? std::stoi(parser.get("rounds")) : 1,
         .warmup_rounds = parser.exists("warmup_rounds") ? std::stoi(parser.get("warmup_rounds")) : 0,
 
@@ -226,7 +226,7 @@ void print_usage() {
     std::cout << "Options:\n";
     std::cout << "  --automaton <name>              Name of the cellular automaton\n";
     std::cout << "  --device <name>                 Device to run on (CPU, CUDA)\n";
-    std::cout << "  --traverser <name>              Traverser type (simple, spacial_blocking)\n";
+    std::cout << "  --traverser <name>              Traverser type (simple, spatial_blocking)\n";
     std::cout << "  --evaluator <name>              Evaluator type (standard, bit_planes)\n";
     std::cout << "  --layout <name>                 Layout type (standard, bit_array, bit_planes)\n";
     std::cout << "  --reference_impl <name>         Reference implementation to use (baseline)\n";
@@ -251,7 +251,7 @@ void print_usage() {
 
 
 int main(int argc, char* argv[]) {
-    
+
     auto params = get_params(argc, argv);
 
     if (params.help) {
@@ -292,9 +292,9 @@ int main(int argc, char* argv[]) {
         test::on_cuda::using_<std::uint32_t>::tiled_bit_planes<automaton>, \
         test::on_cuda::using_<std::uint64_t>::tiled_bit_planes<automaton>, \
         test::on_cuda::standard<automaton>, \
-        test::on_cuda::standard<automaton>::with_spacial_blocking<1, 1>, \
-        test::on_cuda::standard<automaton>::with_spacial_blocking<2, 1>, \
-        test::on_cuda::standard<automaton>::with_spacial_blocking<4, 1>, \
+        test::on_cuda::standard<automaton>::with_spatial_blocking<1, 1>, \
+        test::on_cuda::standard<automaton>::with_spatial_blocking<2, 1>, \
+        test::on_cuda::standard<automaton>::with_spatial_blocking<4, 1>, \
         test::on_cuda::using_<std::uint32_t>::bit_array<automaton>, \
         test::on_cuda::using_<std::uint64_t>::bit_array<automaton>, \
         test::on_cuda::using_<std::uint32_t>::bit_planes<automaton>, \
