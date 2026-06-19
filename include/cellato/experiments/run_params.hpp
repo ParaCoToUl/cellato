@@ -1,9 +1,9 @@
 #ifndef RUN_PARAMS_HPP
 #define RUN_PARAMS_HPP
 
-#include <string>
 #include <cstddef>
 #include <iostream>
+#include <string>
 
 namespace cellato::run {
 
@@ -16,7 +16,7 @@ struct run_params {
     std::string layout = "standard";
 
     std::string reference_impl = "none";
-    
+
     int x_size = 0;
     int y_size = 0;
     int steps = 0;
@@ -42,7 +42,7 @@ struct run_params {
     int cuda_block_size_x = 32;
     int cuda_block_size_y = 8;
 
-    void print_to(std::ostream& os) {
+    void print_to(std::ostream& os) const {
         os << "Run Parameters:\n";
         os << "  Automaton: " << automaton << "\n";
         os << "  Device: " << device << "\n";
@@ -66,9 +66,7 @@ struct run_params {
         os << "  Help: " << (help ? "true" : "false") << "\n";
     }
 
-    void print_std() {
-        print_to(std::cout);
-    }
+    void print_std() const { print_to(std::cout); }
 
     static std::string csv_header() {
         return "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,word_size,temporal_steps,temporal_tile_size_y";
@@ -97,6 +95,6 @@ struct run_params {
     }
 };
 
-}
+} // namespace cellato::run
 
 #endif // RUN_PARAMS_HPP

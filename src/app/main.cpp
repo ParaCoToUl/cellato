@@ -1,35 +1,87 @@
-#include <iostream>
-#include <vector>
-#include <random>
 #include <algorithm>
-#include <unordered_map>
-#include <functional>
+#include <cstdint>
+#include <iostream>
+#include <optional>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <vector>
 
-#include "cellato/experiments/run_params.hpp"
-#include "cellato/experiments/test_suites.hpp"
 #include "cellato/experiments/experiment_manager.hpp"
 #include "cellato/experiments/reference_impl_manager.hpp"
+#include "cellato/experiments/run_params.hpp"
+#include "cellato/experiments/test_suites.hpp"
 #include "cellato/memory/grid_utils.hpp"
 
-#include "game_of_life/algorithm.hpp"
-#include "game_of_life/pretty_print.hpp"
-#include "game_of_life/config.hpp"
-#include "fire/config.hpp"
-#include "excitable/config.hpp"
-#include "wire/config.hpp"
 #include "brian/config.hpp"
-#include "maze/config.hpp"
-#include "fluid/config.hpp"
 #include "critters/config.hpp"
 #include "cyclic/config.hpp"
+#include "excitable/config.hpp"
+#include "fire/config.hpp"
+#include "fluid/config.hpp"
+#include "game_of_life/algorithm.hpp"
+#include "game_of_life/config.hpp"
+#include "game_of_life/pretty_print.hpp"
+#include "maze/config.hpp"
 #include "traffic/config.hpp"
+#include "wire/config.hpp"
 
 #include "args_parser.hpp"
 
+namespace {
 
-#define LOG std::cerr
-#define REPORT std::cout
+constexpr int default_rounds = 1;
+constexpr int default_warmup_rounds = 0;
+constexpr int default_seed = 42;
+constexpr int default_cuda_block_size_x = 32;
+constexpr int default_cuda_block_size_y = 8;
+
+bool requires_word_size(const std::optional<std::string>& evaluator) {
+    return evaluator && (*evaluator == "bit_planes" || *evaluator == "bit_array");
+}
+
+bool requires_temporal_options(const std::optional<std::string>& traverser) {
+    return traverser && *traverser == "temporal";
+}
+
+int parse_int_option(const input::parser& parser, const std::string& option) {
+    const auto raw_value = parser.require(option);
+
+    try {
+        std::size_t parsed_chars = 0;
+        const int value = std::stoi(raw_value, &parsed_chars);
+        if (parsed_chars != raw_value.size()) {
+            throw std::invalid_argument("trailing characters");
+        }
+
+        return value;
+    } catch (const std::invalid_argument&) {
+        throw std::invalid_argument("Invalid integer for --" + option + ": " + raw_value);
+    } catch (const std::out_of_range&) {
+        throw std::out_of_range("Integer out of range for --" + option + ": " + raw_value);
+    }
+}
+
+int parse_optional_int_option(const input::parser& parser, const std::string& option, int default_value) {
+    if (!parser.exists(option)) {
+        return default_value;
+    }
+
+    return parse_int_option(parser, option);
+}
+
+template <typename automaton_config>
+bool automaton_matches(const std::string& automaton) {
+    if (automaton == automaton_config::name) {
+        return true;
+    }
+
+    if constexpr (std::is_same_v<automaton_config, fire::config>) {
+        return automaton == "fire";
+    }
+
+    return false;
+}
 
 template <typename... all_test_suites>
 struct switch_ {
@@ -51,36 +103,24 @@ struct switch_ {
 
 private:
     static bool run_reference_impl(cellato::run::run_params& params) {
-
-        if (params.reference_impl == "baseline") {
-            if (params.automaton == "game-of-life") {
-                return run_reference_for_automaton<game_of_life::config>(params);
-            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                return run_reference_for_automaton<fire::config>(params);
-            } else if (params.automaton == "excitable") {
-                return run_reference_for_automaton<excitable::config>(params);
-            } else if (params.automaton == "wire") {
-                return run_reference_for_automaton<wire::config>(params);
-            } else if (params.automaton == "brian") {
-                return run_reference_for_automaton<brian::config>(params);
-            } else if (params.automaton == "maze") {
-                return run_reference_for_automaton<maze::config>(params);
-            } else if (params.automaton == "fluid") {
-                return run_reference_for_automaton<fluid::config>(params);
-            } else if (params.automaton == "critters") {
-                return run_reference_for_automaton<critters::config>(params);
-            } else if (params.automaton == "cyclic") {
-                return run_reference_for_automaton<cyclic::config>(params);
-            } else if (params.automaton == "traffic") {
-                return run_reference_for_automaton<traffic::config>(params);
-            }
+        if (params.reference_impl != "baseline") {
+            return false;
         }
 
-        return false;
+        return (run_reference_if_for<all_test_suites>(params) || ...);
     }
 
-    template <typename automaton_config,
-              typename runner_t = typename automaton_config::reference_implementation>
+    template <typename test_suite>
+    static bool run_reference_if_for(cellato::run::run_params& params) {
+        using automaton_config = typename test_suite::automaton;
+        if (!automaton_matches<automaton_config>(params.automaton)) {
+            return false;
+        }
+
+        return run_reference_for_automaton<automaton_config>(params);
+    }
+
+    template <typename automaton_config, typename runner_t = typename automaton_config::reference_implementation>
     static bool run_reference_for_automaton(cellato::run::run_params& params) {
         using cell_state_t = typename automaton_config::cell_state;
 
@@ -91,8 +131,8 @@ private:
         cellato::run::reference_impl_manager<runner_t, cell_state_t> manager;
         auto report = manager.run_experiment(params, initial_state);
 
-        REPORT << report.csv_line() << std::endl;
-        report.pretty_print(LOG);
+        std::cout << report.csv_line() << std::endl;
+        report.pretty_print(std::cerr);
 
         return true;
     }
@@ -110,26 +150,18 @@ private:
         cellato::run::experiment_manager<test_suite> manager;
         manager.set_print_config(cellular_automaton::pretty_print::get_config());
 
-        auto report = manager.run_experiment(
-            params, initial_state
-        );
+        auto report = manager.run_experiment(params, initial_state);
 
-        REPORT << report.csv_line() << std::endl;
+        std::cout << report.csv_line() << std::endl;
 
-        report.pretty_print(LOG);
+        report.pretty_print(std::cerr);
 
         return true;
     }
 };
 
-
-template <typename test_suite>
-void run(cellato::run::run_params& params) {
-
-}
-
 cellato::run::run_params get_params(int argc, char* argv[]) {
-    input::parser parser {argc, argv};
+    input::parser parser{argc, argv};
 
     if (parser.exists("help")) {
         return cellato::run::run_params{.help = true};
@@ -139,84 +171,71 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
         return cellato::run::run_params{.print_csv_header = true};
     }
 
-    std::vector<std::string> required {
+    std::vector<std::string> required{
         "automaton",
-        "device", "traverser", "evaluator", "layout",
-        "x_size", "y_size", "steps",
+        "device",
+        "traverser",
+        "evaluator",
+        "layout",
+        "x_size",
+        "y_size",
+        "steps",
     };
 
-    std::vector<std::string> optional {
-        "print", "word_size", "x_tile_size", "y_tile_size",
-        "seed", "rounds", "warmup_rounds", "print_csv_header",
-        "reference_impl", "cuda_block_size_x", "cuda_block_size_y",
-        "temporal_steps", "temporal_tile_size_y"
-    };
-
-    if (parser.exists("evaluator")) {
-        if (parser.get("evaluator") == "bit_planes" || parser.get("evaluator") == "bit_array") {
-            required.push_back("word_size");
-        }
+    if (requires_word_size(parser.get("evaluator"))) {
+        required.push_back("word_size");
     }
 
-    if (parser.exists("traverser")) {
-        if (parser.get("traverser") == "temporal") {
-            required.push_back("temporal_steps");
-            required.push_back("temporal_tile_size_y");
-        }
+    if (requires_temporal_options(parser.get("traverser"))) {
+        required.push_back("temporal_steps");
+        required.push_back("temporal_tile_size_y");
     }
 
     if (parser.exists("reference_impl")) {
-        for (const auto& no_longer_required : {
-            "device", "traverser", "evaluator", "layout"
-        }) {
-            required.erase(
-                std::remove(required.begin(), required.end(), no_longer_required),
-                required.end()
-            );
+        for (const auto& no_longer_required : {"device", "traverser", "evaluator", "layout"}) {
+            required.erase(std::remove(required.begin(), required.end(), no_longer_required), required.end());
         }
     }
 
     for (const auto& opt : required) {
         if (!parser.exists(opt)) {
-            std::cerr << "Missing required option: " << opt << std::endl;
-            exit(1);
+            throw std::invalid_argument("Missing required option: --" + opt);
         }
     }
 
-    cellato::run::run_params params {
-        .automaton = parser.get("automaton"),
+    cellato::run::run_params params{
+        .automaton = parser.require("automaton"),
 
-        .device = parser.get("device"),
-        .traverser = parser.get("traverser"),
-        .evaluator = parser.get("evaluator"),
-        .layout = parser.get("layout"),
+        .device = parser.exists("device") ? parser.require("device") : "",
+        .traverser = parser.exists("traverser") ? parser.require("traverser") : "",
+        .evaluator = parser.exists("evaluator") ? parser.require("evaluator") : "",
+        .layout = parser.exists("layout") ? parser.require("layout") : "",
 
-        .reference_impl = parser.exists("reference_impl") ? parser.get("reference_impl") : "none",
+        .reference_impl = parser.exists("reference_impl") ? parser.require("reference_impl") : "none",
 
-        .x_size = std::stoi(parser.get("x_size")),
-        .y_size = std::stoi(parser.get("y_size")),
-        .steps = std::stoi(parser.get("steps")),
+        .x_size = parse_int_option(parser, "x_size"),
+        .y_size = parse_int_option(parser, "y_size"),
+        .steps = parse_int_option(parser, "steps"),
 
-        .word_size = parser.exists("word_size") ? std::stoi(parser.get("word_size")) : 0,
+        .word_size = parse_optional_int_option(parser, "word_size", 0),
 
-        .x_tile_size = parser.exists("x_tile_size") ? std::stoi(parser.get("x_tile_size")) : 0,
-        .y_tile_size = parser.exists("y_tile_size") ? std::stoi(parser.get("y_tile_size")) : 0,
+        .x_tile_size = parse_optional_int_option(parser, "x_tile_size", 0),
+        .y_tile_size = parse_optional_int_option(parser, "y_tile_size", 0),
 
-        .temporal_steps = parser.exists("temporal_steps") ? std::stoi(parser.get("temporal_steps")) : 0,
-        .temporal_tile_size_y = parser.exists("temporal_tile_size_y") ? std::stoi(parser.get("temporal_tile_size_y")) : 0,
+        .temporal_steps = parse_optional_int_option(parser, "temporal_steps", 0),
+        .temporal_tile_size_y = parse_optional_int_option(parser, "temporal_tile_size_y", 0),
 
-        .rounds = parser.exists("rounds") ? std::stoi(parser.get("rounds")) : 1,
-        .warmup_rounds = parser.exists("warmup_rounds") ? std::stoi(parser.get("warmup_rounds")) : 0,
+        .rounds = parse_optional_int_option(parser, "rounds", default_rounds),
+        .warmup_rounds = parse_optional_int_option(parser, "warmup_rounds", default_warmup_rounds),
 
-        .seed = parser.exists("seed") ? std::stoi(parser.get("seed")) : 42,
+        .seed = parse_optional_int_option(parser, "seed", default_seed),
 
         .print = parser.exists("print"),
         .help = parser.exists("help"),
         .print_csv_header = parser.exists("print_csv_header"),
 
-        .cuda_block_size_x = parser.exists("cuda_block_size_x") ? std::stoi(parser.get("cuda_block_size_x")) : 32,
-        .cuda_block_size_y = parser.exists("cuda_block_size_y") ? std::stoi(parser.get("cuda_block_size_y")) : 8
-    };
+        .cuda_block_size_x = parse_optional_int_option(parser, "cuda_block_size_x", default_cuda_block_size_x),
+        .cuda_block_size_y = parse_optional_int_option(parser, "cuda_block_size_y", default_cuda_block_size_y)};
 
     return params;
 }
@@ -242,17 +261,23 @@ void print_usage() {
     std::cout << "  --word_size <number>            word_size for floating-point calculations (32, 64)\n";
     std::cout << "  --seed <number>                 Random seed for initialization\n";
     std::cout << "  --print                         Print the grid after each step\n";
-    std::cout << "  --reference_impl                Use reference implementation for the automaton\n";
-    std::cout << "  --cuda_block_size_x <number>    CUDA block size X (default: 16)\n";
-    std::cout << "  --cuda_block_size_y <number>    CUDA block size Y (default: 16)\n";
+    std::cout << "  --cuda_block_size_x <number>    CUDA block size X (default: 32)\n";
+    std::cout << "  --cuda_block_size_y <number>    CUDA block size Y (default: 8)\n";
     std::cout << "  --print_csv_header              Print CSV header\n";
     std::cout << "  --help                          Show this help message\n";
 }
 
+} // namespace
 
 int main(int argc, char* argv[]) {
-
-    auto params = get_params(argc, argv);
+    cellato::run::run_params params;
+    try {
+        params = get_params(argc, argv);
+    } catch (const std::exception& error) {
+        std::cerr << "Error: " << error.what() << "\n\n";
+        print_usage();
+        return 1;
+    }
 
     if (params.help) {
         print_usage();
@@ -281,7 +306,8 @@ int main(int argc, char* argv[]) {
     using _cyclic_ = cyclic::config;
     using _traffic_ = traffic::config;
 
-    #define cases_for(automaton) \
+    // clang-format off
+#define cases_for(automaton) \
         test::on_cpu::standard<automaton>, \
         test::on_cpu::using_<std::uint32_t>::bit_array<automaton>, \
         test::on_cpu::using_<std::uint64_t>::bit_array<automaton>, \
@@ -304,18 +330,17 @@ int main(int argc, char* argv[]) {
         test::on_cuda::using_<std::uint32_t>::temporal_linear_bit_planes<automaton>, \
         test::on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>
 
-    switch_<
-        cases_for(_game_of_life_),
-        cases_for(_fire_),
-        cases_for(_wire_),
-        cases_for(_excitable_),
-        cases_for(_brian_),
-        cases_for(_maze_),
-        cases_for(_fluid_),
-        cases_for(_critters_),
-        cases_for(_cyclic_),
-        cases_for(_traffic_)
-    >::run(params);
+    switch_<cases_for(_game_of_life_),
+            cases_for(_fire_),
+            cases_for(_wire_),
+            cases_for(_excitable_),
+            cases_for(_brian_),
+            cases_for(_maze_),
+            cases_for(_fluid_),
+            cases_for(_critters_),
+            cases_for(_cyclic_),
+            cases_for(_traffic_)>::run(params);
+    // clang-format on
 
     return 0;
 }
