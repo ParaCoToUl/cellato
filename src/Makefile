@@ -1,21 +1,21 @@
 CXX = g++
 CXX_STD = c++20
 NVCC = nvcc
-CXXFLAGS = -std=$(CXX_STD) -DNDEBUG -Wall -Wextra -Wpedantic -O3 -march=native -I../include
+CXXFLAGS = -std="$(CXX_STD)" -DNDEBUG -Wall -Wextra -Wpedantic -O3 -march=native -mtune=native -I../include
 NVCC_CC_BIN = $(shell which $(CXX))
-NVCCFLAGS = -std=$(CXX_STD) -DNDEBUG -Wreorder -Wext-lambda-captures-this -O3 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_90,code=sm_90 -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin $(NVCC_CC_BIN) -Xcompiler -std=$(CXX_STD),-Wall,-Wextra,-march=native
+NVCCFLAGS = -std="$(CXX_STD)" -DNDEBUG -Wreorder -Wext-lambda-captures-this -O3 -arch=native -I../include -Wno-deprecated-gpu-targets --expt-relaxed-constexpr -ccbin "$(NVCC_CC_BIN)" -Xcompiler -std="$(CXX_STD)",-Wall,-Wextra,-march=native,-mtune=native
 
 CUDA_HOME = /usr/local/cuda
 
-INCLUDE_DIRS = -I../include -I$(CUDA_HOME)/include
-LIB_DIRS = -L$(CUDA_HOME)/lib64
+INCLUDE_DIRS = -I../include -I"$(CUDA_HOME)/include"
+LIB_DIRS = -L"$(CUDA_HOME)/lib64"
 LIBS = -lcudart
 
 DEFINES =
 ifeq ($(BUILD_TYPE), BENCHMARK)
-    DEFINES += -DBENCHMARK_COMPILE
+	DEFINES += -DBENCHMARK_COMPILE
 else ifeq ($(BUILD_TYPE), VERIFICATION)
-    DEFINES += -DVERIFICATION_COMPILE
+	DEFINES += -DVERIFICATION_COMPILE
 endif
 
 # Directories
@@ -42,13 +42,10 @@ TEST_TARGET = $(BIN_DIR)/cellato_tests
 all: directories $(TARGET) $(TEST_TARGET)
 
 benchmark:
-	@$(MAKE) -j$(shell nproc) all BUILD_TYPE=BENCHMARK
+	@$(MAKE) -j$(shell nproc) -B all BUILD_TYPE=BENCHMARK
 
 verify:
-	@$(MAKE) -j$(shell nproc) all BUILD_TYPE=VERIFICATION
-
-COMPILE_TO_BENCHMARK: benchmark
-COMPILE_TO_VERIFY: verify
+	@$(MAKE) -j$(shell nproc) -B all BUILD_TYPE=VERIFICATION
 
 
 directories:
