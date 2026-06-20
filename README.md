@@ -70,8 +70,8 @@ All core headers live in [`include/`](./include/). Key components:
 
 ```bash
 # Clone & enter
-$> git clone (REMOVED TO PRESERVE AUTHOR ANONYMITY REMOVED TO PRESERVE AUTHOR ANONYMITY DURING REVIEW)
-$> cd cellato
+$> git clone https://github.com/matyas-brabec/2026-cellato-smpt-journal
+$> cd 2026-cellato-smpt-journal
 
 # Build Cellato and the `baseline` reference implementation
 $> (cd src && make)

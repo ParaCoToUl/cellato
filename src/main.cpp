@@ -26,43 +26,6 @@
 #include "traffic/config.hpp"
 
 #include "args-parser.hpp"
-#include "_relwork/runner_wrapper.hpp"
-#include "_relwork/__framework_of_choice__/fire/runner.hpp"
-#include "_relwork/__framework_of_choice__/game_of_life/runner.hpp"
-
-
-#ifdef ENABLE_KOKKOS
-#include "_relwork/kokkos/game_of_life/runner.hpp"
-#include "_relwork/kokkos/fire/runner.hpp"
-#include "_relwork/kokkos/excitable/runner.hpp"
-#include "_relwork/kokkos/brian/runner.hpp"
-#include "_relwork/kokkos/maze/runner.hpp"
-#include "_relwork/kokkos/fluid/runner.hpp"
-#include "_relwork/kokkos/critters/runner.hpp"
-#include "_relwork/kokkos/cyclic/runner.hpp"
-#include "_relwork/kokkos/traffic/runner.hpp"
-#include "_relwork/kokkos/wire/runner.hpp"
-#endif // ENABLE_KOKKOS
-
-#ifdef ENABLE_GRIDTOOLS
-#include "_relwork/gridtools/game_of_life/runner.hpp" 
-// #include "_relwork/gridtools/fire/runner.hpp"
-// #include "_relwork/gridtools/excitable/runner.hpp"
-// #include "_relwork/gridtools/wire/runner.hpp"
-#endif // ENABLE_GRIDTOOLS
-
-#ifdef ENABLE_HALIDE
-#include "_relwork/halide/game_of_life/runner.hpp"
-#include "_relwork/halide/fire/runner.hpp"
-#include "_relwork/halide/excitable/runner.hpp"
-#include "_relwork/halide/wire/runner.hpp"
-#include "_relwork/halide/brian/runner.hpp"
-#include "_relwork/halide/maze/runner.hpp"
-#include "_relwork/halide/fluid/runner.hpp"
-#include "_relwork/halide/critters/runner.hpp"
-#include "_relwork/halide/cyclic/runner.hpp"
-#include "_relwork/halide/traffic/runner.hpp"
-#endif // ENABLE_HALIDE
 
 
 #define LOG std::cerr
@@ -113,107 +76,7 @@ private:
             }
         }
 
-        else if (params.reference_impl == "_framework_of_choice_") {
-            if (params.automaton == "game-of-life") {
-                return run_relwork<game_of_life::config, __framework_of_choice__::game_of_life::runner>(params);
-            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                return run_relwork<fire::config, __framework_of_choice__::fire::runner>(params);
-            }
-            // ...
-        }
-
-#ifdef ENABLE_GRIDTOOLS
-        else if (params.reference_impl == "gridtools") {
-            if (params.automaton == "game-of-life") {
-                return run_relwork<game_of_life::config, gridtools::game_of_life::runner>(params);
-            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                // return run_relwork<fire::config, gridtools::fire::runner>(params);
-            } else if (params.automaton == "excitable") {
-                // return run_relwork<excitable::config, gridtools::excitable::runner>(params);
-            } else if (params.automaton == "wire") {
-                // return run_relwork<wire::config, gridtools::wire::runner>(params);
-            }
-        }
-#else
-        else if (params.reference_impl == "gridtools") {
-            std::cerr << "GridTools reference implementation is not enabled in this build." << std::endl;
-            return false;
-        }
-#endif // ENABLE_GRIDTOOLS
-
-#ifdef ENABLE_KOKKOS
-        else if (params.reference_impl == "kokkos") {
-            if (params.automaton == "game-of-life") {
-                return run_relwork<game_of_life::config, kokkos::game_of_life::runner>(params);
-            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                return run_relwork<fire::config, kokkos::fire::runner>(params);
-            } else if (params.automaton == "excitable") {
-                return run_relwork<excitable::config, kokkos::excitable::runner>(params);
-            } else if (params.automaton == "wire") {
-                return run_relwork<wire::config, kokkos::wire::runner>(params);
-            } else if (params.automaton == "brian") {
-                return run_relwork<brian::config, kokkos::brian::runner>(params);
-            } else if (params.automaton == "maze") {
-                return run_relwork<maze::config, kokkos::maze::runner>(params);
-            } else if (params.automaton == "fluid") {
-                return run_relwork<fluid::config, kokkos::fluid::runner>(params);
-            } else if (params.automaton == "critters") {
-                return run_relwork<critters::config, kokkos::critters::runner>(params);
-            } else if (params.automaton == "cyclic") {
-                return run_relwork<cyclic::config, kokkos::cyclic::runner>(params);
-            } else if (params.automaton == "traffic") {
-                return run_relwork<traffic::config, kokkos::traffic::runner>(params);
-            }
-        }
-#else
-        else if (params.reference_impl == "kokkos") {
-            std::cerr << "Kokkos reference implementation is not enabled in this build." << std::endl;
-            return false;
-        }
-#endif // ENABLE_KOKKOS
-
-#ifdef ENABLE_HALIDE
-        else if (params.reference_impl == "halide") {
-            if (params.automaton == "game-of-life") {
-                return run_relwork<game_of_life::config, halide::game_of_life::runner>(params);
-            } else if (params.automaton == "fire" || params.automaton == "forest-fire") {
-                return run_relwork<fire::config, halide::fire::runner>(params);
-            } else if (params.automaton == "excitable") {
-                return run_relwork<excitable::config, halide::excitable::runner>(params);
-            } else if (params.automaton == "wire") {
-                return run_relwork<wire::config, halide::wire::runner>(params);
-            } else if (params.automaton == "brian") {
-                return run_relwork<brian::config, halide::brian::runner>(params);
-            } else if (params.automaton == "maze") {
-                return run_relwork<maze::config, halide::maze::runner>(params);
-            } else if (params.automaton == "fluid") {
-                return run_relwork<fluid::config, halide::fluid::runner>(params);
-            } else if (params.automaton == "critters") {
-                return run_relwork<critters::config, halide::critters::runner>(params);
-            } else if (params.automaton == "cyclic") {
-                return run_relwork<cyclic::config, halide::cyclic::runner>(params);
-            } else if (params.automaton == "traffic") {
-                return run_relwork<traffic::config, halide::traffic::runner>(params);
-            }
-
-        }
-#else
-        else if (params.reference_impl == "halide") {
-            std::cerr << "Halide reference implementation is not enabled in this build." << std::endl;
-            return false;
-        }
-#endif // ENABLE_HALIDE
-
         return false;
-    }
-
-    template <typename automaton_config, typename relwork_runner>
-    static bool run_relwork(cellato::run::run_params& params) {
-        return run_reference_for_automaton<
-            automaton_config,
-            relwork::runner_wrapper<
-                automaton_config, 
-                relwork_runner>>(params);
     }
 
     template <typename automaton_config,
@@ -366,7 +229,7 @@ void print_usage() {
     std::cout << "  --traverser <name>              Traverser type (simple, spacial_blocking)\n";
     std::cout << "  --evaluator <name>              Evaluator type (standard, bit_planes)\n";
     std::cout << "  --layout <name>                 Layout type (standard, bit_array, bit_planes)\n";
-    std::cout << "  --reference_impl <name>         Reference implementation to use (baseline, kokkos, halide, gridtools)\n";
+    std::cout << "  --reference_impl <name>         Reference implementation to use (baseline)\n";
     std::cout << "  --x_size <number>               X size of the grid\n";
     std::cout << "  --y_size <number>               Y size of the grid\n";
     std::cout << "  --x_tile_size <number>          X tile size for CUDA\n";
