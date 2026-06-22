@@ -1,5 +1,6 @@
 **/*.out
 **/bin
+**/build
 /bin_*
 **/obj
 **/_deps

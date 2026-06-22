@@ -3,6 +3,7 @@
 set -euo pipefail
 
 script_dir=$(dirname "$0")
+build_type="release"
 
 # Uncomment one of these test configurations:
 
@@ -87,9 +88,12 @@ should_remove="${1:-}"
 
 if [ "$should_remove" == "clean" ]; then
     echo "Removing old build..."
-    rm -rf "$script_dir/../bin"
+    rm -rf "$script_dir/../build/$build_type"
 fi
 
-cd "$script_dir"
-# srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:A100 make -j run ARGS="$args"
-srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:H100 make -j run ARGS="$args"
+cd "$script_dir/.."
+cmake --preset $build_type
+cmake --build --preset $build_type --parallel 4
+
+# srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:A100 build/$build_type/cellato $args
+srun -p gpu-short -A kdss --cpus-per-task=32 --mem=64GB --time=2:00:00 --gres=gpu:H100 build/$build_type/cellato $args
