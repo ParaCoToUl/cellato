@@ -28,7 +28,8 @@ using alive_count = count_neighbors<alive, moore_8_neighbors>;
 
 using has_two_alive_neighbors = p<alive_count, equals, c_2>;
 
-using brian_algorithm = 
+// clang-format off
+using brian_algorithm =
     if_< cell_is_dead >::then_<
         if_< has_two_alive_neighbors >::then_<
             alive
@@ -42,9 +43,10 @@ using brian_algorithm =
     else_< // cell_is_dying
         dead
     >;
+// clang-format on
 
 // using brian_algorithm = neighbor_at<1, 1>;
 
-}
+} // namespace brian
 
 #endif // GAME_OF_LIFE_ALGORITHM_HPP

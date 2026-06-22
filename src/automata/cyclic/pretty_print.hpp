@@ -1,8 +1,8 @@
 #ifndef CYCLIC_PRETTY_PRINT_HPP
 #define CYCLIC_PRETTY_PRINT_HPP
 
-#include "cellato/memory/standard_grid.hpp"
 #include "./algorithm.hpp"
+#include "cellato/memory/standard_grid.hpp"
 #include <cstring>
 #include <string>
 #include <vector>
@@ -54,13 +54,14 @@ struct cyclic_pretty_print {
 
         for (std::size_t i = 0; i < STATES; ++i) {
             auto symbol = std::string(1, symbols[i % strlen(symbols)]);
-            conf = conf.with(static_cast<cyclic_cell_state>(i), bash_color_list[i % bash_color_list.size()] + symbol + "\033[0m");
+            conf = conf.with(static_cast<cyclic_cell_state>(i),
+                             bash_color_list[i % bash_color_list.size()] + symbol + "\033[0m");
         }
 
         return conf;
     }
 };
 
-}
+} // namespace cyclic
 
 #endif // CYCLIC_PRETTY_PRINT_HPP

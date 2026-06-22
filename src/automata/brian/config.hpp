@@ -2,8 +2,8 @@
 #define BRIAN_CONFIG_HPP
 
 #include "./algorithm.hpp"
-#include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./pretty_print.hpp"
 #include "./reference_implementation.hpp"
 #include "cellato/memory/state_dictionary.hpp"
 
@@ -18,8 +18,8 @@ struct config {
     using algorithm = brian_algorithm;
 
     using cell_state = brian_cell_state;
-    using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::dead, cell_state::dying, cell_state::alive>;
+    using state_dictionary =
+        cellato::memory::grids::state_dictionary<cell_state::dead, cell_state::dying, cell_state::alive>;
 
     using pretty_print = brian_pretty_print;
 

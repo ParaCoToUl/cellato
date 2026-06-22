@@ -26,6 +26,7 @@ using cell_has_3_wall_neighbors = p<wall_count, equals, c_3>;
 
 using has_less_then_6_wall_neighbors = p<wall_count, less_than, c_6>;
 
+// clang-format off
 using maze_algorithm = if_< cell_has_3_wall_neighbors >::then_<
         wall
     >::elif_< p<cell_is_wall, and_, has_less_then_6_wall_neighbors> >::then_<
@@ -33,7 +34,8 @@ using maze_algorithm = if_< cell_has_3_wall_neighbors >::then_<
     >::else_<
         empty
     >;
+// clang-format on
 
-}
+} // namespace maze
 
 #endif // MAZE_ALGORITHM_HPP

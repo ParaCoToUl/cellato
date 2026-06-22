@@ -5,24 +5,19 @@
 #include <device_launch_parameters.h>
 #include <stdexcept>
 
-#include "cellato/traversers/cuda/spatial_blocking.hpp"
-#include "cellato/memory/standard_grid.hpp"
-#include "cellato/memory/interface.hpp"
-#include "cellato/evaluators/standard.hpp"
 #include "cellato/core/ast.hpp"
-#include "cellato/traversers/traverser_utils.hpp"
+#include "cellato/evaluators/standard.hpp"
+#include "cellato/memory/interface.hpp"
+#include "cellato/memory/standard_grid.hpp"
+#include "cellato/traversers/cuda/spatial_blocking.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
+#include "cellato/traversers/traverser_utils.hpp"
 
 namespace cellato::traversers::cuda::spatial_blocking {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t, int Y_TILE_SIZE, int X_TILE_SIZE>
 __global__ void process_grid_kernel_blocked(
-    grid_data_t input_data,
-    output_data_t output_data,
-    size_t width,
-    size_t height,
-    int time_step
-) {
+    grid_data_t input_data, output_data_t output_data, size_t width, size_t height, int time_step) {
     // Calculate base coordinates for this thread's tile
     int base_x = blockIdx.x * blockDim.x + threadIdx.x;
     int base_y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -66,10 +61,8 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
     // Each thread handles a Y_TILE_SIZE x X_TILE_SIZE tile
     // So we need fewer threads than with the simple traverser
     dim3 blockDim(_block_size_x, _block_size_y);
-    dim3 gridDim(
-        (width + blockDim.x * X_TILE_SIZE - 1) / (blockDim.x * X_TILE_SIZE),
-        (height + blockDim.y * Y_TILE_SIZE - 1) / (blockDim.y * Y_TILE_SIZE)
-    );
+    dim3 gridDim((width + blockDim.x * X_TILE_SIZE - 1) / (blockDim.x * X_TILE_SIZE),
+                 (height + blockDim.y * Y_TILE_SIZE - 1) / (blockDim.y * Y_TILE_SIZE));
 
     if constexpr (mode == _run_mode::VERBOSE) {
         call_callback(0, current);
@@ -79,13 +72,8 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
         auto input_data = current->data();
         auto output_data = next->data();
 
-        process_grid_kernel_blocked<evaluator_t, decltype(input_data), decltype(output_data), Y_TILE_SIZE, X_TILE_SIZE><<<gridDim, blockDim>>>(
-            input_data,
-            output_data,
-            width,
-            height,
-            step
-        );
+        process_grid_kernel_blocked<evaluator_t, decltype(input_data), decltype(output_data), Y_TILE_SIZE, X_TILE_SIZE>
+            <<<gridDim, blockDim>>>(input_data, output_data, width, height, step);
 
         if constexpr (mode == _run_mode::VERBOSE) {
             call_callback(step + 1, next);

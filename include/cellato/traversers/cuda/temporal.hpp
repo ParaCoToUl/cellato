@@ -2,14 +2,14 @@
 #define CELLATO_TRAVERSERS_CUDA_LINEAR_TEMPORAL_HPP
 
 #include <cstddef>
-#include <iostream>
-#include <utility>
-#include <functional>
 #include <cuda_runtime.h>
+#include <functional>
+#include <iostream>
 #include <memory>
+#include <utility>
 
-#include "cellato/memory/interface.hpp"
 #include "../../experiments/run_params.hpp"
+#include "cellato/memory/interface.hpp"
 #include "cellato/traversers/traverser_utils.hpp"
 
 namespace cellato::traversers::cuda::temporal {
@@ -21,10 +21,7 @@ enum class _run_mode {
     VERBOSE,
 };
 
-template <
-    typename evaluator_type,
-    typename grid_type,
-    double average_halo_radius>
+template <typename evaluator_type, typename grid_type, double average_halo_radius>
 class traverser {
     using evaluator_t = evaluator_type;
     using grid_t = grid_type;
@@ -34,24 +31,23 @@ class traverser {
     constexpr static std::size_t word_tile_x = grid_t::x_word_tile_size;
     constexpr static std::size_t word_tile_y = grid_t::y_word_tile_size;
 
-  public:
+public:
     static constexpr bool is_CUDA = true;
 
     traverser() : _final_grid(nullptr) {}
 
-    void init(grid_t grid, 
-              const cellato::run::run_params& params) {
+    void init(grid_t grid, const cellato::run::run_params& params) {
 
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
-        
+
         _temporal_tile_size_y = params.temporal_tile_size_y;
         _temporal_steps = params.temporal_steps;
 
         std::size_t needed_halo_cells = static_cast<std::size_t>(std::ceil(average_halo_radius * _temporal_steps));
         std::size_t x_halo_words = (needed_halo_cells + word_tile_x - 1) / word_tile_x;
         std::size_t y_halo_words = (needed_halo_cells + word_tile_y - 1) / word_tile_y;
-    
+
         _effective_temporal_tile_size_x = _block_size_x - 2 * x_halo_words;
         _effective_temporal_tile_size_y = _temporal_tile_size_y - 2 * y_halo_words;
 
@@ -86,10 +82,10 @@ class traverser {
         }
 
         _input_grid = std::move(grid);
-        
+
         _input_grid_cuda = _input_grid.to_cuda();
         _intermediate_grid_cuda = _input_grid.to_cuda();
-        
+
         _final_grid = &_input_grid_cuda;
     }
 
@@ -97,7 +93,7 @@ class traverser {
 
     template <typename callback = no_callback>
     void run(int steps, callback&& callback_func = no_callback{}) {
-        
+
         if constexpr (!std::is_same_v<callback, no_callback>) {
             _callback_func = std::make_unique<_lambda_wrapper<callback>>(std::forward<callback>(callback_func));
             run_kernel<_run_mode::VERBOSE>(steps);
@@ -106,13 +102,13 @@ class traverser {
             run_kernel<_run_mode::QUIET>(steps);
         }
     }
-    
+
     grid_t fetch_result();
-    
+
 private:
     template <_run_mode mode>
     void run_kernel(int steps);
-    
+
     grid_t _input_grid;
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;
@@ -123,7 +119,7 @@ private:
 
     int _effective_temporal_tile_size_x = -1;
     int _effective_temporal_tile_size_y = -1;
-    
+
     int _temporal_steps = -1;
     int _temporal_tile_size_y = -1;
     int _cells_per_thread = -1;

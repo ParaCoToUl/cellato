@@ -1,14 +1,14 @@
 #ifndef GAME_OF_LIFE_REFERENCE_IMPLEMENTATION_HPP
 #define GAME_OF_LIFE_REFERENCE_IMPLEMENTATION_HPP
 
-#include <vector>
-#include <cstddef>
-#include <iostream>
-#include <stdexcept>
 #include "./algorithm.hpp"
 #include "cellato/experiments/run_params.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
 namespace game_of_life::reference {
 using namespace ::reference::indexing;
@@ -17,14 +17,13 @@ struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
-    void init(const gol_cell_state* grid,
-              const cellato::run::run_params& params = cellato::run::run_params()) {
+    void init(const gol_cell_state* grid, const cellato::run::run_params& params = cellato::run::run_params()) {
         _x_size = params.x_size;
         _y_size = params.y_size;
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
         _current_grid.resize(_x_size * _y_size);
-        _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
+        _next_grid.resize(_x_size * _y_size); // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
             if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
@@ -56,21 +55,19 @@ struct runner {
     void run(int steps) {
         indexer idx(_x_size, _y_size);
 
-
         for (int step = 0; step < steps; ++step) {
             // Process each cell, accounting for margins
             for (std::size_t y = y_margin; y < _y_size - y_margin; ++y) {
                 for (std::size_t x = x_margin; x < _x_size - x_margin; ++x) {
                     // Count live neighbors using toroidal indexing (Moore neighborhood)
-                    int live_neighbors =
-                        (_current_grid[idx.at(x - 1, y - 1)] == gol_cell_state::alive) + // Top-left
-                        (_current_grid[idx.at(x    , y - 1)] == gol_cell_state::alive) + // Top
-                        (_current_grid[idx.at(x + 1, y - 1)] == gol_cell_state::alive) + // Top-right
-                        (_current_grid[idx.at(x - 1, y    )] == gol_cell_state::alive) + // Left
-                        (_current_grid[idx.at(x + 1, y    )] == gol_cell_state::alive) + // Right
-                        (_current_grid[idx.at(x - 1, y + 1)] == gol_cell_state::alive) + // Bottom-left
-                        (_current_grid[idx.at(x    , y + 1)] == gol_cell_state::alive) + // Bottom
-                        (_current_grid[idx.at(x + 1, y + 1)] == gol_cell_state::alive);  // Bottom-right
+                    int live_neighbors = (_current_grid[idx.at(x - 1, y - 1)] == gol_cell_state::alive) + // Top-left
+                                         (_current_grid[idx.at(x, y - 1)] == gol_cell_state::alive) +     // Top
+                                         (_current_grid[idx.at(x + 1, y - 1)] == gol_cell_state::alive) + // Top-right
+                                         (_current_grid[idx.at(x - 1, y)] == gol_cell_state::alive) +     // Left
+                                         (_current_grid[idx.at(x + 1, y)] == gol_cell_state::alive) +     // Right
+                                         (_current_grid[idx.at(x - 1, y + 1)] == gol_cell_state::alive) + // Bottom-left
+                                         (_current_grid[idx.at(x, y + 1)] == gol_cell_state::alive) +     // Bottom
+                                         (_current_grid[idx.at(x + 1, y + 1)] == gol_cell_state::alive); // Bottom-right
 
                     // Apply Game of Life rules
                     gol_cell_state current = _current_grid[y * _x_size + x];

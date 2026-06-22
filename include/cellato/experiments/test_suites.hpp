@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+#include "./run_params.hpp"
 #include "cellato/evaluators/bit_array.hpp"
 #include "cellato/evaluators/bit_planes.hpp"
 #include "cellato/evaluators/standard.hpp"
@@ -16,7 +17,6 @@
 #include "cellato/traversers/cuda/spatial_blocking.hpp"
 #include "cellato/traversers/cuda/temporal.hpp"
 #include "cellato/utils/type_list.hpp"
-#include "./run_params.hpp"
 
 namespace cellato::run::test_suites {
 
@@ -46,9 +46,7 @@ struct standard_layout {
         static constexpr int x_margin = 1;
         static constexpr int y_margin = 1;
 
-        static bool word_size_matches(const cellato::run::run_params&) {
-            return true;
-        }
+        static bool word_size_matches(const cellato::run::run_params&) { return true; }
     };
 };
 
@@ -128,9 +126,7 @@ struct cpu_simple_traverser {
     template <typename evaluator_t, typename grid_t, typename>
     using type = cellato::traversers::cpu::simple::traverser<evaluator_t, grid_t>;
 
-    static bool options_match(const cellato::run::run_params&) {
-        return true;
-    }
+    static bool options_match(const cellato::run::run_params&) { return true; }
 };
 
 struct cuda_simple_traverser {
@@ -140,9 +136,7 @@ struct cuda_simple_traverser {
     template <typename evaluator_t, typename grid_t, typename>
     using type = cellato::traversers::cuda::simple::traverser<evaluator_t, grid_t>;
 
-    static bool options_match(const cellato::run::run_params&) {
-        return true;
-    }
+    static bool options_match(const cellato::run::run_params&) { return true; }
 };
 
 struct cuda_temporal_traverser {
@@ -150,14 +144,10 @@ struct cuda_temporal_traverser {
     static constexpr const char* traverser_name = temporal_opt;
 
     template <typename evaluator_t, typename grid_t, typename cellular_automaton>
-    using type = cellato::traversers::cuda::temporal::traverser<
-        evaluator_t,
-        grid_t,
-        cellular_automaton::average_halo_radius>;
+    using type =
+        cellato::traversers::cuda::temporal::traverser<evaluator_t, grid_t, cellular_automaton::average_halo_radius>;
 
-    static bool options_match(const cellato::run::run_params&) {
-        return true;
-    }
+    static bool options_match(const cellato::run::run_params&) { return true; }
 };
 
 template <int y_tile_size, int x_tile_size>
@@ -166,11 +156,7 @@ struct cuda_spatial_blocking_traverser {
     static constexpr const char* traverser_name = spatial_blocking_opt;
 
     template <typename evaluator_t, typename grid_t, typename>
-    using type = cellato::traversers::cuda::spatial_blocking::traverser<
-        evaluator_t,
-        grid_t,
-        y_tile_size,
-        x_tile_size>;
+    using type = cellato::traversers::cuda::spatial_blocking::traverser<evaluator_t, grid_t, y_tile_size, x_tile_size>;
 
     static bool options_match(const cellato::run::run_params& params) {
         return params.y_tile_size == y_tile_size && params.x_tile_size == x_tile_size;
@@ -192,12 +178,9 @@ struct suite {
     static constexpr int y_margin = layout_traits::y_margin;
 
     static bool is_for(const cellato::run::run_params& params) {
-        return params.automaton == cellular_automaton::name &&
-               params.traverser == traverser::traverser_name &&
-               params.device == traverser::device_name &&
-               params.evaluator == layout_traits::evaluator_name &&
-               params.layout == layout_traits::layout_name &&
-               layout_traits::word_size_matches(params) &&
+        return params.automaton == cellular_automaton::name && params.traverser == traverser::traverser_name &&
+               params.device == traverser::device_name && params.evaluator == layout_traits::evaluator_name &&
+               params.layout == layout_traits::layout_name && layout_traits::word_size_matches(params) &&
                traverser::options_match(params);
     }
 };
@@ -209,43 +192,32 @@ namespace on_cuda {
 template <typename cellular_automaton>
 struct standard : detail::suite<cellular_automaton, detail::standard_layout, detail::cuda_simple_traverser> {
     template <int y_tile_size, int x_tile_size = 1>
-    using with_spatial_blocking = detail::suite<
-        cellular_automaton,
-        detail::standard_layout,
-        detail::cuda_spatial_blocking_traverser<y_tile_size, x_tile_size>>;
+    using with_spatial_blocking = detail::suite<cellular_automaton,
+                                                detail::standard_layout,
+                                                detail::cuda_spatial_blocking_traverser<y_tile_size, x_tile_size>>;
 };
 
 template <typename store_word_type>
 struct using_ {
     template <typename cellular_automaton>
-    using bit_array = detail::suite<
-        cellular_automaton,
-        detail::bit_array_layout<store_word_type>,
-        detail::cuda_simple_traverser>;
+    using bit_array =
+        detail::suite<cellular_automaton, detail::bit_array_layout<store_word_type>, detail::cuda_simple_traverser>;
 
     template <typename cellular_automaton>
-    using bit_planes = detail::suite<
-        cellular_automaton,
-        detail::bit_planes_layout<store_word_type>,
-        detail::cuda_simple_traverser>;
+    using bit_planes =
+        detail::suite<cellular_automaton, detail::bit_planes_layout<store_word_type>, detail::cuda_simple_traverser>;
 
     template <typename cellular_automaton>
-    using tiled_bit_planes = detail::suite<
-        cellular_automaton,
-        detail::tiled_bit_planes_layout<store_word_type>,
-        detail::cuda_simple_traverser>;
+    using tiled_bit_planes = detail::
+        suite<cellular_automaton, detail::tiled_bit_planes_layout<store_word_type>, detail::cuda_simple_traverser>;
 
     template <typename cellular_automaton>
-    using temporal_tiled_bit_planes = detail::suite<
-        cellular_automaton,
-        detail::tiled_bit_planes_layout<store_word_type>,
-        detail::cuda_temporal_traverser>;
+    using temporal_tiled_bit_planes = detail::
+        suite<cellular_automaton, detail::tiled_bit_planes_layout<store_word_type>, detail::cuda_temporal_traverser>;
 
     template <typename cellular_automaton>
-    using temporal_linear_bit_planes = detail::suite<
-        cellular_automaton,
-        detail::bit_planes_layout<store_word_type>,
-        detail::cuda_temporal_traverser>;
+    using temporal_linear_bit_planes =
+        detail::suite<cellular_automaton, detail::bit_planes_layout<store_word_type>, detail::cuda_temporal_traverser>;
 };
 
 } // namespace on_cuda
@@ -258,49 +230,43 @@ struct standard : detail::suite<cellular_automaton, detail::standard_layout, det
 template <typename store_word_type>
 struct using_ {
     template <typename cellular_automaton>
-    using bit_array = detail::suite<
-        cellular_automaton,
-        detail::bit_array_layout<store_word_type>,
-        detail::cpu_simple_traverser>;
+    using bit_array =
+        detail::suite<cellular_automaton, detail::bit_array_layout<store_word_type>, detail::cpu_simple_traverser>;
 
     template <typename cellular_automaton>
-    using bit_planes = detail::suite<
-        cellular_automaton,
-        detail::bit_planes_layout<store_word_type>,
-        detail::cpu_simple_traverser>;
+    using bit_planes =
+        detail::suite<cellular_automaton, detail::bit_planes_layout<store_word_type>, detail::cpu_simple_traverser>;
 
     template <typename cellular_automaton>
-    using tiled_bit_planes = detail::suite<
-        cellular_automaton,
-        detail::tiled_bit_planes_layout<store_word_type>,
-        detail::cpu_simple_traverser>;
+    using tiled_bit_planes = detail::
+        suite<cellular_automaton, detail::tiled_bit_planes_layout<store_word_type>, detail::cpu_simple_traverser>;
 };
 
 } // namespace on_cpu
 
 template <typename automaton>
-using suites_for = cellato::utils::type_list<
-    on_cpu::standard<automaton>,
-    on_cpu::using_<std::uint32_t>::bit_array<automaton>,
-    on_cpu::using_<std::uint64_t>::bit_array<automaton>,
-    on_cpu::using_<std::uint32_t>::bit_planes<automaton>,
-    on_cpu::using_<std::uint64_t>::bit_planes<automaton>,
-    on_cpu::using_<std::uint32_t>::tiled_bit_planes<automaton>,
-    on_cpu::using_<std::uint64_t>::tiled_bit_planes<automaton>,
-    on_cuda::using_<std::uint32_t>::tiled_bit_planes<automaton>,
-    on_cuda::using_<std::uint64_t>::tiled_bit_planes<automaton>,
-    on_cuda::standard<automaton>,
-    typename on_cuda::standard<automaton>::template with_spatial_blocking<1, 1>,
-    typename on_cuda::standard<automaton>::template with_spatial_blocking<2, 1>,
-    typename on_cuda::standard<automaton>::template with_spatial_blocking<4, 1>,
-    on_cuda::using_<std::uint32_t>::bit_array<automaton>,
-    on_cuda::using_<std::uint64_t>::bit_array<automaton>,
-    on_cuda::using_<std::uint32_t>::bit_planes<automaton>,
-    on_cuda::using_<std::uint64_t>::bit_planes<automaton>,
-    on_cuda::using_<std::uint32_t>::temporal_tiled_bit_planes<automaton>,
-    on_cuda::using_<std::uint64_t>::temporal_tiled_bit_planes<automaton>,
-    on_cuda::using_<std::uint32_t>::temporal_linear_bit_planes<automaton>,
-    on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>>;
+using suites_for =
+    cellato::utils::type_list<on_cpu::standard<automaton>,
+                              on_cpu::using_<std::uint32_t>::bit_array<automaton>,
+                              on_cpu::using_<std::uint64_t>::bit_array<automaton>,
+                              on_cpu::using_<std::uint32_t>::bit_planes<automaton>,
+                              on_cpu::using_<std::uint64_t>::bit_planes<automaton>,
+                              on_cpu::using_<std::uint32_t>::tiled_bit_planes<automaton>,
+                              on_cpu::using_<std::uint64_t>::tiled_bit_planes<automaton>,
+                              on_cuda::using_<std::uint32_t>::tiled_bit_planes<automaton>,
+                              on_cuda::using_<std::uint64_t>::tiled_bit_planes<automaton>,
+                              on_cuda::standard<automaton>,
+                              typename on_cuda::standard<automaton>::template with_spatial_blocking<1, 1>,
+                              typename on_cuda::standard<automaton>::template with_spatial_blocking<2, 1>,
+                              typename on_cuda::standard<automaton>::template with_spatial_blocking<4, 1>,
+                              on_cuda::using_<std::uint32_t>::bit_array<automaton>,
+                              on_cuda::using_<std::uint64_t>::bit_array<automaton>,
+                              on_cuda::using_<std::uint32_t>::bit_planes<automaton>,
+                              on_cuda::using_<std::uint64_t>::bit_planes<automaton>,
+                              on_cuda::using_<std::uint32_t>::temporal_tiled_bit_planes<automaton>,
+                              on_cuda::using_<std::uint64_t>::temporal_tiled_bit_planes<automaton>,
+                              on_cuda::using_<std::uint32_t>::temporal_linear_bit_planes<automaton>,
+                              on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>>;
 
 template <typename automata>
 struct suites_for_all;

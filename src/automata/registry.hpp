@@ -14,25 +14,23 @@
 #include "traffic/config.hpp"
 #include "wire/config.hpp"
 
-#define CELLATO_AUTOMATA(APPLY) \
-    APPLY(game_of_life, game_of_life::config) \
-    APPLY(fire, fire::config) \
-    APPLY(wire, wire::config) \
-    APPLY(excitable, excitable::config) \
-    APPLY(brian, brian::config) \
-    APPLY(maze, maze::config) \
-    APPLY(fluid, fluid::config) \
-    APPLY(critters, critters::config) \
-    APPLY(cyclic, cyclic::config) \
+#define CELLATO_AUTOMATA(APPLY)                                                                                        \
+    APPLY(game_of_life, game_of_life::config)                                                                          \
+    APPLY(fire, fire::config)                                                                                          \
+    APPLY(wire, wire::config)                                                                                          \
+    APPLY(excitable, excitable::config)                                                                                \
+    APPLY(brian, brian::config)                                                                                        \
+    APPLY(maze, maze::config)                                                                                          \
+    APPLY(fluid, fluid::config)                                                                                        \
+    APPLY(critters, critters::config)                                                                                  \
+    APPLY(cyclic, cyclic::config)                                                                                      \
     APPLY(traffic, traffic::config)
 
 #define CELLATO_AUTOMATON_TYPE_LIST(short_name, config_type) cellato::utils::type_list<config_type>,
 
 namespace cellato::automata {
 
-using all = cellato::utils::concat_t<
-    CELLATO_AUTOMATA(CELLATO_AUTOMATON_TYPE_LIST)
-    cellato::utils::type_list<>>;
+using all = cellato::utils::concat_t<CELLATO_AUTOMATA(CELLATO_AUTOMATON_TYPE_LIST) cellato::utils::type_list<>>;
 
 } // namespace cellato::automata
 

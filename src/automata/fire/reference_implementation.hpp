@@ -1,14 +1,14 @@
 #ifndef FIRE_REFERENCE_IMPLEMENTATION_HPP
 #define FIRE_REFERENCE_IMPLEMENTATION_HPP
 
-#include <vector>
-#include <cstddef>
-#include <iostream>
-#include <stdexcept>
 #include "./algorithm.hpp"
 #include "cellato/experiments/run_params.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
 namespace fire::reference {
 using namespace ::reference::indexing;
@@ -17,15 +17,14 @@ struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
-    void init(const fire_cell_state* grid,
-              const cellato::run::run_params& params = cellato::run::run_params()) {
+    void init(const fire_cell_state* grid, const cellato::run::run_params& params = cellato::run::run_params()) {
 
         _x_size = params.x_size;
         _y_size = params.y_size;
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
         _current_grid.resize(_x_size * _y_size);
-        _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
+        _next_grid.resize(_x_size * _y_size); // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
             if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
@@ -69,29 +68,25 @@ struct runner {
                     if (current == fire_cell_state::empty) {
                         // Empty remains empty
                         next = fire_cell_state::empty;
-                    }
-                    else if (current == fire_cell_state::tree) {
+                    } else if (current == fire_cell_state::tree) {
                         // Tree catches fire if any von Neumann neighbor is on fire
                         // Use toroidal indexing for the 4 von Neumann neighbors
                         next = fire_cell_state::tree;
-                        if (_current_grid[idx.at(x, y-1)] == fire_cell_state::fire ||  // North
-                            _current_grid[idx.at(x+1, y)] == fire_cell_state::fire ||  // East
-                            _current_grid[idx.at(x, y+1)] == fire_cell_state::fire ||  // South
-                            _current_grid[idx.at(x-1, y)] == fire_cell_state::fire) {  // West
+                        if (_current_grid[idx.at(x, y - 1)] == fire_cell_state::fire || // North
+                            _current_grid[idx.at(x + 1, y)] == fire_cell_state::fire || // East
+                            _current_grid[idx.at(x, y + 1)] == fire_cell_state::fire || // South
+                            _current_grid[idx.at(x - 1, y)] == fire_cell_state::fire) { // West
                             next = fire_cell_state::fire;
                         }
-                    }
-                    else if (current == fire_cell_state::fire) {
+                    } else if (current == fire_cell_state::fire) {
                         // Fire becomes ash
                         next = fire_cell_state::ash;
-                    }
-                    else if (current == fire_cell_state::ash) {
+                    } else if (current == fire_cell_state::ash) {
                         // Check if ash has fire neighbors using toroidal indexing
-                        bool has_fire_neighbor =
-                            _current_grid[idx.at(x, y-1)] == fire_cell_state::fire ||  // North
-                            _current_grid[idx.at(x+1, y)] == fire_cell_state::fire ||  // East
-                            _current_grid[idx.at(x, y+1)] == fire_cell_state::fire ||  // South
-                            _current_grid[idx.at(x-1, y)] == fire_cell_state::fire;    // West
+                        bool has_fire_neighbor = _current_grid[idx.at(x, y - 1)] == fire_cell_state::fire || // North
+                                                 _current_grid[idx.at(x + 1, y)] == fire_cell_state::fire || // East
+                                                 _current_grid[idx.at(x, y + 1)] == fire_cell_state::fire || // South
+                                                 _current_grid[idx.at(x - 1, y)] == fire_cell_state::fire;   // West
 
                         // Ash cell with fire neighbors remains ash, others become empty
                         next = has_fire_neighbor ? fire_cell_state::ash : fire_cell_state::empty;

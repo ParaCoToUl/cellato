@@ -249,7 +249,8 @@ void print_usage() {
     std::cout << "  --x_tile_size <number>          X tile size for CUDA\n";
     std::cout << "  --y_tile_size <number>          Y tile size for CUDA\n";
     std::cout << "  --temporal_steps <number>       Temporal steps for CUDA (only for temporal_tiled_bit_planes)\n";
-    std::cout << "  --temporal_tile_size_y <number> Temporal tile size Y for CUDA (only for temporal_tiled_bit_planes)\n";
+    std::cout
+        << "  --temporal_tile_size_y <number> Temporal tile size Y for CUDA (only for temporal_tiled_bit_planes)\n";
     std::cout << "  --rounds <number>               Number of rounds to run\n";
     std::cout << "  --warmup_rounds <number>        Number of warmup rounds to run\n";
     std::cout << "  --steps <number>                Number of steps to run\n";

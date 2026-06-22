@@ -1,11 +1,11 @@
 #ifndef GRID_UTILS_HPP
 #define GRID_UTILS_HPP
 
-#include <vector>
-#include <tuple>
-#include <random>  // For mt19937 and uniform_real_distribution
+#include <cmath> // For abs function
 #include <iostream>
-#include <cmath>   // For abs function
+#include <random> // For mt19937 and uniform_real_distribution
+#include <tuple>
+#include <vector>
 
 namespace cellato::memory::grids::utils {
 
@@ -13,11 +13,11 @@ namespace cellato::memory::grids::utils {
 // Each tuple in probabilities contains (state, probability)
 // Probabilities should sum to 1.0
 template <typename CellState>
-void generate_random_grid(
-    std::vector<CellState>& grid,
-    std::size_t height, std::size_t width,
-    const std::vector<std::tuple<CellState, double>>& probabilities,
-    unsigned int seed = 12345) {
+void generate_random_grid(std::vector<CellState>& grid,
+                          std::size_t height,
+                          std::size_t width,
+                          const std::vector<std::tuple<CellState, double>>& probabilities,
+                          unsigned int seed = 12345) {
 
     // Verify probabilities sum to approximately 1.0 (allowing for small floating point errors)
     double sum = 0.0;
@@ -58,22 +58,20 @@ void generate_random_grid(
 
 // Shorthand for common case with just two states
 template <typename CellState>
-void generate_random_grid(
-    std::vector<CellState>& grid,
-    std::size_t height, std::size_t width,
-    CellState primary_state, double primary_probability,
-    CellState secondary_state,
-    unsigned int seed = 12345) {
+void generate_random_grid(std::vector<CellState>& grid,
+                          std::size_t height,
+                          std::size_t width,
+                          CellState primary_state,
+                          double primary_probability,
+                          CellState secondary_state,
+                          unsigned int seed = 12345) {
 
-    std::vector<std::tuple<CellState, double>> probabilities = {
-        {primary_state, primary_probability},
-        {secondary_state, 1.0 - primary_probability}
-    };
+    std::vector<std::tuple<CellState, double>> probabilities = {{primary_state, primary_probability},
+                                                                {secondary_state, 1.0 - primary_probability}};
 
     generate_random_grid(grid, height, width, probabilities, seed);
 }
 
-
-}
+} // namespace cellato::memory::grids::utils
 
 #endif // GRID_UTILS_HPP

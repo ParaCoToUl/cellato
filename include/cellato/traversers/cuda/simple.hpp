@@ -1,15 +1,15 @@
 #ifndef CELLATO_TRAVERSERS_CUDA_SIMPLE_HPP
 #define CELLATO_TRAVERSERS_CUDA_SIMPLE_HPP
 
-#include <iostream>
-#include <utility>
-#include <functional>
 #include <cuda_runtime.h>
+#include <functional>
+#include <iostream>
 #include <memory>
+#include <utility>
 
-#include "cellato/memory/interface.hpp"
-#include "cellato/memory/idx_type.hpp"
 #include "../../experiments/run_params.hpp"
+#include "cellato/memory/idx_type.hpp"
+#include "cellato/memory/interface.hpp"
 #include "cellato/traversers/traverser_utils.hpp"
 
 namespace cellato::traversers::cuda::simple {
@@ -22,37 +22,33 @@ enum class _run_mode {
     VERBOSE,
 };
 
-template <
-    typename evaluator_type,
-    typename grid_type >
+template <typename evaluator_type, typename grid_type>
 class traverser {
     using evaluator_t = evaluator_type;
     using grid_t = grid_type;
     using cuda_grid_t = typename std::invoke_result<decltype(&grid_t::to_cuda), grid_t>::type;
     using cell_t = typename grid_t::store_type;
 
-  public:
+public:
     static constexpr bool is_CUDA = true;
 
     traverser() : _final_grid(nullptr) {}
 
-    void init(grid_t grid, 
-              const cellato::run::run_params& params) {
+    void init(grid_t grid, const cellato::run::run_params& params) {
 
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
 
-        if (grid.x_size_physical() % _block_size_x != 0 ||
-            grid.y_size_physical() % _block_size_y != 0) {
+        if (grid.x_size_physical() % _block_size_x != 0 || grid.y_size_physical() % _block_size_y != 0) {
             std::cerr << "Grid size must be divisible by block size.\n";
             throw std::runtime_error("Invalid grid size for CUDA traverser.");
         }
 
         _input_grid = std::move(grid);
-        
+
         _input_grid_cuda = _input_grid.to_cuda();
         _intermediate_grid_cuda = _input_grid.to_cuda();
-        
+
         _final_grid = &_input_grid_cuda;
     }
 
@@ -60,7 +56,7 @@ class traverser {
 
     template <typename callback = no_callback>
     void run(int steps, callback&& callback_func = no_callback{}) {
-        
+
         if constexpr (!std::is_same_v<callback, no_callback>) {
             _callback_func = std::make_unique<_lambda_wrapper<callback>>(std::forward<callback>(callback_func));
             run_kernel<_run_mode::VERBOSE>(steps);
@@ -69,13 +65,13 @@ class traverser {
             run_kernel<_run_mode::QUIET>(steps);
         }
     }
-    
+
     grid_t fetch_result();
-    
+
 private:
     template <_run_mode mode>
     void run_kernel(idx_type steps);
-    
+
     grid_t _input_grid;
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;

@@ -2,8 +2,8 @@
 #define WIRE_CONFIG_HPP
 
 #include "./algorithm.hpp"
-#include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./pretty_print.hpp"
 #include "./reference_implementation.hpp"
 #include "cellato/memory/state_dictionary.hpp"
 
@@ -16,11 +16,12 @@ struct config {
     static constexpr double average_halo_radius = 1.0;
 
     using algorithm = wire_algorithm;
-    
+
     using cell_state = wire_cell_state;
-    using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::empty, cell_state::electron_head,
-        cell_state::electron_tail, cell_state::conductor>;
+    using state_dictionary = cellato::memory::grids::state_dictionary<cell_state::empty,
+                                                                      cell_state::electron_head,
+                                                                      cell_state::electron_tail,
+                                                                      cell_state::conductor>;
 
     using pretty_print = wire_pretty_print;
 
@@ -31,6 +32,6 @@ struct config {
     };
 };
 
-}
+} // namespace wire
 
 #endif // WIRE_CONFIG_HPP

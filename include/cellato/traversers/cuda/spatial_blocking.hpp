@@ -1,14 +1,14 @@
 #ifndef CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_HPP
 #define CELLATO_TRAVERSERS_CUDA_SPATIAL_BLOCKING_HPP
 
-#include <iostream>
-#include <utility>
-#include <functional>
 #include <cuda_runtime.h>
+#include <functional>
+#include <iostream>
 #include <memory>
+#include <utility>
 
-#include "cellato/memory/interface.hpp"
 #include "../../experiments/run_params.hpp"
+#include "cellato/memory/interface.hpp"
 #include "cellato/traversers/traverser_utils.hpp"
 
 namespace cellato::traversers::cuda::spatial_blocking {
@@ -20,25 +20,19 @@ enum class _run_mode {
     VERBOSE,
 };
 
-template <
-    typename evaluator_type,
-    typename grid_type,
-    int Y_TILE_SIZE,
-    int X_TILE_SIZE>
+template <typename evaluator_type, typename grid_type, int Y_TILE_SIZE, int X_TILE_SIZE>
 class traverser {
     using evaluator_t = evaluator_type;
     using grid_t = grid_type;
     using cuda_grid_t = typename std::invoke_result<decltype(&grid_t::to_cuda), grid_t>::type;
     using cell_t = typename grid_t::store_type;
 
-  public:
+public:
     static constexpr bool is_CUDA = true;
-
 
     traverser() : _final_grid(nullptr) {}
 
-    void init(grid_t grid,
-              const cellato::run::run_params& params) {
+    void init(grid_t grid, const cellato::run::run_params& params) {
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
 

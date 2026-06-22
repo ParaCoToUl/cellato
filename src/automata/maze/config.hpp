@@ -2,8 +2,8 @@
 #define MAZE_CONFIG_HPP
 
 #include "./algorithm.hpp"
-#include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./pretty_print.hpp"
 #include "./reference_implementation.hpp"
 #include "cellato/memory/state_dictionary.hpp"
 
@@ -17,10 +17,9 @@ struct config {
     static constexpr double average_halo_radius = 1.0;
 
     using algorithm = maze_algorithm;
-    
+
     using cell_state = maze_cell_state;
-    using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::empty, cell_state::wall>;
+    using state_dictionary = cellato::memory::grids::state_dictionary<cell_state::empty, cell_state::wall>;
 
     using pretty_print = maze_pretty_print;
 
@@ -31,6 +30,6 @@ struct config {
     };
 };
 
-}
+} // namespace maze
 
 #endif // MAZE_CONFIG_HPP

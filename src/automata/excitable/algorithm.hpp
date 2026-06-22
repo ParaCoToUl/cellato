@@ -54,7 +54,8 @@ Rules:
 2. If cell is excited (1), it transitions to refractory_1 (2)
 3. If cell is in refractory_n state, it transitions to refractory_n+1 or back to quiescent
 */
-using ghm_algorithm = 
+// clang-format off
+using ghm_algorithm =
     if_< cell_is_quiescent >::then_<
         if_< has_excited_neighbors >::then_<
             excited
@@ -69,7 +70,8 @@ using ghm_algorithm =
     elif_< cell_is_refractory_4 >::then_< refractory_5 >::
     elif_< cell_is_refractory_5 >::then_< refractory_6 >::
     else_< quiescent >; // refractory_6 goes back to quiescent
+// clang-format on
 
-}
+} // namespace excitable
 
 #endif // GREENBERG_HASTINGS_ALGORITHM_HPP

@@ -1,8 +1,8 @@
 #ifndef CELLATO_PRETTY_PRINT_HPP
 #define CELLATO_PRETTY_PRINT_HPP
 
-#include "cellato/memory/standard_grid.hpp"
 #include "./algorithm.hpp"
+#include "cellato/memory/standard_grid.hpp"
 
 namespace game_of_life {
 

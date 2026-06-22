@@ -21,43 +21,23 @@ using incoming_from_right = has_bit_set<neighbor_at<1, 0>, RIGHT_bit>;
 using vertical_collision = p<incoming_from_top, bit_and_, incoming_from_bottom>;
 using horizontal_collision = p<incoming_from_left, bit_and_, incoming_from_right>;
 
-using combined_vertical_incoming = p<
-        p<neighbor_at<0, -1>, bit_and_, constant<TOP>>,
-        bit_or_,
-        p<neighbor_at<0, 1>, bit_and_, constant<BOTTOM>>
-    >;
+using combined_vertical_incoming =
+    p<p<neighbor_at<0, -1>, bit_and_, constant<TOP>>, bit_or_, p<neighbor_at<0, 1>, bit_and_, constant<BOTTOM>>>;
 
-using combined_horizontal_incoming = p<
-        p<neighbor_at<-1, 0>, bit_and_, constant<LEFT>>,
-        bit_or_,
-        p<neighbor_at<1, 0>, bit_and_, constant<RIGHT>>
-    >;
+using combined_horizontal_incoming =
+    p<p<neighbor_at<-1, 0>, bit_and_, constant<LEFT>>, bit_or_, p<neighbor_at<1, 0>, bit_and_, constant<RIGHT>>>;
 
-using just_vertical_collision = p<
-        vertical_collision,
-        bit_and_,
-        p<combined_horizontal_incoming, equals, constant<0>>
-    >;
+using just_vertical_collision = p<vertical_collision, bit_and_, p<combined_horizontal_incoming, equals, constant<0>>>;
 
-using just_horizontal_collision = p<
-        horizontal_collision,
-        bit_and_,
-        p<combined_vertical_incoming, equals, constant<0>>
-    >;
+using just_horizontal_collision = p<horizontal_collision, bit_and_, p<combined_vertical_incoming, equals, constant<0>>>;
 
-using vertical_result = if_< just_vertical_collision >::then_<
-        state_constant<LEFT | RIGHT>
-    >::else_<
-        combined_vertical_incoming
-    >;
+using vertical_result =
+    if_<just_vertical_collision>::then_<state_constant<LEFT | RIGHT>>::else_<combined_vertical_incoming>;
 
-using horizontal_result = if_< just_horizontal_collision >::then_<
-        state_constant<TOP | BOTTOM>
-    >::else_<
-        combined_horizontal_incoming
-    >;
+using horizontal_result =
+    if_<just_horizontal_collision>::then_<state_constant<TOP | BOTTOM>>::else_<combined_horizontal_incoming>;
 
-using fluid_algorithm = p< vertical_result, bit_or_, horizontal_result >;
+using fluid_algorithm = p<vertical_result, bit_or_, horizontal_result>;
 
 } // namespace fluid
 

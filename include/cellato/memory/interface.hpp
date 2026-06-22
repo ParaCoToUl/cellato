@@ -50,15 +50,11 @@ struct point_in_grid {
 
     idx_type time_step = 0;
 
-    CUDA_CALLABLE idx_type idx() const {
-        return properties.idx(position.x, position.y);
-    }
+    CUDA_CALLABLE idx_type idx() const { return properties.idx(position.x, position.y); }
 
-    CUDA_CALLABLE idx_type idx(idx_type x, idx_type y) const {
-        return properties.idx(x, y);
-    }
+    CUDA_CALLABLE idx_type idx(idx_type x, idx_type y) const { return properties.idx(x, y); }
 };
 
-}
+} // namespace cellato::memory::grids
 
 #endif // CELLATO_MEMORY_INTERFACE_HPP

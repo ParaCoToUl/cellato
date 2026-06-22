@@ -1,8 +1,8 @@
 #ifndef FLUID_PRETTY_PRINT_HPP
 #define FLUID_PRETTY_PRINT_HPP
 
-#include "cellato/memory/standard_grid.hpp"
 #include "./algorithm.hpp"
+#include "cellato/memory/standard_grid.hpp"
 
 namespace fluid {
 
@@ -35,6 +35,6 @@ struct fluid_pretty_print {
     }
 };
 
-}
+} // namespace fluid
 
 #endif // FLUID_PRETTY_PRINT_HPP

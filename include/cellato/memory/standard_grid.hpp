@@ -1,20 +1,19 @@
 #ifndef CELLATO_MEMORY_STANDARD_GRID_HPP
 #define CELLATO_MEMORY_STANDARD_GRID_HPP
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cuda_runtime.h>
 #include <iostream>
-#include <vector>
 #include <map>
-#include <string>
 #include <sstream>
 #include <stdexcept>
-#include <cuda_runtime.h>
-#include <cassert>
+#include <string>
 #include <utility>
-#include <algorithm>
-#include <stdexcept>
-#include <cmath>
-#include <cstdint>
+#include <vector>
 
 #include "./interface.hpp"
 
@@ -35,19 +34,18 @@ public:
     using store_type = cell_type;
     constexpr static bool HAS_OWN_PRINT = true;
 
-    grid(int x_size, int y_size)
-        : _properties{x_size, y_size}, _data(x_size * y_size) {}
+    grid(int x_size, int y_size) : _properties{x_size, y_size}, _data(x_size * y_size) {}
 
     grid() = default;
 
-    grid(std::vector<cell_type>&& data, int x_size, int y_size)
-        : _properties{x_size, y_size}, _data(std::move(data)) {
+    grid(std::vector<cell_type>&& data, int x_size, int y_size) : _properties{x_size, y_size}, _data(std::move(data)) {
         if ((int)_data.size() != x_size * y_size) {
             throw std::invalid_argument("Data size does not match grid dimensions");
         }
     }
 
-    grid(cuda_params<cell_type> params) requires (device_type == device::CUDA)
+    grid(cuda_params<cell_type> params)
+        requires(device_type == device::CUDA)
         : _properties{params.x_size, params.y_size}, _data() {
 
         _cuda_data = params.cuda_data;
@@ -55,7 +53,7 @@ public:
 
     grid(const grids::properties& properties, std::vector<cell_type> data)
         : _properties(properties), _data(std::move(data)) {}
-    
+
     cell_type* data() const {
         if constexpr (device_type == device::CUDA) {
             return _cuda_data;
@@ -72,28 +70,19 @@ public:
         }
     }
 
-    int x_size_physical() const {
-        return _properties.x_size;
-    }
+    int x_size_physical() const { return _properties.x_size; }
 
-    int y_size_physical() const {
-        return _properties.y_size;
-    }
+    int y_size_physical() const { return _properties.y_size; }
 
-    int x_size_logical() const {
-        return _properties.x_size;
-    }
+    int x_size_logical() const { return _properties.x_size; }
 
-    int y_size_logical() const {
-        return _properties.y_size;
-    }
+    int y_size_logical() const { return _properties.y_size; }
 
     template <int x_margin, int y_margin>
-    grid<cell_type> with_empty_margins() const requires (device_type == device::CPU) {
-        grids::properties new_properties {
-            _properties.x_size + 2 * x_margin,
-            _properties.y_size + 2 * y_margin
-        };
+    grid<cell_type> with_empty_margins() const
+        requires(device_type == device::CPU)
+    {
+        grids::properties new_properties{_properties.x_size + 2 * x_margin, _properties.y_size + 2 * y_margin};
 
         std::vector<cell_type> new_data(new_properties.x_size * new_properties.y_size, cell_type{});
 
@@ -107,11 +96,10 @@ public:
     }
 
     template <int x_margin, int y_margin>
-    grid<cell_type> with_removed_margins() const requires (device_type == device::CPU) {
-        grids::properties new_properties {
-            _properties.x_size - 2 * x_margin,
-            _properties.y_size - 2 * y_margin
-        };
+    grid<cell_type> with_removed_margins() const
+        requires(device_type == device::CPU)
+    {
+        grids::properties new_properties{_properties.x_size - 2 * x_margin, _properties.y_size - 2 * y_margin};
 
         std::vector<cell_type> new_data(new_properties.x_size * new_properties.y_size);
 
@@ -124,11 +112,11 @@ public:
         return grid<cell_type>(new_properties, std::move(new_data));
     }
 
-    grid<cell_type> to_standard() const {
-        return *this;
-    }
+    grid<cell_type> to_standard() const { return *this; }
 
-    void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const requires (device_type == device::CPU) {
+    void print(std::ostream& os, print_config<cell_type> config = print_config<cell_type>()) const
+        requires(device_type == device::CPU)
+    {
         for (int y = 0; y < _properties.y_size; ++y) {
             for (int x = 0; x < _properties.x_size; ++x) {
                 os << config.get_str(_data[_properties.idx(x, y)]) << " ";
@@ -145,24 +133,23 @@ public:
         }
     }
 
-    grid<cell_type, device::CPU> to_cpu() const requires (device_type == device::CUDA) {
+    grid<cell_type, device::CPU> to_cpu() const
+        requires(device_type == device::CUDA)
+    {
         std::vector<cell_type> host_data(_properties.x_size * _properties.y_size);
         cudaMemcpy(host_data.data(), _cuda_data, host_data.size() * sizeof(cell_type), cudaMemcpyDeviceToHost);
 
         return grid<cell_type, device::CPU>{_properties, std::move(host_data)};
-
     }
 
-    grid<cell_type, device::CUDA> to_cuda() const requires (device_type == device::CPU) {
+    grid<cell_type, device::CUDA> to_cuda() const
+        requires(device_type == device::CPU)
+    {
         cell_type* device_data;
         cudaMalloc((void**)&device_data, _data.size() * sizeof(cell_type));
         cudaMemcpy(device_data, _data.data(), _data.size() * sizeof(cell_type), cudaMemcpyHostToDevice);
 
-        cuda_params<cell_type> params{
-            device_data,
-            _properties.x_size,
-            _properties.y_size
-        };
+        cuda_params<cell_type> params{device_data, _properties.x_size, _properties.y_size};
 
         return grid<cell_type, device::CUDA>(params);
     }
@@ -176,14 +163,16 @@ public:
         }
     }
 
-    std::string get_checksum() const requires (device_type == device::CPU) {
+    std::string get_checksum() const
+        requires(device_type == device::CPU)
+    {
         constexpr int dims = 4;
         std::stringstream result;
-        
+
         // Calculate tile dimensions
         const int tile_width = (_properties.x_size + dims - 1) / dims;
         const int tile_height = (_properties.y_size + dims - 1) / dims;
-        
+
         // Process each tile
         for (int tile_y = 0; tile_y < dims; ++tile_y) {
             for (int tile_x = 0; tile_x < dims; ++tile_x) {
@@ -192,7 +181,7 @@ public:
                 int start_y = tile_y * tile_height;
                 int end_x = std::min(start_x + tile_width, _properties.x_size);
                 int end_y = std::min(start_y + tile_height, _properties.y_size);
-                
+
                 // Sum the values in this tile
                 std::uint64_t sum = 0;
                 for (int y = start_y; y < end_y; ++y) {
@@ -200,7 +189,7 @@ public:
                         sum += static_cast<std::uint64_t>(_data[_properties.idx(x, y)]);
                     }
                 }
-                
+
                 // Add to result string with hyphen separator (except for first value)
                 if (tile_y > 0 || tile_x > 0) {
                     result << "-";
@@ -208,12 +197,11 @@ public:
                 result << sum;
             }
         }
-        
+
         return result.str();
     }
 
 private:
-
     grids::properties _properties;
     std::vector<cell_type> _data;
 
@@ -230,23 +218,21 @@ public:
 
     std::string get_str(cell_type state) const {
         auto it = _state_to_symbol.find(state);
-        
+
         if (it != _state_to_symbol.end()) {
             return it->second;
         }
-        
+
         auto state_as_int = static_cast<int>(state);
         return std::to_string(state_as_int);
     }
 
-    static print_config<cell_type> empty() {
-        return print_config<cell_type>();
-    }
+    static print_config<cell_type> empty() { return print_config<cell_type>(); }
 
 private:
     std::map<cell_type, std::string> _state_to_symbol;
 };
 
-}
+} // namespace cellato::memory::grids::standard
 
 #endif // CELLATO_MEMORY_STANDARD_GRID_HPP

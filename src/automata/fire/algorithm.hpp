@@ -36,7 +36,8 @@ using has_fire_neighbors = p<fire_count, greater_than, c_0>;
 using no_fire_neighbors = p<fire_count, equals, c_0>;
 
 // Define the Forest Fire algorithm
-using fire_algorithm = 
+// clang-format off
+using fire_algorithm =
     if_< cell_is_fire >::then_<
         ash
     >::
@@ -55,7 +56,8 @@ using fire_algorithm =
         >
     >::
     else_< empty >; // If cell is empty, it remains empty
+// clang-format on
 
-}
+} // namespace fire
 
 #endif // FOREST_FIRE_ALGORITHM_HPP

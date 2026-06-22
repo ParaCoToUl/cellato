@@ -2,8 +2,8 @@
 #define TRAFFIC_CONFIG_HPP
 
 #include "./algorithm.hpp"
-#include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./pretty_print.hpp"
 #include "./reference_implementation.hpp"
 #include "cellato/memory/state_dictionary.hpp"
 
@@ -16,10 +16,10 @@ struct config {
     static constexpr double average_halo_radius = 1.0;
 
     using algorithm = traffic_algorithm;
-    
+
     using cell_state = traffic_cell_state;
-    using state_dictionary = cellato::memory::grids::state_dictionary<
-        cell_state::empty, cell_state::red_car, cell_state::blue_car>;
+    using state_dictionary =
+        cellato::memory::grids::state_dictionary<cell_state::empty, cell_state::red_car, cell_state::blue_car>;
 
     using pretty_print = traffic_pretty_print;
 
@@ -30,6 +30,6 @@ struct config {
     };
 };
 
-}
+} // namespace traffic
 
 #endif // TRAFFIC_CONFIG_HPP

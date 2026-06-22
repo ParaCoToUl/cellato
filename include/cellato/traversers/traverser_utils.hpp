@@ -11,7 +11,6 @@
 #endif
 #endif
 
-
 namespace cellato::traversers::utils {
 
 template <typename grid_data_t, typename idx_type, typename value_t>
@@ -23,6 +22,6 @@ CUDA_CALLABLE void save_to(grid_data_t grid, idx_type index, value_t new_value) 
     }
 }
 
-}
+} // namespace cellato::traversers::utils
 
 #endif // CELLATO_TRAVERSERS_UTILS_HPP

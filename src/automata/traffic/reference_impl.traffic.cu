@@ -1,21 +1,24 @@
 #include "./reference_implementation.hpp"
-#include <cuda_runtime.h>
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cuda_runtime.h>
 
 namespace traffic::reference {
 using namespace ::reference::indexing;
 
+namespace {
+
 template <traffic_cell_state movable, traffic_cell_state stationary>
-__device__ traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
+__device__ traffic_cell_state rule(traffic_cell_state incoming_neighbor,
+                                   traffic_cell_state current_state,
+                                   traffic_cell_state outgoing_neighbor) {
     if (current_state == movable) {
         if (outgoing_neighbor == traffic_cell_state::empty) {
             return traffic_cell_state::empty;
         } else {
             return movable; // Car stays if it can't move out
         }
-    }
-    else if (current_state == traffic_cell_state::empty) {
+    } else if (current_state == traffic_cell_state::empty) {
         if (incoming_neighbor == movable) {
             return movable;
         } else {
@@ -29,8 +32,8 @@ __device__ traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic
 };
 
 // CUDA kernel for Forest traffic (single step)
-__global__ void traffic_kernel(const traffic_cell_state* current, traffic_cell_state* next,
-                            int width, int height, int step) {
+__global__ void
+traffic_kernel(const traffic_cell_state* current, traffic_cell_state* next, int width, int height, int step) {
     // Calculate thread indices, adjusting for margins
     int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
     int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
@@ -41,17 +44,21 @@ __global__ void traffic_kernel(const traffic_cell_state* current, traffic_cell_s
     traffic_cell_state cell_state = current[center_idx];
 
     if (step % 2 == 0) {
-        traffic_cell_state left_neighbor = current[idx.at(x-1, y)];
-        traffic_cell_state right_neighbor = current[idx.at(x+1, y)];
+        traffic_cell_state left_neighbor = current[idx.at(x - 1, y)];
+        traffic_cell_state right_neighbor = current[idx.at(x + 1, y)];
 
-        next[center_idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
+        next[center_idx] =
+            rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
     } else {
-        traffic_cell_state up_neighbor = current[idx.at(x, y-1)];
-        traffic_cell_state down_neighbor = current[idx.at(x, y+1)];
+        traffic_cell_state up_neighbor = current[idx.at(x, y - 1)];
+        traffic_cell_state down_neighbor = current[idx.at(x, y + 1)];
 
-        next[center_idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
+        next[center_idx] =
+            rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
     }
 }
+
+} // namespace
 
 void runner::run_kernel(int steps) {
     if (!d_current || !d_next) {
@@ -68,7 +75,7 @@ void runner::run_kernel(int steps) {
     auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
 
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x,
-                 (_y_size_threads + block_size.y - 1) / block_size.y);
+                  (_y_size_threads + block_size.y - 1) / block_size.y);
 
     // Run steps iterations
     for (int i = 0; i < steps; i++) {

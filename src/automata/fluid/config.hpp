@@ -2,8 +2,8 @@
 #define FLUID_CONFIG_HPP
 
 #include "./algorithm.hpp"
-#include "./pretty_print.hpp"
 #include "./data_init.hpp"
+#include "./pretty_print.hpp"
 #include "./reference_implementation.hpp"
 #include "cellato/memory/state_dictionary.hpp"
 
@@ -16,7 +16,7 @@ struct config {
     static constexpr double average_halo_radius = 1.0;
 
     using algorithm = fluid_algorithm;
-    
+
     using cell_state = fluid_cell_state;
     using state_dictionary = cellato::memory::grids::int_based_state_dictionary<4>;
 
@@ -29,6 +29,6 @@ struct config {
     };
 };
 
-}
+} // namespace fluid
 
 #endif // FLUID_CONFIG_HPP

@@ -32,7 +32,8 @@ using has_three_alive_neighbors = p<alive_count, equals, c_3>;
 using has_two_or_three_alive_neighbors = p<has_two_alive_neighbors, or_, has_three_alive_neighbors>;
 
 // Define the Game of Life algorithm
-using gol_algorithm = 
+// clang-format off
+using gol_algorithm =
     if_< cell_is_alive >::then_<
         if_< has_two_or_three_alive_neighbors >::then_<
             alive
@@ -47,7 +48,8 @@ using gol_algorithm =
             dead
         >
     >;
+// clang-format on
 
-}
+} // namespace game_of_life
 
 #endif // GAME_OF_LIFE_ALGORITHM_HPP

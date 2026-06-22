@@ -1,14 +1,14 @@
 #ifndef CRITTERS_REFERENCE_IMPLEMENTATION_HPP
 #define CRITTERS_REFERENCE_IMPLEMENTATION_HPP
 
-#include <vector>
-#include <cstddef>
-#include <iostream>
-#include <stdexcept>
 #include "./algorithm.hpp"
 #include "cellato/experiments/run_params.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
 namespace critters::reference {
 using namespace ::reference::indexing;
@@ -17,15 +17,14 @@ struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
-    void init(const critters_cell_state* grid,
-              const cellato::run::run_params& params = cellato::run::run_params()) {
+    void init(const critters_cell_state* grid, const cellato::run::run_params& params = cellato::run::run_params()) {
 
         _x_size = params.x_size;
         _y_size = params.y_size;
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
         _current_grid.resize(_x_size * _y_size);
-        _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
+        _next_grid.resize(_x_size * _y_size); // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
             if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
@@ -73,17 +72,37 @@ struct runner {
                     int y_coords[2];
 
                     if (step_parity == 0) {
-                        if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; }
-                        else { x_coords[0] = -1; x_coords[1] = 0; }
+                        if (x_parity == 0) {
+                            x_coords[0] = 0;
+                            x_coords[1] = 1;
+                        } else {
+                            x_coords[0] = -1;
+                            x_coords[1] = 0;
+                        }
 
-                        if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; }
-                        else { y_coords[0] = -1; y_coords[1] = 0; }
+                        if (y_parity == 0) {
+                            y_coords[0] = 0;
+                            y_coords[1] = 1;
+                        } else {
+                            y_coords[0] = -1;
+                            y_coords[1] = 0;
+                        }
                     } else { // step_parity == 1
-                        if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; }
-                        else { x_coords[0] = 0; x_coords[1] = 1; }
+                        if (x_parity == 0) {
+                            x_coords[0] = -1;
+                            x_coords[1] = 0;
+                        } else {
+                            x_coords[0] = 0;
+                            x_coords[1] = 1;
+                        }
 
-                        if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; }
-                        else { y_coords[0] = 0; y_coords[1] = 1; }
+                        if (y_parity == 0) {
+                            y_coords[0] = -1;
+                            y_coords[1] = 0;
+                        } else {
+                            y_coords[0] = 0;
+                            y_coords[1] = 1;
+                        }
                     }
 
                     // Count the total number of live cells in the 2x2 block
@@ -112,14 +131,12 @@ struct runner {
                         int opposite_idx = idx.at(x + dx_opposite, y + dy_opposite);
                         critters_cell_state opposite_state = _current_grid[opposite_idx];
 
-                        next_state = (opposite_state == critters_cell_state::alive)
-                                    ? critters_cell_state::dead
-                                    : critters_cell_state::alive;
+                        next_state = (opposite_state == critters_cell_state::alive) ? critters_cell_state::dead
+                                                                                    : critters_cell_state::alive;
                     } else {
                         // Rule 2 (covers counts 0, 1, and 4): Flip the state in place.
-                        next_state = (current == critters_cell_state::alive)
-                                    ? critters_cell_state::dead
-                                    : critters_cell_state::alive;
+                        next_state = (current == critters_cell_state::alive) ? critters_cell_state::dead
+                                                                             : critters_cell_state::alive;
                     }
 
                     _next_grid[center_idx] = next_state;

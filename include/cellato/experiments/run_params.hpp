@@ -69,10 +69,13 @@ struct run_params {
     void print_std() const { print_to(std::cout); }
 
     static std::string csv_header() {
-        return "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,word_size,temporal_steps,temporal_tile_size_y";
+        return "automaton,device,traverser,evaluator,layout,reference_impl,x_size,y_size,steps,rounds,warmup_rounds,x_"
+               "tile_size,y_tile_size,cuda_block_size_x,cuda_block_size_y,seed,word_size,temporal_steps,temporal_tile_"
+               "size_y";
     }
 
     std::string csv_line() const {
+        // clang-format off
         return automaton + "," +
                device + "," +
                traverser + "," +
@@ -92,6 +95,7 @@ struct run_params {
                std::to_string(word_size) + "," +
                std::to_string(temporal_steps) + "," +
                std::to_string(temporal_tile_size_y);
+        // clang-format on
     }
 };
 

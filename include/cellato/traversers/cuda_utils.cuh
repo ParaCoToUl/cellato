@@ -9,22 +9,17 @@
  * A stream exception that is base for all runtime errors.
  */
 class CudaError : public std::exception {
-  protected:
+protected:
     std::string mMessage; ///< Internal buffer where the message is kept.
     cudaError_t mStatus;
 
-  public:
-    CudaError(cudaError_t status = cudaSuccess) : std::exception(), mStatus(status) {
-    }
-    CudaError(const char* msg, cudaError_t status = cudaSuccess) : std::exception(), mMessage(msg), mStatus(status) {
-    }
+public:
+    CudaError(cudaError_t status = cudaSuccess) : std::exception(), mStatus(status) {}
+    CudaError(const char* msg, cudaError_t status = cudaSuccess) : std::exception(), mMessage(msg), mStatus(status) {}
     CudaError(const std::string& msg, cudaError_t status = cudaSuccess)
-        : std::exception(), mMessage(msg), mStatus(status) {
-    }
+        : std::exception(), mMessage(msg), mStatus(status) {}
 
-    virtual const char* what() const noexcept override {
-        return mMessage.c_str();
-    }
+    virtual const char* what() const noexcept override { return mMessage.c_str(); }
 
     // Overloading << operator that uses stringstream to append data to mMessage.
     template <typename T>

@@ -7,7 +7,9 @@ namespace traffic {
 using namespace cellato::ast;
 
 enum class traffic_cell_state {
-    empty, red_car, blue_car
+    empty,
+    red_car,
+    blue_car
 };
 
 using empty = state_constant<traffic_cell_state::empty>;
@@ -21,6 +23,7 @@ struct one_direction {
     using outgoing_is_empty = p<outgoing_neighbor, equals, empty>;
     using incoming_is_movable_car = p<incoming_neighbor, equals, movable_car>;
 
+    // clang-format off
     using move_to_outgoing_if_possible =
         if_< outgoing_is_empty >::template then_<
             empty
@@ -35,16 +38,17 @@ struct one_direction {
             empty
         >;
 
-    using algorithm = 
+    using algorithm =
         if_< is_movable_car >::template then_<
             move_to_outgoing_if_possible
-        
+
         >::template elif_< is_empty >::template then_<
             move_incoming_neighbor_if_possible
 
         >::template else_< // is_stationary_car
             stationary_car // do not move
         >;
+    // clang-format on
 };
 
 using red_car = state_constant<traffic_cell_state::red_car>;
@@ -55,11 +59,9 @@ using down = neighbor_at<0, 1>;
 using left = neighbor_at<-1, 0>;
 using right = neighbor_at<1, 0>;
 
-using traffic_algorithm = alternate_algorithms<
-    one_direction<red_car, blue_car, left, right>::algorithm,
-    one_direction<blue_car, red_car, up, down>::algorithm
->;
+using traffic_algorithm = alternate_algorithms<one_direction<red_car, blue_car, left, right>::algorithm,
+                                               one_direction<blue_car, red_car, up, down>::algorithm>;
 
-}
+} // namespace traffic
 
 #endif // TRAFFIC_ALGORITHM_HPP

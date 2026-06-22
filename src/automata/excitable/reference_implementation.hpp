@@ -1,14 +1,14 @@
 #ifndef GREENBERG_REFERENCE_IMPLEMENTATION_HPP
 #define GREENBERG_REFERENCE_IMPLEMENTATION_HPP
 
-#include <vector>
-#include <cstddef>
-#include <iostream>
-#include <stdexcept>
 #include "./algorithm.hpp"
 #include "cellato/experiments/run_params.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
 namespace excitable::reference {
 using namespace ::reference::indexing;
@@ -17,14 +17,13 @@ struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
-    void init(const ghm_cell_state* grid,
-              const cellato::run::run_params& params = cellato::run::run_params()) {
+    void init(const ghm_cell_state* grid, const cellato::run::run_params& params = cellato::run::run_params()) {
         _x_size = params.x_size;
         _y_size = params.y_size;
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
         _current_grid.resize(_x_size * _y_size);
-        _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
+        _next_grid.resize(_x_size * _y_size); // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
             if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
@@ -67,43 +66,35 @@ struct runner {
                     if (current == ghm_cell_state::quiescent) {
                         // Quiescent cell becomes excited if it has at least one excited neighbor
                         auto excited_count =
-                            (_current_grid[idx.at(x-1, y-1)] == ghm_cell_state::excited) + // Top-left
-                            (_current_grid[idx.at(x  , y-1)] == ghm_cell_state::excited) + // Top
-                            (_current_grid[idx.at(x+1, y-1)] == ghm_cell_state::excited) + // Top-right
-                            (_current_grid[idx.at(x-1, y  )] == ghm_cell_state::excited) + // Left
-                            (_current_grid[idx.at(x+1, y  )] == ghm_cell_state::excited) + // Right
-                            (_current_grid[idx.at(x-1, y+1)] == ghm_cell_state::excited) + // Bottom-left
-                            (_current_grid[idx.at(x  , y+1)] == ghm_cell_state::excited) + // Bottom
-                            (_current_grid[idx.at(x+1, y+1)] == ghm_cell_state::excited);  // Bottom-right
+                            (_current_grid[idx.at(x - 1, y - 1)] == ghm_cell_state::excited) + // Top-left
+                            (_current_grid[idx.at(x, y - 1)] == ghm_cell_state::excited) +     // Top
+                            (_current_grid[idx.at(x + 1, y - 1)] == ghm_cell_state::excited) + // Top-right
+                            (_current_grid[idx.at(x - 1, y)] == ghm_cell_state::excited) +     // Left
+                            (_current_grid[idx.at(x + 1, y)] == ghm_cell_state::excited) +     // Right
+                            (_current_grid[idx.at(x - 1, y + 1)] == ghm_cell_state::excited) + // Bottom-left
+                            (_current_grid[idx.at(x, y + 1)] == ghm_cell_state::excited) +     // Bottom
+                            (_current_grid[idx.at(x + 1, y + 1)] == ghm_cell_state::excited);  // Bottom-right
 
                         if (excited_count > 0) {
                             next = ghm_cell_state::excited;
-                        }
-                        else {
+                        } else {
                             next = ghm_cell_state::quiescent; // Remains quiescent if no excited neighbors
                         }
-                    }
-                    else if (current == ghm_cell_state::excited) {
+                    } else if (current == ghm_cell_state::excited) {
                         // Excited cell becomes refractory_1
                         next = ghm_cell_state::refractory_1;
-                    }
-                    else if (current == ghm_cell_state::refractory_1) {
+                    } else if (current == ghm_cell_state::refractory_1) {
                         // Refractory cells progress through refractory states
                         next = ghm_cell_state::refractory_2;
-                    }
-                    else if (current == ghm_cell_state::refractory_2) {
+                    } else if (current == ghm_cell_state::refractory_2) {
                         next = ghm_cell_state::refractory_3;
-                    }
-                    else if (current == ghm_cell_state::refractory_3) {
+                    } else if (current == ghm_cell_state::refractory_3) {
                         next = ghm_cell_state::refractory_4;
-                    }
-                    else if (current == ghm_cell_state::refractory_4) {
+                    } else if (current == ghm_cell_state::refractory_4) {
                         next = ghm_cell_state::refractory_5;
-                    }
-                    else if (current == ghm_cell_state::refractory_5) {
+                    } else if (current == ghm_cell_state::refractory_5) {
                         next = ghm_cell_state::refractory_6;
-                    }
-                    else if (current == ghm_cell_state::refractory_6) {
+                    } else if (current == ghm_cell_state::refractory_6) {
                         // Last refractory state returns to quiescent
                         next = ghm_cell_state::quiescent;
                     }

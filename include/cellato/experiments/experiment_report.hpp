@@ -2,10 +2,10 @@
 #define CELLATO_EXPERIMENT_REPORT_HPP
 
 #include "./run_params.hpp"
-#include <vector>
-#include <string>
-#include <iostream>
 #include <cmath>
+#include <iostream>
+#include <string>
+#include <vector>
 
 namespace cellato::run {
 
@@ -24,30 +24,30 @@ struct experiment_report {
         const std::string YELLOW = "\033[33m";
         const std::string CYAN = "\033[36m";
         const std::string RED = "\033[31m";
-        
+
         // Print header and basic information
         os << BOLD << BLUE << "==============================================" << RESET << std::endl;
         os << BOLD << BLUE << "          EXPERIMENT REPORT                  " << RESET << std::endl;
         os << BOLD << BLUE << "==============================================" << RESET << std::endl;
-        
+
         // Print experiment parameters
         os << BOLD << "Experiment Parameters:" << RESET << std::endl;
-        os << "  " << CYAN << "Grid Size: " << RESET << params.x_size << " x " << params.y_size 
-           << " (" << params.x_size * params.y_size << " cells)" << std::endl;
+        os << "  " << CYAN << "Grid Size: " << RESET << params.x_size << " x " << params.y_size << " ("
+           << params.x_size * params.y_size << " cells)" << std::endl;
         os << "  " << CYAN << "Steps: " << RESET << params.steps << std::endl;
         if (params.seed != -1) {
             os << "  " << CYAN << "Random Seed: " << RESET << params.seed << std::endl;
         }
-        
+
         // Print performance metrics
         os << std::endl << BOLD << "Performance Metrics:" << RESET << std::endl;
         os << "  " << YELLOW << "Avg. Execution Time: " << RESET << average_time_ms() << " ms" << std::endl;
         os << "  " << YELLOW << "Std. Deviation: " << RESET << std_time_ms() << " ms" << std::endl;
         os << "  " << YELLOW << "Avg. Time Per Cell: " << RESET << average_time_per_cell_ps() << " ps" << std::endl;
-        
+
         // Print number of executions
         os << "  " << YELLOW << "Number of Executions: " << RESET << execution_times_ms.size() << std::endl;
-        
+
         // Print detailed time information if we have multiple executions
         if (execution_times_ms.size() > 1) {
             os << std::endl << BOLD << "Execution Times (ms):" << RESET << std::endl << "  ";
@@ -63,7 +63,7 @@ struct experiment_report {
             }
             os << std::endl;
         }
-        
+
         // Print checksum information
         os << std::endl << BOLD << "Consistency Check:" << RESET << std::endl;
         if (rounds_had_same_checksums()) {
@@ -71,25 +71,28 @@ struct experiment_report {
         } else {
             os << "  " << RED << "Warning: Different rounds produced different results!" << RESET << std::endl;
         }
-        
+
         if (!checksums.empty()) {
             os << "  " << CYAN << "Checksum: " << RESET << checksums[0] << std::endl;
         }
-        
+
         os << BOLD << BLUE << "==============================================" << RESET << std::endl;
     }
 
     static std::string csv_header() {
-        return run_params::csv_header() + ",average_time_ms,average_time_per_cell_ps,std_time_ms,rounds_had_same_checksums,checksum";
+        return run_params::csv_header() +
+               ",average_time_ms,average_time_per_cell_ps,std_time_ms,rounds_had_same_checksums,checksum";
     }
 
     std::string csv_line() const {
+        // clang-format off
         return params.csv_line() + "," +
                std::to_string(average_time_ms()) + "," +
                std::to_string(average_time_per_cell_ps()) + "," +
                std::to_string(std_time_ms()) + "," +
                (rounds_had_same_checksums() ? "true" : "false") + "," +
                checksums[0];
+        // clang-format on
     }
 
     double average_time_ms() const {
@@ -127,6 +130,6 @@ struct experiment_report {
     }
 };
 
-}
+} // namespace cellato::run
 
 #endif // CELLATO_EXPERIMENT_REPORT_HPP

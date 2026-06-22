@@ -10,9 +10,7 @@ namespace cellato::memory::grids {
 template <auto... states>
 class state_dictionary {
 private:
-    constexpr static int log_2(int n) {
-        return (n < 2) ? 0 : 1 + log_2(n / 2);
-    }
+    constexpr static int log_2(int n) { return (n < 2) ? 0 : 1 + log_2(n / 2); }
 
 public:
     using index_t = int;
@@ -21,9 +19,7 @@ public:
     static constexpr index_t number_of_values = sizeof...(states);
     static constexpr index_t needed_bits = state_dictionary::log_2(number_of_values - 1) + 1;
 
-    static constexpr index_t state_to_index(state_t state) {
-        return state_to_index_impl(state, states...);
-    }
+    static constexpr index_t state_to_index(state_t state) { return state_to_index_impl(state, states...); }
 
     static constexpr state_t index_to_state(index_t index) {
         constexpr state_t state_array[] = {states...};
@@ -68,6 +64,6 @@ public:
         throw std::out_of_range("Index out of range");
     }
 };
-}
+} // namespace cellato::memory::grids
 
 #endif // CELLATO_MEMORY_STATE_DICTIONARY_HPP

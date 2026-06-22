@@ -1,14 +1,16 @@
 #include "./reference_implementation.hpp"
-#include <cuda_runtime.h>
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cuda_runtime.h>
 
 namespace critters::reference {
 using namespace ::reference::indexing;
 
+namespace {
+
 // CUDA kernel for Forest critters (single step)
-__global__ void critters_kernel(const critters_cell_state* current, critters_cell_state* next,
-                                int width, int height, int step) {
+__global__ void
+critters_kernel(const critters_cell_state* current, critters_cell_state* next, int width, int height, int step) {
     int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
     int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
 
@@ -25,17 +27,37 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
     int y_coords[2];
 
     if (step_parity == 0) {
-        if (x_parity == 0) { x_coords[0] = 0; x_coords[1] = 1; }
-        else { x_coords[0] = -1; x_coords[1] = 0; }
+        if (x_parity == 0) {
+            x_coords[0] = 0;
+            x_coords[1] = 1;
+        } else {
+            x_coords[0] = -1;
+            x_coords[1] = 0;
+        }
 
-        if (y_parity == 0) { y_coords[0] = 0; y_coords[1] = 1; }
-        else { y_coords[0] = -1; y_coords[1] = 0; }
+        if (y_parity == 0) {
+            y_coords[0] = 0;
+            y_coords[1] = 1;
+        } else {
+            y_coords[0] = -1;
+            y_coords[1] = 0;
+        }
     } else { // step_parity == 1
-        if (x_parity == 0) { x_coords[0] = -1; x_coords[1] = 0; }
-        else { x_coords[0] = 0; x_coords[1] = 1; }
+        if (x_parity == 0) {
+            x_coords[0] = -1;
+            x_coords[1] = 0;
+        } else {
+            x_coords[0] = 0;
+            x_coords[1] = 1;
+        }
 
-        if (y_parity == 0) { y_coords[0] = -1; y_coords[1] = 0; }
-        else { y_coords[0] = 0; y_coords[1] = 1; }
+        if (y_parity == 0) {
+            y_coords[0] = -1;
+            y_coords[1] = 0;
+        } else {
+            y_coords[0] = 0;
+            y_coords[1] = 1;
+        }
     }
 
     // Count the total number of live cells in the 2x2 block
@@ -58,38 +80,49 @@ __global__ void critters_kernel(const critters_cell_state* current, critters_cel
         int dx_opposite, dy_opposite;
 
         if (step_parity == 0) {
-            if (x_parity == 0) { dx_opposite = 1; }
-            else { dx_opposite = -1; }
+            if (x_parity == 0) {
+                dx_opposite = 1;
+            } else {
+                dx_opposite = -1;
+            }
 
-            if (y_parity == 0) { dy_opposite = 1; }
-            else { dy_opposite = -1; }
+            if (y_parity == 0) {
+                dy_opposite = 1;
+            } else {
+                dy_opposite = -1;
+            }
         } else { // step_parity == 1
-            if (x_parity == 0) { dx_opposite = -1; }
-            else { dx_opposite = 1; }
+            if (x_parity == 0) {
+                dx_opposite = -1;
+            } else {
+                dx_opposite = 1;
+            }
 
-            if (y_parity == 0) { dy_opposite = -1; }
-            else { dy_opposite = 1; }
+            if (y_parity == 0) {
+                dy_opposite = -1;
+            } else {
+                dy_opposite = 1;
+            }
         }
 
         int opposite_idx = idx.at(x + dx_opposite, y + dy_opposite);
         critters_cell_state opposite_state = current[opposite_idx];
 
-        next_state = (opposite_state == critters_cell_state::alive)
-                     ? critters_cell_state::dead
-                     : critters_cell_state::alive;
+        next_state =
+            (opposite_state == critters_cell_state::alive) ? critters_cell_state::dead : critters_cell_state::alive;
 
     } else if (live_cells_in_block == 2) {
         // Rule: No change. The block remains the same.
         next_state = own_state;
     } else {
         // Rule (covers counts 0, 1, and 4): Flip the state in place.
-        next_state = (own_state == critters_cell_state::alive)
-                     ? critters_cell_state::dead
-                     : critters_cell_state::alive;
+        next_state = (own_state == critters_cell_state::alive) ? critters_cell_state::dead : critters_cell_state::alive;
     }
 
     next[center_idx] = next_state;
 }
+
+} // namespace
 
 void runner::run_kernel(int steps) {
     if (!d_current || !d_next) {
@@ -106,7 +139,7 @@ void runner::run_kernel(int steps) {
     auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
 
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x,
-                 (_y_size_threads + block_size.y - 1) / block_size.y);
+                  (_y_size_threads + block_size.y - 1) / block_size.y);
 
     // Run steps iterations
     for (int i = 0; i < steps; i++) {

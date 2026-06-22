@@ -1,13 +1,14 @@
 #include "./reference_implementation.hpp"
-#include <cuda_runtime.h>
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cuda_runtime.h>
 
 namespace maze::reference {
 using namespace ::reference::indexing;
 
-__global__ void maze_kernel(const maze_cell_state* current, maze_cell_state* next,
-                            int width, int height) {
+namespace {
+
+__global__ void maze_kernel(const maze_cell_state* current, maze_cell_state* next, int width, int height) {
     // Calculate thread indices, adjusting for margins
     int x = blockIdx.x * blockDim.x + threadIdx.x + indexer::x_margin;
     int y = blockIdx.y * blockDim.y + threadIdx.y + indexer::y_margin;
@@ -41,6 +42,8 @@ __global__ void maze_kernel(const maze_cell_state* current, maze_cell_state* nex
     next[center_idx] = next_state;
 }
 
+} // namespace
+
 void runner::run_kernel(int steps) {
     if (!d_current || !d_next) {
         init_cuda();
@@ -56,7 +59,7 @@ void runner::run_kernel(int steps) {
     auto _y_size_threads = _y_size - 2 * y_margin; // Adjust for margins
 
     dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x,
-                 (_y_size_threads + block_size.y - 1) / block_size.y);
+                  (_y_size_threads + block_size.y - 1) / block_size.y);
 
     // Run steps iterations
     for (int i = 0; i < steps; i++) {

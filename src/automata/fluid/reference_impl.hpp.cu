@@ -1,8 +1,8 @@
 #include "./reference_implementation.hpp"
-#include <cuda_runtime.h>
-#include <memory>
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cuda_runtime.h>
+#include <memory>
 
 namespace fluid::reference {
 using namespace ::reference::indexing;
@@ -10,18 +10,17 @@ using namespace ::reference::indexing;
 namespace {
 
 // CUDA kernel for Forest fluid (single step)
-__global__ void fluid_kernel(const fluid_cell_state* current, fluid_cell_state* next,
-                            int width, int height) {
+__global__ void fluid_kernel(const fluid_cell_state* current, fluid_cell_state* next, int width, int height) {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
     const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
     const indexer idx(width, height);
     const int center_idx = idx.at(x, y);
 
-    const auto top_neighbor = current[idx.at(x, y-1)];
-    const auto bottom_neighbor = current[idx.at(x, y+1)];
-    const auto left_neighbor = current[idx.at(x-1, y)];
-    const auto right_neighbor = current[idx.at(x+1, y)];
+    const auto top_neighbor = current[idx.at(x, y - 1)];
+    const auto bottom_neighbor = current[idx.at(x, y + 1)];
+    const auto left_neighbor = current[idx.at(x - 1, y)];
+    const auto right_neighbor = current[idx.at(x + 1, y)];
 
     constexpr fluid_cell_state TOP = 0b0001;
     constexpr fluid_cell_state BOTTOM = 0b0010;
@@ -59,7 +58,7 @@ __global__ void fluid_kernel(const fluid_cell_state* current, fluid_cell_state* 
     next[center_idx] = result;
 }
 
-}
+} // namespace
 
 void runner::run_kernel(int steps) {
     if (!d_current || !d_next) {
@@ -74,7 +73,7 @@ void runner::run_kernel(int steps) {
     const auto _y_size_threads = _y_size;
 
     const dim3 grid_dim((_x_size_threads + block_size.x - 1) / block_size.x,
-                 (_y_size_threads + block_size.y - 1) / block_size.y);
+                        (_y_size_threads + block_size.y - 1) / block_size.y);
 
     // Run steps iterations
     for (int i = 0; i < steps; i++) {

@@ -14,9 +14,8 @@ namespace reference::indexing {
 struct indexer {
     static constexpr int x_margin = 0;
     static constexpr int y_margin = 0;
-    
-    CUDA_CALLABLE indexer(int x_size, int y_size)
-        : _x_size(x_size), _y_size(y_size) {};
+
+    CUDA_CALLABLE indexer(int x_size, int y_size) : _x_size(x_size), _y_size(y_size) {};
 
     CUDA_CALLABLE int at(int x, int y) const {
         const auto x_real = (x + _x_size) % _x_size;
@@ -29,7 +28,6 @@ private:
     int _x_size, _y_size;
 };
 
-}
-
+} // namespace reference::indexing
 
 #endif // INDEXING_CUH

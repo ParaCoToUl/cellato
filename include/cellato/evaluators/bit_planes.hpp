@@ -1,21 +1,21 @@
 #ifndef CELLATO_EVALUATORS_BIT_PLANES_HPP
 #define CELLATO_EVALUATORS_BIT_PLANES_HPP
 
+#include <algorithm>
 #include <array>
-#include <vector>
 #include <cstddef>
+#include <cstdint>
+#include <iostream>
 #include <stdexcept>
 #include <utility>
-#include <iostream>
-#include <cstdint>
-#include <algorithm>
+#include <vector>
 
 #include "cellato/core/ast.hpp"
 #include "cellato/core/vector_int.hpp"
 #include "cellato/memory/bit_planes_grid.hpp"
 #include "cellato/memory/grid_utils.hpp"
-#include "cellato/memory/interface.hpp"
 #include "cellato/memory/idx_type.hpp"
+#include "cellato/memory/interface.hpp"
 
 // Use the same CUDA_CALLABLE definition as in standard evaluator
 #ifdef __CUDACC__
@@ -32,12 +32,13 @@ using namespace cellato::ast;
 using namespace cellato::core::bitwise;
 using namespace cellato::memory::grids::utils;
 
-
-template <typename cell_row_type, typename state_dictionary_type, template <typename, typename> class recursive_evaluator>
+template <typename cell_row_type,
+          typename state_dictionary_type,
+          template <typename, typename> class recursive_evaluator>
 struct implementation_params {
     using cell_row_t = cell_row_type;
     using state_dict_t = state_dictionary_type;
-    
+
     template <typename params, typename Expression>
     using evaluator_t = recursive_evaluator<params, Expression>;
 };
@@ -45,8 +46,9 @@ struct implementation_params {
 template <typename params, typename Expression>
 struct _evaluator_impl {};
 
-template <typename cell_row_type,  typename state_dictionary_type, typename Expression>
-using evaluator = _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
+template <typename cell_row_type, typename state_dictionary_type, typename Expression>
+using evaluator =
+    _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
 
 template <typename cell_row_type, typename state_dictionary_type>
 using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::needed_bits>;
@@ -169,9 +171,7 @@ struct _evaluator_impl<params, modulo<Left, constant<ConstValue>>> {
 
     static_assert((ConstValue & (ConstValue - 1)) == 0, "Only modulo by power of two is supported");
 
-    static constexpr int log2(int n) {
-        return (n < 2) ? 0 : 1 + log2(n / 2);
-    }
+    static constexpr int log2(int n) { return (n < 2) ? 0 : 1 + log2(n / 2); }
 
     static constexpr int number_of_bits = log2(ConstValue);
 
@@ -289,7 +289,6 @@ struct _evaluator_impl<params, has_bit_set<Value, bit_idx>> {
     }
 };
 
-
 template <typename params, idx_type x_offset, idx_type y_offset>
 struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     static constexpr int vector_width_bits = sizeof(typename params::cell_row_t) * 8;
@@ -313,7 +312,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         return shifted_center.get_ored(shifted_neighbor);
     }
 
-  private:
+private:
     using vint = vector_int<cell_row_type, state_dictionary_type::needed_bits>;
 
     CUDA_CALLABLE static vint shift_center(vint center) {
@@ -322,13 +321,13 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         } else if constexpr (x_offset < 0) {
             return center.template get_left_shifted_vector<-x_offset>();
         } else {
-            #ifndef __CUDA_ARCH__
+#ifndef __CUDA_ARCH__
             throw std::logic_error("Invalid x_offset value");
-            #else
+#else
             // In CUDA device code, we can't throw exceptions
             // Just return the unshifted center as a fallback
             return center;
-            #endif
+#endif
         }
     }
 
@@ -338,12 +337,12 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
         } else if constexpr (x_offset < 0) {
             return neighbor.template get_right_shifted_vector<vector_width_bits + x_offset>();
         } else {
-            #ifndef __CUDA_ARCH__
+#ifndef __CUDA_ARCH__
             throw std::logic_error("Invalid x_offset value");
-            #else
+#else
             // In CUDA device code, we can't throw exceptions
             return neighbor;
-            #endif
+#endif
         }
     }
 
@@ -365,11 +364,7 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
 };
 
 template <typename params, typename cell_state_type, cell_state_type CellStateValue>
-struct _evaluator_impl<
-    params,
-    count_neighbors<
-        state_constant<CellStateValue>,
-        margolus_alternating_neighborhood>> {
+struct _evaluator_impl<params, count_neighbors<state_constant<CellStateValue>, margolus_alternating_neighborhood>> {
 
     template <typename E>
     using evaluator_t = typename params::template evaluator_t<params, E>;
@@ -378,7 +373,7 @@ struct _evaluator_impl<
     using state_dictionary_type = typename params::state_dict_t;
 
     constexpr static auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
-    
+
     CUDA_CALLABLE static vector_int<typename params::cell_row_t, 3> evaluate(state_t<params> state) {
         auto parity = state.time_step % 2;
 
@@ -391,11 +386,11 @@ struct _evaluator_impl<
 
 private:
     CUDA_CALLABLE static vector_int<cell_row_type, 3> even_parity(state_t<params> state) {
-        auto current_state_c = evaluator_t<neighbor_at< 0,  0>>::evaluate(state).template equals_to<cell_state>();
+        auto current_state_c = evaluator_t<neighbor_at<0, 0>>::evaluate(state).template equals_to<cell_state>();
 
-        auto vertical_neighbor_c = (y_parity(state) == 0) ?
-            evaluator_t<neighbor_at< 0,   1>>::evaluate(state).template equals_to<cell_state>() :
-            evaluator_t<neighbor_at< 0,  -1>>::evaluate(state).template equals_to<cell_state>();
+        auto vertical_neighbor_c =
+            (y_parity(state) == 0) ? evaluator_t<neighbor_at<0, 1>>::evaluate(state).template equals_to<cell_state>()
+                                   : evaluator_t<neighbor_at<0, -1>>::evaluate(state).template equals_to<cell_state>();
 
         auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
         auto vertical_neighbor = vector_int_factory::from_condition_result<cell_row_type>(vertical_neighbor_c);
@@ -404,18 +399,18 @@ private:
 
         auto switched_pairs = columns_sum.get_with_switched_pairs_of_numbers();
 
-        return columns_sum.template to_vector_with_bits<3>()
-            .get_added(switched_pairs);
+        return columns_sum.template to_vector_with_bits<3>().get_added(switched_pairs);
     }
 
     CUDA_CALLABLE static vector_int<cell_row_type, 3> odd_parity(state_t<params> state) {
-        cell_row_type current_state_c = evaluator_t<neighbor_at<1,  0>>::evaluate(state).template equals_to<cell_state>();
+        cell_row_type current_state_c =
+            evaluator_t<neighbor_at<1, 0>>::evaluate(state).template equals_to<cell_state>();
         cell_row_type vertical_neighbor_c;
 
         if (y_parity(state) == 0) {
             vertical_neighbor_c = evaluator_t<neighbor_at<1, -1>>::evaluate(state).template equals_to<cell_state>();
         } else {
-            vertical_neighbor_c = evaluator_t<neighbor_at<1,  1>>::evaluate(state).template equals_to<cell_state>();
+            vertical_neighbor_c = evaluator_t<neighbor_at<1, 1>>::evaluate(state).template equals_to<cell_state>();
         }
 
         auto current_state = vector_int_factory::from_condition_result<cell_row_type>(current_state_c);
@@ -426,7 +421,8 @@ private:
         auto switched_pairs = columns_sum.get_with_switched_pairs_of_numbers();
 
         auto result = columns_sum.template to_vector_with_bits<3>()
-            .get_added(switched_pairs).template get_left_shifted_vector<1>();
+                          .get_added(switched_pairs)
+                          .template get_left_shifted_vector<1>();
 
         int last_bit_result = solve_for_last_bit(state);
         result.set_at(0, last_bit_result);
@@ -435,23 +431,21 @@ private:
     }
 
     CUDA_CALLABLE static int solve_for_last_bit(state_t<params> state) {
-        cell_row_type current_state_c = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).template equals_to<cell_state>();
+        cell_row_type current_state_c =
+            evaluator_t<neighbor_at<-1, 0>>::evaluate(state).template equals_to<cell_state>();
         cell_row_type vertical_neighbor_c;
-
 
         if (y_parity(state) == 0) {
             vertical_neighbor_c = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
         } else {
-            vertical_neighbor_c = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).template equals_to<cell_state>();
+            vertical_neighbor_c = evaluator_t<neighbor_at<-1, 1>>::evaluate(state).template equals_to<cell_state>();
         }
 
         constexpr int counts[4] = {0, 1, 1, 2};
         return counts[vertical_neighbor_c & 0b11] + counts[current_state_c & 0b11];
     }
 
-    CUDA_CALLABLE static int y_parity(state_t<params> state) {
-        return state.position.y % 2;
-    }
+    CUDA_CALLABLE static int y_parity(state_t<params> state) { return state.position.y % 2; }
 };
 
 template <typename params>
@@ -463,7 +457,7 @@ struct _evaluator_impl<params, margolus_180_neighbor> {
     using state_dictionary_type = typename params::state_dict_t;
 
     using state_vint_type = vector_int<cell_row_type, state_dictionary_type::needed_bits>;
-    
+
     CUDA_CALLABLE static auto evaluate(state_t<params> state) {
         auto parity = state.time_step % 2;
 
@@ -473,44 +467,36 @@ struct _evaluator_impl<params, margolus_180_neighbor> {
             return odd_parity(state);
         }
     }
-  private:
+
+private:
     CUDA_CALLABLE static auto even_parity(state_t<params> state) {
-        auto vertical_neighbor = (y_parity(state) == 0) ?
-            evaluator_t<neighbor_at< 0,   1>>::evaluate(state) :
-            evaluator_t<neighbor_at< 0,  -1>>::evaluate(state);
+        auto vertical_neighbor = (y_parity(state) == 0) ? evaluator_t<neighbor_at<0, 1>>::evaluate(state)
+                                                        : evaluator_t<neighbor_at<0, -1>>::evaluate(state);
 
         return vertical_neighbor.get_with_switched_pairs_of_numbers();
     }
 
     CUDA_CALLABLE static auto odd_parity(state_t<params> state) {
-        auto even_cells = (y_parity(state) == 0) ?
-            evaluator_t<neighbor_at< 1, -1>>::evaluate(state) :
-            evaluator_t<neighbor_at< 1,  1>>::evaluate(state);
+        auto even_cells = (y_parity(state) == 0) ? evaluator_t<neighbor_at<1, -1>>::evaluate(state)
+                                                 : evaluator_t<neighbor_at<1, 1>>::evaluate(state);
 
-        auto odd_cells = (y_parity(state) == 0) ?
-            evaluator_t<neighbor_at<-1, -1>>::evaluate(state) :
-            evaluator_t<neighbor_at<-1,  1>>::evaluate(state);
+        auto odd_cells = (y_parity(state) == 0) ? evaluator_t<neighbor_at<-1, -1>>::evaluate(state)
+                                                : evaluator_t<neighbor_at<-1, 1>>::evaluate(state);
 
         constexpr cell_row_type alternating_mask_0_at_0 = static_cast<cell_row_type>(0xAAAAAAAAAAAAAAAALLU);
         constexpr cell_row_type alternating_mask_1_at_0 = static_cast<cell_row_type>(0x5555555555555555LLU);
 
         auto even_masked = even_cells.mask_out_columns(alternating_mask_0_at_0);
-        auto odd_masked  = odd_cells.mask_out_columns(alternating_mask_1_at_0);
+        auto odd_masked = odd_cells.mask_out_columns(alternating_mask_1_at_0);
 
         return even_masked.get_ored(odd_masked);
     }
 
-    CUDA_CALLABLE static int y_parity(state_t<params> state) {
-        return state.position.y % 2;
-    }
+    CUDA_CALLABLE static int y_parity(state_t<params> state) { return state.position.y % 2; }
 };
 
 template <typename params, typename cell_state_type, cell_state_type CellStateValue>
-struct _evaluator_impl<
-    params,
-    count_neighbors<
-        state_constant<CellStateValue>,
-        moore_8_neighbors>> {
+struct _evaluator_impl<params, count_neighbors<state_constant<CellStateValue>, moore_8_neighbors>> {
 
     template <typename E>
     using evaluator_t = typename params::template evaluator_t<params, E>;
@@ -521,41 +507,39 @@ struct _evaluator_impl<
     CUDA_CALLABLE static vector_int<typename params::cell_row_t, 4> evaluate(state_t<params> state) {
         constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
-        auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
-        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).template equals_to<cell_state>();
-        auto top_right_c    = evaluator_t<neighbor_at< 1, -1>>::evaluate(state).template equals_to<cell_state>();
-        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).template equals_to<cell_state>();
-        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).template equals_to<cell_state>();
-        auto bottom_left_c  = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).template equals_to<cell_state>();
-        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).template equals_to<cell_state>();
-        auto bottom_right_c = evaluator_t<neighbor_at< 1,  1>>::evaluate(state).template equals_to<cell_state>();
+        auto top_left_c = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).template equals_to<cell_state>();
+        auto top_c = evaluator_t<neighbor_at<0, -1>>::evaluate(state).template equals_to<cell_state>();
+        auto top_right_c = evaluator_t<neighbor_at<1, -1>>::evaluate(state).template equals_to<cell_state>();
+        auto left_c = evaluator_t<neighbor_at<-1, 0>>::evaluate(state).template equals_to<cell_state>();
+        auto right_c = evaluator_t<neighbor_at<1, 0>>::evaluate(state).template equals_to<cell_state>();
+        auto bottom_left_c = evaluator_t<neighbor_at<-1, 1>>::evaluate(state).template equals_to<cell_state>();
+        auto bottom_c = evaluator_t<neighbor_at<0, 1>>::evaluate(state).template equals_to<cell_state>();
+        auto bottom_right_c = evaluator_t<neighbor_at<1, 1>>::evaluate(state).template equals_to<cell_state>();
 
-        auto top_left       = vector_int_factory::from_condition_result<cell_row_type>(top_left_c);
-        auto top            = vector_int_factory::from_condition_result<cell_row_type>(top_c);
-        auto top_right      = vector_int_factory::from_condition_result<cell_row_type>(top_right_c);
-        auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
-        auto right          = vector_int_factory::from_condition_result<cell_row_type>(right_c);
-        auto bottom_left    = vector_int_factory::from_condition_result<cell_row_type>(bottom_left_c);
-        auto bottom         = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
-        auto bottom_right   = vector_int_factory::from_condition_result<cell_row_type>(bottom_right_c);
+        auto top_left = vector_int_factory::from_condition_result<cell_row_type>(top_left_c);
+        auto top = vector_int_factory::from_condition_result<cell_row_type>(top_c);
+        auto top_right = vector_int_factory::from_condition_result<cell_row_type>(top_right_c);
+        auto left = vector_int_factory::from_condition_result<cell_row_type>(left_c);
+        auto right = vector_int_factory::from_condition_result<cell_row_type>(right_c);
+        auto bottom_left = vector_int_factory::from_condition_result<cell_row_type>(bottom_left_c);
+        auto bottom = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
+        auto bottom_right = vector_int_factory::from_condition_result<cell_row_type>(bottom_right_c);
 
         return top_left.template to_vector_with_bits<2>()
             .get_added(top)
-            .get_added(top_right).template to_vector_with_bits<3>()
+            .get_added(top_right)
+            .template to_vector_with_bits<3>()
             .get_added(left)
             .get_added(right)
             .get_added(bottom_left)
-            .get_added(bottom).template to_vector_with_bits<4>()
+            .get_added(bottom)
+            .template to_vector_with_bits<4>()
             .get_added(bottom_right);
     }
 };
 
 template <typename params, typename CellStateValue>
-struct _evaluator_impl<
-    params,
-    count_neighbors<
-        CellStateValue,
-        moore_8_neighbors>> {
+struct _evaluator_impl<params, count_neighbors<CellStateValue, moore_8_neighbors>> {
 
     template <typename E>
     using evaluator_t = typename params::template evaluator_t<params, E>;
@@ -566,44 +550,39 @@ struct _evaluator_impl<
     CUDA_CALLABLE static vector_int<typename params::cell_row_t, 4> evaluate(state_t<params> state) {
         auto cell_state = evaluator_t<CellStateValue>::evaluate(state);
 
-        auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).equals_to(cell_state);
-        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).equals_to(cell_state);
-        auto top_right_c    = evaluator_t<neighbor_at< 1, -1>>::evaluate(state).equals_to(cell_state);
-        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).equals_to(cell_state);
-        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).equals_to(cell_state);
-        auto bottom_left_c  = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).equals_to(cell_state);
-        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).equals_to(cell_state);
-        auto bottom_right_c = evaluator_t<neighbor_at< 1,  1>>::evaluate(state).equals_to(cell_state);
+        auto top_left_c = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_c = evaluator_t<neighbor_at<0, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_right_c = evaluator_t<neighbor_at<1, -1>>::evaluate(state).equals_to(cell_state);
+        auto left_c = evaluator_t<neighbor_at<-1, 0>>::evaluate(state).equals_to(cell_state);
+        auto right_c = evaluator_t<neighbor_at<1, 0>>::evaluate(state).equals_to(cell_state);
+        auto bottom_left_c = evaluator_t<neighbor_at<-1, 1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_c = evaluator_t<neighbor_at<0, 1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_right_c = evaluator_t<neighbor_at<1, 1>>::evaluate(state).equals_to(cell_state);
 
-        auto top_left       = vector_int_factory::from_condition_result<cell_row_type>(top_left_c);
-        auto top            = vector_int_factory::from_condition_result<cell_row_type>(top_c);
-        auto top_right      = vector_int_factory::from_condition_result<cell_row_type>(top_right_c);
-        auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
-        auto right          = vector_int_factory::from_condition_result<cell_row_type>(right_c);
-        auto bottom_left    = vector_int_factory::from_condition_result<cell_row_type>(bottom_left_c);
-        auto bottom         = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
-        auto bottom_right   = vector_int_factory::from_condition_result<cell_row_type>(bottom_right_c);
+        auto top_left = vector_int_factory::from_condition_result<cell_row_type>(top_left_c);
+        auto top = vector_int_factory::from_condition_result<cell_row_type>(top_c);
+        auto top_right = vector_int_factory::from_condition_result<cell_row_type>(top_right_c);
+        auto left = vector_int_factory::from_condition_result<cell_row_type>(left_c);
+        auto right = vector_int_factory::from_condition_result<cell_row_type>(right_c);
+        auto bottom_left = vector_int_factory::from_condition_result<cell_row_type>(bottom_left_c);
+        auto bottom = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
+        auto bottom_right = vector_int_factory::from_condition_result<cell_row_type>(bottom_right_c);
 
         return top_left.template to_vector_with_bits<2>()
             .get_added(top)
-            .get_added(top_right).template to_vector_with_bits<3>()
+            .get_added(top_right)
+            .template to_vector_with_bits<3>()
             .get_added(left)
             .get_added(right)
             .get_added(bottom_left)
-            .get_added(bottom).template to_vector_with_bits<4>()
+            .get_added(bottom)
+            .template to_vector_with_bits<4>()
             .get_added(bottom_right);
     }
 };
 
 template <typename params, typename CellStateValue>
-struct _evaluator_impl<
-    params,
-    greater_than<
-        count_neighbors<
-            CellStateValue,
-            moore_8_neighbors>,
-        constant<0>
-    >> {
+struct _evaluator_impl<params, greater_than<count_neighbors<CellStateValue, moore_8_neighbors>, constant<0>>> {
 
     template <typename E>
     using evaluator_t = typename params::template evaluator_t<params, E>;
@@ -614,25 +593,21 @@ struct _evaluator_impl<
     CUDA_CALLABLE static auto evaluate(state_t<params> state) {
         auto cell_state = evaluator_t<CellStateValue>::evaluate(state);
 
-        auto top_left_c     = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).equals_to(cell_state);
-        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).equals_to(cell_state);
-        auto top_right_c    = evaluator_t<neighbor_at< 1, -1>>::evaluate(state).equals_to(cell_state);
-        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).equals_to(cell_state);
-        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).equals_to(cell_state);
-        auto bottom_left_c  = evaluator_t<neighbor_at<-1,  1>>::evaluate(state).equals_to(cell_state);
-        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).equals_to(cell_state);
-        auto bottom_right_c = evaluator_t<neighbor_at< 1,  1>>::evaluate(state).equals_to(cell_state);
+        auto top_left_c = evaluator_t<neighbor_at<-1, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_c = evaluator_t<neighbor_at<0, -1>>::evaluate(state).equals_to(cell_state);
+        auto top_right_c = evaluator_t<neighbor_at<1, -1>>::evaluate(state).equals_to(cell_state);
+        auto left_c = evaluator_t<neighbor_at<-1, 0>>::evaluate(state).equals_to(cell_state);
+        auto right_c = evaluator_t<neighbor_at<1, 0>>::evaluate(state).equals_to(cell_state);
+        auto bottom_left_c = evaluator_t<neighbor_at<-1, 1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_c = evaluator_t<neighbor_at<0, 1>>::evaluate(state).equals_to(cell_state);
+        auto bottom_right_c = evaluator_t<neighbor_at<1, 1>>::evaluate(state).equals_to(cell_state);
 
         return top_left_c | top_c | top_right_c | left_c | right_c | bottom_left_c | bottom_c | bottom_right_c;
     }
 };
 
 template <typename params, typename cell_state_type, cell_state_type CellStateValue>
-struct _evaluator_impl<
-    params,
-    count_neighbors<
-        state_constant<CellStateValue>,
-        von_neumann_4_neighbors>> {
+struct _evaluator_impl<params, count_neighbors<state_constant<CellStateValue>, von_neumann_4_neighbors>> {
 
     template <typename E>
     using evaluator_t = typename params::template evaluator_t<params, E>;
@@ -644,20 +619,21 @@ struct _evaluator_impl<
         constexpr auto cell_state = state_dictionary_type::state_to_index(CellStateValue);
 
         // Get the four neighbors (top, right, bottom, left)
-        auto top_c          = evaluator_t<neighbor_at< 0, -1>>::evaluate(state).template equals_to<cell_state>();
-        auto right_c        = evaluator_t<neighbor_at< 1,  0>>::evaluate(state).template equals_to<cell_state>();
-        auto bottom_c       = evaluator_t<neighbor_at< 0,  1>>::evaluate(state).template equals_to<cell_state>();
-        auto left_c         = evaluator_t<neighbor_at<-1,  0>>::evaluate(state).template equals_to<cell_state>();
+        auto top_c = evaluator_t<neighbor_at<0, -1>>::evaluate(state).template equals_to<cell_state>();
+        auto right_c = evaluator_t<neighbor_at<1, 0>>::evaluate(state).template equals_to<cell_state>();
+        auto bottom_c = evaluator_t<neighbor_at<0, 1>>::evaluate(state).template equals_to<cell_state>();
+        auto left_c = evaluator_t<neighbor_at<-1, 0>>::evaluate(state).template equals_to<cell_state>();
 
         // Convert condition results to vector_int
-        auto top            = vector_int_factory::from_condition_result<cell_row_type>(top_c);
-        auto right          = vector_int_factory::from_condition_result<cell_row_type>(right_c);
-        auto bottom         = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
-        auto left           = vector_int_factory::from_condition_result<cell_row_type>(left_c);
+        auto top = vector_int_factory::from_condition_result<cell_row_type>(top_c);
+        auto right = vector_int_factory::from_condition_result<cell_row_type>(right_c);
+        auto bottom = vector_int_factory::from_condition_result<cell_row_type>(bottom_c);
+        auto left = vector_int_factory::from_condition_result<cell_row_type>(left_c);
 
         return top.template to_vector_with_bits<2>()
             .get_added(right)
-            .get_added(bottom).template to_vector_with_bits<3>()
+            .get_added(bottom)
+            .template to_vector_with_bits<3>()
             .get_added(left);
     }
 };

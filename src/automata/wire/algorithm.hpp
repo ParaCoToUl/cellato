@@ -7,11 +7,11 @@ namespace wire {
 using namespace cellato::ast;
 
 // --- States for the Wireworld CA ---
-enum class wire_cell_state { 
-    empty, 
-    electron_head, 
-    electron_tail, 
-    conductor 
+enum class wire_cell_state {
+    empty,
+    electron_head,
+    electron_tail,
+    conductor
 };
 
 // --- Define constants for cell states ---
@@ -36,16 +36,16 @@ using electron_head_count = count_neighbors<electron_head, moore_8_neighbors>;
 // --- Check if exactly 1 or 2 neighboring cells are electron heads ---
 using has_one_electron_head_neighbor = p<electron_head_count, equals, c_1>;
 using has_two_electron_head_neighbors = p<electron_head_count, equals, c_2>;
-using has_one_or_two_electron_head_neighbors = 
-    p<has_one_electron_head_neighbor, or_, has_two_electron_head_neighbors>;
+using has_one_or_two_electron_head_neighbors = p<has_one_electron_head_neighbor, or_, has_two_electron_head_neighbors>;
 
 // --- Wireworld algorithm ---
 // Rule 1: empty → empty
 // Rule 2: electron head → electron tail
 // Rule 3: electron tail → conductor
-// Rule 4: conductor → electron head if exactly 1 or 2 neighboring cells 
+// Rule 4: conductor → electron head if exactly 1 or 2 neighboring cells
 //         are electron heads, otherwise remains conductor
-using wire_algorithm = 
+// clang-format off
+using wire_algorithm =
     if_< cell_is_electron_head >::then_<
         electron_tail
     >::elif_< cell_is_electron_tail >::then_<
@@ -57,6 +57,7 @@ using wire_algorithm =
             conductor
         >
     >::else_<empty>; // If cell is empty, it remains empty
-}
+// clang-format on
+} // namespace wire
 
 #endif // WIRE_ALGORITHM_HPP

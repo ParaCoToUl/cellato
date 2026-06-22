@@ -1,34 +1,31 @@
 #ifndef CELLATO_TRAVERSERS_CPU_SIMPLE_HPP
 #define CELLATO_TRAVERSERS_CPU_SIMPLE_HPP
 
+#include <chrono>
+#include <functional>
 #include <iostream>
 #include <thread>
-#include <chrono>
 #include <utility>
-#include <functional>
 
+#include "../../experiments/run_params.hpp"
 #include "cellato/memory/interface.hpp"
 #include "cellato/traversers/traverser_utils.hpp"
-#include "../../experiments/run_params.hpp"
 
 namespace cellato::traversers::cpu::simple {
 
 using namespace cellato::traversers::utils;
 
-template <
-    typename evaluator_type,
-    typename grid_type >
+template <typename evaluator_type, typename grid_type>
 class traverser {
     using evaluator_t = evaluator_type;
     using grid_t = grid_type;
 
     using cell_t = typename grid_t::store_type;
 
-  public:
+public:
     static constexpr bool is_CUDA = false;
 
-    void init(grid_t grid, 
-              const cellato::run::run_params& params) {
+    void init(grid_t grid, const cellato::run::run_params& params) {
         (void)params; // Unused parameter
 
         _input_grid = std::move(grid);
@@ -40,7 +37,7 @@ class traverser {
 
     template <typename callback = no_callback>
     void run(int steps, callback&& callback_func = no_callback{}) {
-        
+
         auto current = &_input_grid;
         auto next = &_intermediate_grid;
 
@@ -61,7 +58,7 @@ class traverser {
 
             state.grid = current->data();
             state.time_step = step;
-            
+
             auto next_data = next->data();
 
             // Process cells
@@ -87,16 +84,13 @@ class traverser {
         _final_grid = current;
     }
 
-    grid_t fetch_result() const {
-        return std::move(*_final_grid);
-    }
+    grid_t fetch_result() const { return std::move(*_final_grid); }
 
-    private:
-
+private:
     grid_t _input_grid, _intermediate_grid;
     grid_t* _final_grid;
 };
 
-}
+} // namespace cellato::traversers::cpu::simple
 
 #endif // CELLATO_TRAVERSERS_CPU_SIMPLE_HPP

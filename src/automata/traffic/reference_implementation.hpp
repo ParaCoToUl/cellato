@@ -1,14 +1,14 @@
 #ifndef TRAFFIC_REFERENCE_IMPLEMENTATION_HPP
 #define TRAFFIC_REFERENCE_IMPLEMENTATION_HPP
 
-#include <vector>
-#include <cstddef>
-#include <iostream>
-#include <stdexcept>
 #include "./algorithm.hpp"
 #include "cellato/experiments/run_params.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cuda_instantiation/indexing.hpp"
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
 namespace traffic::reference {
 using namespace ::reference::indexing;
@@ -17,15 +17,14 @@ struct runner {
     static constexpr std::size_t x_margin = indexer::x_margin;
     static constexpr std::size_t y_margin = indexer::y_margin;
 
-    void init(const traffic_cell_state* grid,
-              const cellato::run::run_params& params = cellato::run::run_params()) {
+    void init(const traffic_cell_state* grid, const cellato::run::run_params& params = cellato::run::run_params()) {
 
         _x_size = params.x_size;
         _y_size = params.y_size;
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
         _current_grid.resize(_x_size * _y_size);
-        _next_grid.resize(_x_size * _y_size);  // Pre-allocate next_grid
+        _next_grid.resize(_x_size * _y_size); // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
             if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
@@ -55,15 +54,15 @@ struct runner {
     }
 
     template <traffic_cell_state movable, traffic_cell_state stationary>
-    traffic_cell_state rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
+    traffic_cell_state
+    rule(traffic_cell_state incoming_neighbor, traffic_cell_state current_state, traffic_cell_state outgoing_neighbor) {
         if (current_state == movable) {
             if (outgoing_neighbor == traffic_cell_state::empty) {
                 return traffic_cell_state::empty;
             } else {
                 return movable; // Car stays if it can't move out
             }
-        }
-        else if (current_state == traffic_cell_state::empty) {
+        } else if (current_state == traffic_cell_state::empty) {
             if (incoming_neighbor == movable) {
                 return movable;
             } else {
@@ -87,15 +86,17 @@ struct runner {
                     const int center_idx = idx.at(x, y);
 
                     traffic_cell_state cell_state = _current_grid[center_idx];
-                    traffic_cell_state left_neighbor = _current_grid[idx.at(x-1, y)];
-                    traffic_cell_state right_neighbor = _current_grid[idx.at(x+1, y)];
-                    traffic_cell_state up_neighbor = _current_grid[idx.at(x, y-1)];
-                    traffic_cell_state down_neighbor = _current_grid[idx.at(x, y+1)];
+                    traffic_cell_state left_neighbor = _current_grid[idx.at(x - 1, y)];
+                    traffic_cell_state right_neighbor = _current_grid[idx.at(x + 1, y)];
+                    traffic_cell_state up_neighbor = _current_grid[idx.at(x, y - 1)];
+                    traffic_cell_state down_neighbor = _current_grid[idx.at(x, y + 1)];
 
                     if (step % 2 == 0) {
-                        _next_grid[center_idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(left_neighbor, cell_state, right_neighbor);
+                        _next_grid[center_idx] = rule<traffic_cell_state::red_car, traffic_cell_state::blue_car>(
+                            left_neighbor, cell_state, right_neighbor);
                     } else {
-                        _next_grid[center_idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(up_neighbor, cell_state, down_neighbor);
+                        _next_grid[center_idx] = rule<traffic_cell_state::blue_car, traffic_cell_state::red_car>(
+                            up_neighbor, cell_state, down_neighbor);
                     }
                 }
             }

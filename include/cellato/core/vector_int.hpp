@@ -1,18 +1,17 @@
 #ifndef CELLATO_CORE_VECTOR_INT_HPP
 #define CELLATO_CORE_VECTOR_INT_HPP
 
-#include <tuple>
-#include <string>
-#include <stdexcept>
-#include <utility>
-#include <iostream>
-#include <cstdint>
 #include <algorithm>
-#include <type_traits>
-#include <limits>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <limits>
 #include <stdexcept>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 #include "cellato/memory/grid_utils.hpp"
 #include "cellato/memory/idx_type.hpp"
@@ -158,7 +157,7 @@ struct vector_int_factory;
 
 template <typename vector_store_type, int bits>
 class vector_int {
-  public:
+public:
     template <typename T, int N>
     friend class vector_int;
 
@@ -172,17 +171,15 @@ class vector_int {
     template <int other_bits>
     using vector_int_higher_precision_t = vector_int<vector_store_type, (bits > other_bits ? bits : other_bits)>;
 
-    static std::string type_info() {
-        return "vector_int<" + std::to_string(bits) + ">";
-    }
+    static std::string type_info() { return "vector_int<" + std::to_string(bits) + ">"; }
 
     template <typename val_t>
     CUDA_CALLABLE void set_at(int index, val_t value) {
-        #ifndef __CUDA_ARCH__
+#ifndef __CUDA_ARCH__
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
-        #endif
+#endif
 
         for_each_bit([&]<idx_type bit_idx>() {
             auto ith_bit = static_cast<vector_store_type>((value >> bit_idx) & 1);
@@ -196,11 +193,11 @@ class vector_int {
 
     template <typename val_t = int>
     CUDA_CALLABLE val_t get_at(int index) const {
-        #ifndef __CUDA_ARCH__
+#ifndef __CUDA_ARCH__
         if (index > width_in_bits) {
             throw std::out_of_range("Index out of range");
         }
-        #endif
+#endif
 
         val_t value = 0;
 
@@ -225,8 +222,8 @@ class vector_int {
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_added(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits>
+    get_added(vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int res_bits = (bits > other_bits ? bits : other_bits);
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
@@ -286,28 +283,27 @@ class vector_int {
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_ored(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits>
+    get_ored(vector_int<vector_store_type, other_bits> other) const {
 
         return get_oped<other_bits, op_or>(other);
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_xored(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits>
+    get_xored(vector_int<vector_store_type, other_bits> other) const {
 
         return get_oped<other_bits, op_xor>(other);
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_anded(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits>
+    get_anded(vector_int<vector_store_type, other_bits> other) const {
 
         return get_oped<other_bits, op_and>(other);
     }
 
-    CUDA_CALLABLE vector_int<vector_store_type, bits> mask_out_columns(
-        vector_store_type mask) const {
+    CUDA_CALLABLE vector_int<vector_store_type, bits> mask_out_columns(vector_store_type mask) const {
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<idx_type i>() {
@@ -341,9 +337,7 @@ class vector_int {
         return get_shifted_vector<op_shift_left>(shift);
     }
 
-    CUDA_CALLABLE vector_int<vector_store_type, bits> get_noted() const {
-        return get_oped<op_not>();
-    }
+    CUDA_CALLABLE vector_int<vector_store_type, bits> get_noted() const { return get_oped<op_not>(); }
 
     template <int constant>
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_anded() const {
@@ -390,8 +384,8 @@ class vector_int {
     }
 
     template <typename tuple_of_pointers_storage_t>
-    CUDA_CALLABLE static vector_int<vector_store_type, bits> load_from(
-        tuple_of_pointers_storage_t storage, idx_type offset) {
+    CUDA_CALLABLE static vector_int<vector_store_type, bits> load_from(tuple_of_pointers_storage_t storage,
+                                                                       idx_type offset) {
 
         vector_int<vector_store_type, bits> result;
 
@@ -421,8 +415,7 @@ class vector_int {
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_store_type equals_to(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_store_type equals_to(vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = constats_ops<vector_store_type>::ones;
@@ -439,8 +432,7 @@ class vector_int {
                 auto a = std::get<min_bits + i>(numbers);
                 result &= ~a;
             });
-        }
-        else if constexpr (other_bits > bits) {
+        } else if constexpr (other_bits > bits) {
             for_each_in<other_bits - bits>([&]<idx_type i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
                 result &= ~a;
@@ -451,8 +443,7 @@ class vector_int {
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_store_type not_equal_to(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_store_type not_equal_to(vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         vector_store_type result = 0;
@@ -469,8 +460,7 @@ class vector_int {
                 auto a = std::get<min_bits + i>(numbers);
                 result |= a;
             });
-        }
-        else if constexpr (other_bits > bits) {
+        } else if constexpr (other_bits > bits) {
             for_each_in<other_bits - bits>([&]<idx_type i>() {
                 auto a = std::get<min_bits + i>(other.numbers);
                 result |= a;
@@ -490,8 +480,7 @@ class vector_int {
         for_each_in<bits>([&]<idx_type i>() {
             auto a = std::get<i>(numbers);
 
-            constexpr auto constant_is_set =
-                constats_ops<vector_store_type>::template is_set_at<constant>(i);
+            constexpr auto constant_is_set = constats_ops<vector_store_type>::template is_set_at<constant>(i);
 
             if constexpr (constant_is_set) {
                 result &= a;
@@ -504,14 +493,13 @@ class vector_int {
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_store_type greater_than(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_store_type greater_than(vector_int<vector_store_type, other_bits> other) const {
 
         vector_store_type result = 0;
         vector_store_type decided = 0;
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
-        
+
         if constexpr (bits > other_bits) {
             for_each_in<bits - other_bits>([&]<idx_type i_lower>() {
                 constexpr idx_type i = bits - i_lower - 1;
@@ -522,7 +510,7 @@ class vector_int {
         }
 
         decided = result;
-        
+
         if constexpr (other_bits > bits) {
             for_each_in<other_bits - bits>([&]<idx_type i_lower>() {
                 constexpr idx_type i = other_bits - i_lower - 1;
@@ -537,7 +525,7 @@ class vector_int {
 
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
-            
+
             result = result | (~decided & ((a ^ b) & a));
 
             decided = decided | (a ^ b);
@@ -547,14 +535,13 @@ class vector_int {
     }
 
     template <int other_bits>
-    CUDA_CALLABLE vector_store_type less_than(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_store_type less_than(vector_int<vector_store_type, other_bits> other) const {
 
         vector_store_type result = 0;
         vector_store_type decided = 0;
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
-        
+
         if constexpr (other_bits > bits) {
             for_each_in<other_bits - bits>([&]<idx_type i_lower>() {
                 constexpr idx_type i = other_bits - i_lower - 1;
@@ -580,7 +567,7 @@ class vector_int {
 
             auto a = std::get<i>(numbers);
             auto b = std::get<i>(other.numbers);
-            
+
             result = result | (~decided & ((b ^ a) & b));
 
             decided = decided | (b ^ a);
@@ -591,7 +578,7 @@ class vector_int {
 
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_with_switched_pairs_of_numbers() const {
         constexpr vector_store_type mask = static_cast<vector_store_type>(0x5555555555555555); // binary: 0101...
-        
+
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<idx_type i>() {
@@ -607,8 +594,9 @@ class vector_int {
     }
 
     CUDA_CALLABLE vector_int<vector_store_type, bits> get_with_switched_rows_of_8() const {
-        constexpr vector_store_type mask = static_cast<vector_store_type>(0x00FF00FF00FF00FF); // binary: 00000000111111110000000011111111
-        
+        constexpr vector_store_type mask =
+            static_cast<vector_store_type>(0x00FF00FF00FF00FF); // binary: 00000000111111110000000011111111
+
         vector_int<vector_store_type, bits> result;
 
         for_each_in<bits>([&]<idx_type i>() {
@@ -623,10 +611,10 @@ class vector_int {
         return result;
     }
 
-  private:
+private:
     store_t numbers;
 
-    template <typename Callback, std::size_t ... Is>
+    template <typename Callback, std::size_t... Is>
     CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
         (cb.template operator()<static_cast<idx_type>(Is)>(), ...);
     }
@@ -685,8 +673,8 @@ class vector_int {
     }
 
     template <int other_bits, typename op_t>
-    CUDA_CALLABLE vector_int_higher_precision_t<other_bits> get_oped(
-        vector_int<vector_store_type, other_bits> other) const {
+    CUDA_CALLABLE vector_int_higher_precision_t<other_bits>
+    get_oped(vector_int<vector_store_type, other_bits> other) const {
 
         constexpr int min_bits = (bits < other_bits ? bits : other_bits);
         constexpr int max_bits = (bits > other_bits ? bits : other_bits);
@@ -751,8 +739,7 @@ class vector_int {
 struct vector_int_factory {
     template <typename vector_store_type, int constant>
     CUDA_CALLABLE static auto from_constant() {
-        constexpr auto bits
-            = constats_ops<int>::get_highest_set_bit<constant>() + 1;
+        constexpr auto bits = constats_ops<int>::get_highest_set_bit<constant>() + 1;
 
         if constexpr (bits == 0) {
             return vector_int<vector_store_type, 1>{};
@@ -761,12 +748,10 @@ struct vector_int_factory {
         vector_int<vector_store_type, bits + 1> result;
 
         for_each_in<bits + 1>([&]<idx_type bit_idx>() {
-            constexpr auto is_set
-                = constats_ops<vector_store_type>::template is_set_at<constant>(bit_idx);
+            constexpr auto is_set = constats_ops<vector_store_type>::template is_set_at<constant>(bit_idx);
 
             if constexpr (is_set) {
-                std::get<bit_idx>(result.numbers)
-                    = constats_ops<vector_store_type>::ones;
+                std::get<bit_idx>(result.numbers) = constats_ops<vector_store_type>::ones;
             } else {
                 std::get<bit_idx>(result.numbers) = 0;
             }
@@ -790,8 +775,8 @@ struct vector_int_factory {
         return vector_int<vector_store_type, bits>::load_from(storage, offset);
     }
 
-  private:
-    template <typename Callback, std::size_t ... Is>
+private:
+    template <typename Callback, std::size_t... Is>
     CUDA_CALLABLE static void for_each_bit_impl(Callback&& cb, std::index_sequence<Is...>) {
         (cb.template operator()<static_cast<idx_type>(Is)>(), ...);
     }
@@ -802,6 +787,6 @@ struct vector_int_factory {
     }
 };
 
-}
+} // namespace cellato::core::bitwise
 
 #endif // CELLATO_CORE_VECTOR_INT_HPP

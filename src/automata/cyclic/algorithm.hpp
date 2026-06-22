@@ -16,12 +16,14 @@ using one_bigger_then_current = p<one_bigger_then_current_absolute, modulo, cons
 
 using one_bigger_count = count_neighbors<one_bigger_then_current, moore_8_neighbors>;
 
+// clang-format off
 using cyclic_algorithm = if_< p<one_bigger_count, greater_than, constant<0>> >::then_<
         one_bigger_then_current
     >::else_<
         current_state
     >;
+// clang-format on
 
-}
+} // namespace cyclic
 
 #endif // CYCLIC_ALGORITHM_HPP

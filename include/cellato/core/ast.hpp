@@ -80,9 +80,8 @@ struct plus {
     using right = Right;
 };
 
-template <typename ...Algs>
-struct alternate_algorithms {
-};
+template <typename... Algs>
+struct alternate_algorithms {};
 
 template <typename Left, typename Right>
 struct modulo {
@@ -126,12 +125,10 @@ public:
 template <typename C, typename T, typename... Chain>
 class __unpacked_if<C, T, Chain...> {
 public:
-    using nested_if_then_else = if_then_else<
-        C, T,
-        typename __unpacked_if<Chain...>::nested_if_then_else>;
+    using nested_if_then_else = if_then_else<C, T, typename __unpacked_if<Chain...>::nested_if_then_else>;
 };
 
-template <typename Condition, typename ...ChainOfThenElse>
+template <typename Condition, typename... ChainOfThenElse>
 struct if_ {
     template <typename Then>
     struct then_ {
@@ -143,12 +140,11 @@ struct if_ {
     };
 };
 
-
 template <typename Left, template <typename, typename> class Operator, typename Right>
 using p = Operator<Left, Right>;
 
 using current_state = neighbor_at<0, 0>;
 
-}
+} // namespace cellato::ast
 
 #endif // CELLATO_AST_HPP
