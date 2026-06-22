@@ -29,3 +29,13 @@ ctest --preset verification
 cmake --preset benchmark
 cmake --build --preset benchmark --parallel 4
 ```
+
+## Make your own cellular automaton
+
+The [`examples/your_own_ca`](examples/your_own_ca) directory contains a simple application using the Cellato DSL to implement a cellular automaton.
+
+```sh
+cmake --preset release -S examples/your_own_ca
+cmake --build examples/your_own_ca/build/release --parallel 4
+examples/your_own_ca/build/release/your_own_ca
+```
