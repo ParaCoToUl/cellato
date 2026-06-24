@@ -7,7 +7,6 @@ import argparse
 import re
 from pathlib import Path
 
-
 AUTOMATON_RE = re.compile(
     r"APPLY\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([A-Za-z_][A-Za-z0-9_:]*)\s*\)"
 )
@@ -25,10 +24,14 @@ def parse_automata(registry: Path) -> list[tuple[str, str]]:
                 if cursor >= len(lines):
                     raise RuntimeError("CELLATO_AUTOMATA macro is not terminated")
                 macro_lines.append(lines[cursor])
-            macro_body = "\n".join(part.rstrip().removesuffix("\\") for part in macro_lines)
+            macro_body = "\n".join(
+                part.rstrip().removesuffix("\\") for part in macro_lines
+            )
             automata = AUTOMATON_RE.findall(macro_body)
             if not automata:
-                raise RuntimeError("CELLATO_AUTOMATA does not contain any APPLY entries")
+                raise RuntimeError(
+                    "CELLATO_AUTOMATA does not contain any APPLY entries"
+                )
             return automata
 
     raise RuntimeError("CELLATO_AUTOMATA(APPLY) was not found in the registry")
@@ -81,18 +84,22 @@ def cmake_list(name: str, values: list[str]) -> str:
         return f"set({name})\n"
 
     lines = [f"set({name}\n"]
-    lines.extend(f"    \"{value}\"\n" for value in values)
+    lines.extend(f'    "{value}"\n' for value in values)
     lines.append(")\n")
     return "".join(lines)
 
 
 def cmake_fragment(all_sources: list[str], temporal_sources: list[str]) -> str:
-    return "".join([
-        generated_cmake_header(),
-        cmake_list("CELLATO_GENERATED_CUDA_INSTANTIATION_SRCS", all_sources),
-        "\n",
-        cmake_list("CELLATO_GENERATED_TEMPORAL_CUDA_INSTANTIATION_SRCS", temporal_sources),
-    ])
+    return "".join(
+        [
+            generated_cmake_header(),
+            cmake_list("CELLATO_GENERATED_CUDA_INSTANTIATION_SRCS", all_sources),
+            "\n",
+            cmake_list(
+                "CELLATO_GENERATED_TEMPORAL_CUDA_INSTANTIATION_SRCS", temporal_sources
+            ),
+        ]
+    )
 
 
 def main() -> None:
