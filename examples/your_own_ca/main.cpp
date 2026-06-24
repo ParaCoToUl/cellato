@@ -75,6 +75,8 @@ std::vector<cell_state> initial_state() {
 int main() {
     using suite = cellato::run::test_suites::on_cpu::standard<your_own_ca::config>;
 
+    // note that the current suite always runs on CPU with the simple traverser and standard evaluator/layout
+    // regardless of the parameters below
     cellato::run::run_params params{.automaton = your_own_ca::config::name,
                                     .device = "CPU",
                                     .traverser = "simple",
