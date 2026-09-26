@@ -86,24 +86,24 @@ struct _evaluator_impl<params, neighbor_at<x_offset, y_offset>> {
     using state_dictionary_type = typename params::state_dict_t;
 
     CUDA_CALLABLE static auto evaluate(eval_state_t state) {
-        auto center = get_center_offsetted(state);
+        auto result = get_center_offsetted(state);
 
         if constexpr (x_offset != 0) {
             auto horizontal_neighbor = get_horizontal_neighbor(state);
-            center = center.template get_ored(horizontal_neighbor);
+            result = result.get_ored(horizontal_neighbor);
         }
 
         if constexpr (y_offset != 0) {
             auto vertical_neighbor = get_vertical_neighbor(state);
-            center = center.template get_ored(vertical_neighbor);
+            result = result.get_ored(vertical_neighbor);
         }
 
-        if (x_offset != 0 && y_offset != 0) {
+        if constexpr (x_offset != 0 && y_offset != 0) {
             auto diagonal_neighbor = get_diagonal_neighbor(state);
-            center = center.template get_ored(diagonal_neighbor);
+            result = result.get_ored(diagonal_neighbor);
         }
 
-        return center;
+        return result;
     }
 
 private:
