@@ -195,6 +195,7 @@ private:
 
     CUDA_CALLABLE static vint get_diagonal_neighbor(eval_state_t state) {
         // TODO: right now only works for offsets in {-1, 1}
+        static_assert(abs(x_offset) == 1 && abs(y_offset) == 1, "Diagonal neighbor offsets must be in {-1, 1}");
 
         auto x = state.position.x;
         auto y = state.position.y;
