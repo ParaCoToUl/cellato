@@ -86,20 +86,19 @@ examples/your_own_ca/build/release/your_own_ca
 
 ## Publications
 
-Cellato is developed from the ideas in the Cellato DSL paper and the follow-up bit-plane/vectorization work:
+Cellato builds on the DSL paper and the follow-up work on bit-plane encoding and bitwise vectorization listed below. If you use Cellato in research, please cite the most recent paper on bit-plane encoding and bitwise vectorization.
 
 - **Cellato: a DSL for Cellular Automata based on C++ Template Meta-programming**
-  - Journal of Object Technology, 2026.
+  - Matyáš Brabec, Jiří Klepl, and Martin Kruliš.
+  - *Journal of Object Technology*, volume 25, no. 1, pp. 1:1–13, March 2026 (ECOOP 2025 Workshops).
   - DOI: [10.5381/jot.2026.25.1.a13](https://doi.org/10.5381/jot.2026.25.1.a13)
   - Artifact: [matyas-brabec/2025-icooolps-cellato](https://github.com/matyas-brabec/2025-icooolps-cellato)
 
-  Cite as: Matyáš Brabec, Jiří Klepl, Martin Kruliš, “Cellato: a DSL for Cellular Automata based on C++ Template Meta-programming”, Journal of Object Technology, Volume 25, no. 1 ( 2026), pp. 1:1-13, doi:10.5381/jot.2026.25.1.a13.
-
-  BibTeX entry for citation:
+  BibTeX:
 
   ```bibtex
-  @article{
-    title = {Cellato: a DSL for Cellular Automata based on C++ Template Meta-programming},
+  @article{brabec2026cellato,
+    title = {{Cellato}: a {DSL} for Cellular Automata based on {C++} Template Meta-programming},
     author = {Matyáš Brabec and Jiří Klepl and Martin Kruliš},
     journal = {Journal of Object Technology},
     volume = {25},
@@ -107,7 +106,7 @@ Cellato is developed from the ideas in the Cellato DSL paper and the follow-up b
     issn = {1660-1769},
     year = {2026},
     month = mar,
-    pages = {1:1-13},
+    pages = {1:1--13},
     doi = {10.5381/jot.2026.25.1.a13},
     url = {https://www.jot.fm/contents/issue_2026_01/a13.html},
     note = {ECOOP 2025 Workshops}
@@ -115,12 +114,27 @@ Cellato is developed from the ideas in the Cellato DSL paper and the follow-up b
   ```
 
 - **Improving Cellular Automata Performance with Bit-Planes Encoding and Bitwise Vectorization**
-  - In peer-review for the Parallel Computing journal
+  - Matyáš Brabec, Jiří Klepl, and Martin Kruliš.
+  - *Parallel Computing*, article 103226, 2026.
+  - DOI: [10.1016/j.parco.2026.103226](https://doi.org/10.1016/j.parco.2026.103226)
   - Artifact: [matyas-brabec/2026-cellato-journal](https://github.com/matyas-brabec/2026-cellato-journal)
 
-If you use Cellato in research, please cite the most recent published paper.
+  BibTeX:
 
-The linked artifacts preserve the paper-specific replication packages with past versions of Cellato.
+  ```bibtex
+  @article{brabec2026improving,
+    title = {Improving cellular automata performance with bit-planes encoding and bitwise vectorization},
+    author = {Matyáš Brabec and Jiří Klepl and Martin Kruliš},
+    journal = {Parallel Computing},
+    pages = {103226},
+    year = {2026},
+    issn = {0167-8191},
+    doi = {10.1016/j.parco.2026.103226},
+    url = {https://doi.org/10.1016/j.parco.2026.103226}
+  }
+  ```
+
+The linked artifacts contain the replication packages and the versions of Cellato used in each paper.
 
 ## License
 
