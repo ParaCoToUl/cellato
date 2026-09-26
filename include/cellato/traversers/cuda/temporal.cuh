@@ -14,6 +14,7 @@
 #include "cellato/memory/interface.hpp"
 #include "cellato/memory/standard_grid.hpp"
 #include "cellato/traversers/cuda/temporal.hpp"
+#include "cellato/traversers/cuda/temporal_options.hpp"
 #include "cellato/traversers/cuda_utils.cuh"
 #include "cellato/traversers/temporal_utils.cuh"
 #include "cellato/traversers/traverser_utils.hpp"
@@ -165,47 +166,10 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
         call_callback(0, current);
     }
 
-    // Has to be fixed to 32 because of warp size
-    using cuda_th_block_x_opts = std::integer_sequence<idx_type, 32>;
-
-// Others can be adjusted:
-
-// For the full benchmarking
-#ifdef BENCHMARK_COMPILE
-    using temporal_steps_opts =
-        std::integer_sequence<idx_type, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 20, 22, 24>;
-    using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 16, 32, 64, 128>;
-    using cuda_th_block_y_opts = std::integer_sequence<idx_type, 2, 4, 8, 16>;
-#endif
-
-// Verification compilation (for <repo root>/src/_scripts/cluster_run/verify.py script)
-#ifdef VERIFICATION_COMPILE
-    using temporal_steps_opts = std::integer_sequence<idx_type, 4, 8, 12, 20>;
-    using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 8, 32>;
-    using cuda_th_block_y_opts = std::integer_sequence<idx_type, 2, 4>;
-#endif
-
-// Custom compilation -- FOR USER EDITS
-#ifndef BENCHMARK_COMPILE
-#ifndef VERIFICATION_COMPILE
-
-    // possible values for --temporal_steps
-    using temporal_steps_opts = std::integer_sequence<idx_type, 4>;
-
-    // possible values for --temporal_tile_size_y
-    using temporal_block_size_Y_opts = std::integer_sequence<idx_type, 32>;
-
-    // possible values for --cuda_block_size_y
-    using cuda_th_block_y_opts = std::integer_sequence<idx_type, 8>;
-
-#endif
-#endif
-
-    cellato::generic_dispatcher::call<temporal_steps_opts,
-                                      temporal_block_size_Y_opts,
-
-                                      cuda_th_block_x_opts,
-                                      cuda_th_block_y_opts>(
+    cellato::generic_dispatcher::call<options::time_steps,
+                                      options::tile_size_y,
+                                      options::block_size_x,
+                                      options::block_size_y>(
         [&]<idx_type temporal_steps, idx_type temporal_tile_size_y, idx_type block_size_x, idx_type block_size_y>() {
             constexpr idx_type temporal_tile_size_x = block_size_x;
             constexpr idx_type required_buffers_bytes = 2 * temporal_tile_size_y * temporal_tile_size_x *

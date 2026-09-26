@@ -19,6 +19,22 @@ These CLI options identify a suite:
 
 The suite matcher compares those values with static names in the suite catalog. If a packed layout is selected, `--word_size` must match the compiled word type. If spatial blocking is selected, tile sizes must match one of the compiled tile variants. See [Layouts](layouts.md) for the matching evaluator/layout pairs.
 
+## Invalid CLI Options
+
+Invalid runs print a specific error to standard error and exit with status `1`. The CLI distinguishes unknown names from supported names used in an unsupported combination. Available names and combinations come from the compiled suite catalog, so the suggestions match the current binary.
+
+Examples:
+
+```text
+Error: Unknown --traverser 'standard'. Available values: simple, spatial_blocking, temporal.
+Error: Unsupported combination: --automaton game-of-life --device CPU --traverser temporal. Supported --traverser values for --automaton game-of-life --device CPU: simple.
+Error: Unsupported --word_size 16 for --evaluator bit_planes --layout bit_planes. Available values: 32, 64.
+```
+
+Diagnostics also identify missing suite-specific options, unsupported spatial tile pairs, temporal values absent from the current build, and invalid numeric ranges or grid divisibility. Grid-size errors report the required multiple in logical cells, accounting for packed words, CUDA blocks, and temporal halos.
+
+Temporal option sets are shared between validation and kernel dispatch in [`temporal_options.hpp`](../include/cellato/traversers/cuda/temporal_options.hpp). Use `--help` to list the recognized names.
+
 ## CPU Simple Traversal
 
 CLI:

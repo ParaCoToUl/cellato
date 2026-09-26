@@ -152,6 +152,8 @@ struct cuda_temporal_traverser {
 
 template <int y_tile_size, int x_tile_size>
 struct cuda_spatial_blocking_traverser {
+    static constexpr int tile_size_x = x_tile_size;
+    static constexpr int tile_size_y = y_tile_size;
     static constexpr const char* device_name = cuda_opt;
     static constexpr const char* traverser_name = spatial_blocking_opt;
 
@@ -166,6 +168,7 @@ struct cuda_spatial_blocking_traverser {
 template <typename cellular_automaton, typename layout, typename traverser>
 struct suite {
     using automaton = cellular_automaton;
+    using traverser_traits = traverser;
     using layout_traits = typename layout::template bind<cellular_automaton>;
 
     using original_cell_t = typename layout_traits::original_cell_t;

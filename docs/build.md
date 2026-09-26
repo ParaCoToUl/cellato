@@ -114,5 +114,5 @@ The example uses `on_cpu::standard`, so it is the fastest path for learning the 
 
 - If CMake cannot find CUDA, install a CUDA toolkit. The current standalone example also finds and links the CUDA runtime.
 - If `native` CUDA architecture detection fails, pass `-DCMAKE_CUDA_ARCHITECTURES=<arch>`.
-- If a temporal CLI run rejects an option value, use the preset that compiles that value or add it to the option set in `temporal.cuh`.
+- If a temporal CLI run rejects an option value, use the preset that compiles that value or add it to the option set in `include/cellato/traversers/cuda/temporal_options.hpp`.
 - If an automaton is missing from CUDA dispatch, check `src/automata/registry.hpp`, reconfigure CMake, and inspect the generated instantiation sources.

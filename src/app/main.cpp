@@ -16,6 +16,7 @@
 #include "automata/registry.hpp"
 
 #include "args_parser.hpp"
+#include "validation.hpp"
 
 namespace {
 
@@ -79,14 +80,14 @@ struct switch_ {
         if (params.reference_impl != "none") {
             bool ref_executed = run_reference_impl(params);
             if (!ref_executed) {
-                std::cerr << "No suitable reference implementation found for the given parameters." << std::endl;
+                throw std::logic_error("No reference implementation matches the validated parameters.");
             }
             return;
         }
 
         bool any_executed = (call<all_test_suites>(params) || ...);
         if (!any_executed) {
-            std::cerr << "No suitable test suite found for the given parameters." << std::endl;
+            throw std::logic_error("No compiled suite matches the validated parameters.");
         }
     }
 
@@ -155,7 +156,7 @@ struct switch_list;
 template <typename... all_test_suites>
 struct switch_list<cellato::utils::type_list<all_test_suites...>> : switch_<all_test_suites...> {};
 
-cellato::run::run_params get_params(int argc, char* argv[]) {
+cellato::run::run_params get_params(int argc, char* argv[], const input::suite_catalog& catalog) {
     input::parser parser{argc, argv};
 
     if (parser.exists("help")) {
@@ -177,16 +178,8 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
         "steps",
     };
 
-    if (requires_word_size(parser.get("evaluator"))) {
-        required.push_back("word_size");
-    }
-
-    if (requires_temporal_options(parser.get("traverser"))) {
-        required.push_back("temporal_steps");
-        required.push_back("temporal_tile_size_y");
-    }
-
-    if (parser.exists("reference_impl")) {
+    const bool reference_requested = parser.exists("reference_impl") && parser.require("reference_impl") != "none";
+    if (reference_requested) {
         for (const auto& no_longer_required : {"device", "traverser", "evaluator", "layout"}) {
             required.erase(std::remove(required.begin(), required.end(), no_longer_required), required.end());
         }
@@ -232,30 +225,54 @@ cellato::run::run_params get_params(int argc, char* argv[]) {
         .cuda_block_size_x = parse_optional_int_option(parser, "cuda_block_size_x", default_cuda_block_size_x),
         .cuda_block_size_y = parse_optional_int_option(parser, "cuda_block_size_y", default_cuda_block_size_y)};
 
+    const auto candidates = input::select_suites(params, catalog);
+    if (!reference_requested) {
+        std::vector<std::string> dependent_options;
+        if (requires_word_size(parser.get("evaluator"))) dependent_options.push_back("word_size");
+        if (requires_temporal_options(parser.get("traverser"))) {
+            dependent_options.push_back("temporal_steps");
+            dependent_options.push_back("temporal_tile_size_y");
+        }
+        if (params.traverser == "spatial_blocking") {
+            dependent_options.push_back("x_tile_size");
+            dependent_options.push_back("y_tile_size");
+        }
+        for (const auto& option : dependent_options) {
+            if (!parser.exists(option)) {
+                throw std::invalid_argument("Missing required option: --" + option + " for the selected suite.");
+            }
+        }
+    }
+
+    input::validate_parameters(params, candidates);
     return params;
 }
 
-void print_usage() {
+void print_usage(const input::suite_catalog& catalog) {
     std::cout << "Usage: ./cellato [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --automaton <name>              Name of the cellular automaton\n";
-    std::cout << "  --device <name>                 Device to run on (CPU, CUDA)\n";
-    std::cout << "  --traverser <name>              Traverser type (simple, spatial_blocking)\n";
-    std::cout << "  --evaluator <name>              Evaluator type (standard, bit_planes)\n";
-    std::cout << "  --layout <name>                 Layout type (standard, bit_array, bit_planes)\n";
+    std::cout << "  --automaton <name>              "
+              << input::join(input::names(catalog, &input::suite_options::automaton)) << "\n";
+    std::cout << "  --device <name>                 "
+              << input::join(input::names(catalog, &input::suite_options::device)) << "\n";
+    std::cout << "  --traverser <name>              "
+              << input::join(input::names(catalog, &input::suite_options::traverser)) << "\n";
+    std::cout << "  --evaluator <name>              "
+              << input::join(input::names(catalog, &input::suite_options::evaluator)) << "\n";
+    std::cout << "  --layout <name>                 "
+              << input::join(input::names(catalog, &input::suite_options::layout)) << "\n";
     std::cout << "  --reference_impl <name>         Reference implementation to use (baseline)\n";
     std::cout << "  --x_size <number>               X size of the grid\n";
     std::cout << "  --y_size <number>               Y size of the grid\n";
     std::cout << "  --x_tile_size <number>          X tile size for CUDA\n";
     std::cout << "  --y_tile_size <number>          Y tile size for CUDA\n";
-    std::cout << "  --temporal_steps <number>       Temporal steps for CUDA (only for temporal_tiled_bit_planes)\n";
-    std::cout
-        << "  --temporal_tile_size_y <number> Temporal tile size Y for CUDA (only for temporal_tiled_bit_planes)\n";
+    std::cout << "  --temporal_steps <number>       Time steps per temporal CUDA batch\n";
+    std::cout << "  --temporal_tile_size_y <number> Temporal CUDA tile height in words\n";
     std::cout << "  --rounds <number>               Number of rounds to run\n";
     std::cout << "  --warmup_rounds <number>        Number of warmup rounds to run\n";
     std::cout << "  --steps <number>                Number of steps to run\n";
-    std::cout << "  --word_size <number>            word_size for floating-point calculations (32, 64)\n";
-    std::cout << "  --seed <number>                 Random seed for initialization\n";
+    std::cout << "  --word_size <number>            Packed storage word width (32, 64 bits)\n";
+    std::cout << "  --seed <number>                 Random seed for initialization and probabilistic rules\n";
     std::cout << "  --print                         Print the grid after each step\n";
     std::cout << "  --cuda_block_size_x <number>    CUDA block size X (default: 32)\n";
     std::cout << "  --cuda_block_size_y <number>    CUDA block size Y (default: 8)\n";
@@ -266,31 +283,25 @@ void print_usage() {
 } // namespace
 
 int main(int argc, char* argv[]) {
-    cellato::run::run_params params;
+    using all_suites = cellato::run::test_suites::suites_for_all_t<cellato::automata::all>;
     try {
-        params = get_params(argc, argv);
+        const auto catalog = input::make_suite_catalog(all_suites{});
+        auto params = get_params(argc, argv, catalog);
+
+        if (params.help) {
+            print_usage(catalog);
+            return 0;
+        }
+        if (params.print_csv_header) {
+            std::cout << cellato::run::experiment_report::csv_header() << std::endl;
+            return 0;
+        }
+        if (params.print) params.print_std();
+
+        switch_list<all_suites>::run(params);
+        return 0;
     } catch (const std::exception& error) {
-        std::cerr << "Error: " << error.what() << "\n\n";
-        print_usage();
+        std::cerr << "Error: " << error.what() << "\nUse --help to see available options.\n";
         return 1;
     }
-
-    if (params.help) {
-        print_usage();
-        return 0;
-    }
-
-    if (params.print_csv_header) {
-        std::cout << cellato::run::experiment_report::csv_header() << std::endl;
-        return 0;
-    }
-
-    if (params.print) {
-        params.print_std();
-    }
-
-    using all_suites = cellato::run::test_suites::suites_for_all_t<cellato::automata::all>;
-    switch_list<all_suites>::run(params);
-
-    return 0;
 }

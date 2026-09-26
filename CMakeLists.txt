@@ -112,3 +112,8 @@ enable_testing()
 add_test(NAME cellato_tests COMMAND cellato_tests)
 add_test(NAME cellato_probability_cuda_tests COMMAND cellato_probability_cuda_tests)
 set_tests_properties(cellato_probability_cuda_tests PROPERTIES SKIP_RETURN_CODE 77)
+
+add_test(NAME cellato_cli_validation
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_validation.py"
+        --binary "$<TARGET_FILE:cellato>" "--compile-mode=${CELLATO_COMPILE_MODE}"
+)
