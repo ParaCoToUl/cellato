@@ -22,14 +22,16 @@ namespace {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t>
 __global__ void process_grid_kernel_simple(
-    grid_data_t input_data, output_data_t output_data, idx_type width, idx_type height, idx_type time_step) {
+    grid_data_t input_data, output_data_t output_data, idx_type width, idx_type height, idx_type time_step,
+    std::uint64_t random_seed = 42) {
     const idx_type x = blockIdx.x * blockDim.x + threadIdx.x;
     const idx_type y = blockIdx.y * blockDim.y + threadIdx.y;
 
     const cellato::memory::grids::point_in_grid state{.grid = input_data,
                                                       .properties{.x_size = width, .y_size = height},
                                                       .position{.x = x, .y = y},
-                                                      .time_step = time_step};
+                                                      .time_step = time_step,
+                                                      .random_seed = random_seed};
 
     save_to(output_data, state.idx(), evaluator_t::evaluate(state));
 }
@@ -59,7 +61,7 @@ void traverser<evaluator_type, grid_type>::run_kernel(int steps) {
 
     for (int step = 0; step < steps; ++step) {
         process_grid_kernel_simple<evaluator_t>
-            <<<gridDim, blockDim>>>(current->data(), next->data(), width, height, step);
+            <<<gridDim, blockDim>>>(current->data(), next->data(), width, height, step, _random_seed);
 
         if constexpr (mode == _run_mode::VERBOSE) {
             call_callback(step + 1, next);

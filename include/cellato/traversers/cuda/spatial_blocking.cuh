@@ -17,7 +17,8 @@ namespace cellato::traversers::cuda::spatial_blocking {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t, int Y_TILE_SIZE, int X_TILE_SIZE>
 __global__ void process_grid_kernel_blocked(
-    grid_data_t input_data, output_data_t output_data, size_t width, size_t height, int time_step) {
+    grid_data_t input_data, output_data_t output_data, size_t width, size_t height, int time_step,
+    std::uint64_t random_seed = 42) {
     // Calculate base coordinates for this thread's tile
     int base_x = blockIdx.x * blockDim.x + threadIdx.x;
     int base_y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -41,6 +42,7 @@ __global__ void process_grid_kernel_blocked(
             state.position.x = x;
             state.position.y = y;
             state.time_step = time_step;
+            state.random_seed = random_seed;
 
             auto result = evaluator_t::evaluate(state);
             save_to(output_data, state.idx(), result);
@@ -73,7 +75,7 @@ void traverser<evaluator_type, grid_type, Y_TILE_SIZE, X_TILE_SIZE>::run_kernel(
         auto output_data = next->data();
 
         process_grid_kernel_blocked<evaluator_t, decltype(input_data), decltype(output_data), Y_TILE_SIZE, X_TILE_SIZE>
-            <<<gridDim, blockDim>>>(input_data, output_data, width, height, step);
+            <<<gridDim, blockDim>>>(input_data, output_data, width, height, step, _random_seed);
 
         if constexpr (mode == _run_mode::VERBOSE) {
             call_callback(step + 1, next);

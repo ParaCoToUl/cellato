@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "cellato/core/ast.hpp"
+#include "cellato/core/probability.hpp"
 #include "cellato/core/vector_int.hpp"
 #include "cellato/memory/bit_planes_grid.hpp"
 #include "cellato/memory/grid_utils.hpp"
@@ -56,6 +57,20 @@ using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::ne
 template <typename params>
 using state_t = cellato::memory::grids::point_in_grid<
     grid_cell_data_type<typename params::cell_row_t, typename params::state_dict_t>>;
+
+template <typename params, std::uint64_t Numerator, std::uint64_t Denominator, std::uint64_t Stream>
+struct _evaluator_impl<params, probability<Numerator, Denominator, Stream>> {
+    using word_t = typename params::cell_row_t;
+    using probability_t = probability<Numerator, Denominator, Stream>;
+
+    CUDA_CALLABLE static word_t evaluate(state_t<params> state) {
+        const auto position = cellato::core::random::global_position(state);
+        cellato::core::random::word_source<word_t> source(
+            state, position.x * (sizeof(word_t) * 8), position.y, probability_t::stream);
+        return cellato::core::random::sample_ratio<word_t, probability_t::numerator, probability_t::denominator>(
+            source);
+    }
+};
 
 template <typename params, auto Value>
 struct _evaluator_impl<params, constant<Value>> {

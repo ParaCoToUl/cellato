@@ -105,6 +105,37 @@ using gol_algorithm =
 
 The syntax resembles ordinary control flow, but all branches are type expressions. Evaluators decide how to lower those expressions for their layout.
 
+## Probabilistic Predicates
+
+`probability<Numerator, Denominator, Stream = 0>` is a boolean predicate with the
+exact rational probability `Numerator / Denominator` of being true for each cell
+at each time step. The denominator must be positive and the numerator must be
+between zero and the denominator; invalid ratios fail at compile time.
+
+```cpp
+using ignite = probability<1, 100, 0>;
+using recover = probability<3, 8, 1>;
+
+using stochastic_rule =
+    if_<p<current_state, equals, alive>>::then_<
+        if_<recover>::then_<dead>::else_<alive>
+    >::else_<
+        if_<ignite>::then_<alive>::else_<dead>
+    >;
+```
+
+Use a distinct `Stream` number for each independent random event in a rule. Reusing a stream reuses the same random binary fraction for that cell and time step, even across different ratios: `probability<1, 4, 0>` implies
+`probability<1, 2, 0>`. In particular, combining two copies of `probability<1, 2>` with `and_` still has probability `1/2`. Use different streams to obtain independent trials with combined probability `1/4`.
+
+Randomness is determined by `run_params::seed`, logical cell coordinates, time step, and stream. The same inputs reproduce the same events on CPU and CUDA, across all four layouts and supported word sizes. Temporal traversal uses global coordinates, so overlapping halo computations agree. Branch evaluation order does not affect the draws. Direct evaluator users can set `point_in_grid::random_seed` (default `42`); traversal supplies it automatically.
+When evaluating a local tile directly, also supply its physical word offset in `random_origin` and the global physical dimensions in `random_domain`.
+
+The bit-plane implementations generate whole words of random bits, one bit per cell, and compare the resulting random binary fractions with the requested ratio using bitwise logic. Finite binary ratios reduce to a fixed AND/OR
+expression: `1/4` uses two random words and `3/8` uses three. Ratios such as `1/3` continue drawing words for undecided lanes until all lanes are resolved. This avoids fixed-precision rounding and modulo bias; non-dyadic ratios have variable work with no fixed worst-case draw count. Ratios `0/D` and `D/D` need no random
+draws. Tiled bit planes assemble eight-bit row slices from the same random words used by the other layouts.
+
+The ratio describes each cell's probability, not a guaranteed fraction of set bits in each word or generation. Sampling uses a deterministic integer PRNG; exactness refers to the rational sampling algorithm under uniform random bits, not to exact frequencies in a finite simulation.
+
 ## Alternate Algorithms
 
 `alternate_algorithms<...>` represents automata whose update alternates between multiple rules. The bundled Traffic automaton uses it to alternate red-car and blue-car movement directions:

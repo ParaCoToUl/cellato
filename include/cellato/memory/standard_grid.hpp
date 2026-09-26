@@ -34,11 +34,12 @@ public:
     using store_type = cell_type;
     constexpr static bool HAS_OWN_PRINT = true;
 
-    grid(int x_size, int y_size) : _properties{x_size, y_size}, _data(x_size * y_size) {}
+    grid(int x_size, int y_size) : _properties{x_size, y_size}, _data(x_size * y_size), _cuda_data(nullptr) {}
 
     grid() = default;
 
-    grid(std::vector<cell_type>&& data, int x_size, int y_size) : _properties{x_size, y_size}, _data(std::move(data)) {
+    grid(std::vector<cell_type>&& data, int x_size, int y_size)
+        : _properties{x_size, y_size}, _data(std::move(data)), _cuda_data(nullptr) {
         if ((int)_data.size() != x_size * y_size) {
             throw std::invalid_argument("Data size does not match grid dimensions");
         }
@@ -52,7 +53,7 @@ public:
     }
 
     grid(const grids::properties& properties, std::vector<cell_type> data)
-        : _properties(properties), _data(std::move(data)) {}
+        : _properties(properties), _data(std::move(data)), _cuda_data(nullptr) {}
 
     cell_type* data() const {
         if constexpr (device_type == device::CUDA) {

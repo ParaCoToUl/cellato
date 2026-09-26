@@ -2,6 +2,7 @@
 #define CELLATO_MEMORY_INTERFACE_HPP
 
 #include <cstddef>
+#include <cstdint>
 #ifndef CUDA_CALLABLE
 #ifdef __CUDACC__
 #define CUDA_CALLABLE __host__ __device__
@@ -49,6 +50,12 @@ struct point_in_grid {
     grids::point position{};
 
     idx_type time_step = 0;
+
+    std::uint64_t random_seed = 42;
+    // Randomness uses global physical coordinates, including for shared-memory tiles.
+    grids::point random_origin{};
+    // A zero-sized domain falls back to the grid properties.
+    grids::properties random_domain{};
 
     CUDA_CALLABLE idx_type idx() const { return properties.idx(position.x, position.y); }
 

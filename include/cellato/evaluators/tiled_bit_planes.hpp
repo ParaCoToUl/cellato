@@ -13,6 +13,7 @@
 #include "./bit_planes.hpp"
 
 #include "cellato/core/ast.hpp"
+#include "cellato/core/probability.hpp"
 #include "cellato/core/vector_int.hpp"
 #include "cellato/memory/bit_planes_grid.hpp"
 #include "cellato/memory/grid_utils.hpp"
@@ -75,6 +76,21 @@ struct _evaluator_impl {
 template <typename cell_row_type, typename state_dictionary_type, typename Expression>
 using evaluator =
     _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
+
+template <typename params, std::uint64_t Numerator, std::uint64_t Denominator, std::uint64_t Stream>
+struct _evaluator_impl<params, probability<Numerator, Denominator, Stream>> {
+    using word_t = typename params::cell_row_t;
+    using probability_t = probability<Numerator, Denominator, Stream>;
+    static constexpr int rows = sizeof(word_t);
+
+    CUDA_CALLABLE static word_t evaluate(state_t<params> state) {
+        const auto position = cellato::core::random::global_position(state);
+        cellato::core::random::word_source<word_t, rows> source(
+            state, position.x * 8, position.y * rows, probability_t::stream);
+        return cellato::core::random::sample_ratio<word_t, probability_t::numerator, probability_t::denominator>(
+            source);
+    }
+};
 
 // Partial specialization for neighbor_at
 template <typename params, idx_type x_offset, idx_type y_offset>

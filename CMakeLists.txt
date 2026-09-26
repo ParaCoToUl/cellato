@@ -68,7 +68,11 @@ add_executable(cellato_tests
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runner.cpp"
 )
 
-foreach(target IN ITEMS cellato cellato_tests)
+add_executable(cellato_probability_cuda_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/probability_cuda.cu"
+)
+
+foreach(target IN ITEMS cellato cellato_tests cellato_probability_cuda_tests)
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -87,9 +91,13 @@ foreach(target IN ITEMS cellato cellato_tests)
     )
 
     if(CELLATO_COMPILE_MODE STREQUAL "BENCHMARK")
-        target_compile_definitions(${target} PRIVATE BENCHMARK_COMPILE)
+        if(NOT target STREQUAL "cellato_probability_cuda_tests")
+            target_compile_definitions(${target} PRIVATE BENCHMARK_COMPILE)
+        endif()
     elseif(CELLATO_COMPILE_MODE STREQUAL "VERIFICATION")
-        target_compile_definitions(${target} PRIVATE VERIFICATION_COMPILE)
+        if(NOT target STREQUAL "cellato_probability_cuda_tests")
+            target_compile_definitions(${target} PRIVATE VERIFICATION_COMPILE)
+        endif()
     elseif(NOT CELLATO_COMPILE_MODE STREQUAL "")
         message(FATAL_ERROR "Unsupported CELLATO_COMPILE_MODE: ${CELLATO_COMPILE_MODE}")
     endif()
@@ -102,3 +110,5 @@ set_source_files_properties(
 
 enable_testing()
 add_test(NAME cellato_tests COMMAND cellato_tests)
+add_test(NAME cellato_probability_cuda_tests COMMAND cellato_probability_cuda_tests)
+set_tests_properties(cellato_probability_cuda_tests PROPERTIES SKIP_RETURN_CODE 77)

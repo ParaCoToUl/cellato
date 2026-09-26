@@ -40,7 +40,8 @@ template <typename evaluator_t,
           typename output_data_t>
 
 __global__ void process_grid_kernel_linear_temporal(
-    grid_data_t input_data, output_data_t output_data, idx_type width, idx_type height, idx_type time_step) {
+    grid_data_t input_data, output_data_t output_data, idx_type width, idx_type height, idx_type time_step,
+    std::uint64_t random_seed = 42) {
     using grid_props = props<grid_data_t>;
     using store_t = typename grid_props::no_pointer_type;
     using prt_t = typename grid_props::ptr_type;
@@ -108,6 +109,11 @@ __global__ void process_grid_kernel_linear_temporal(
             state.position.y = local_y_start + y_offset;
 
             state.time_step = time_step + t;
+            state.random_seed = random_seed;
+            // Halo copies of a physical word must use the same random stream.
+            state.random_origin.x = global_x_non_wrapped - local_x;
+            state.random_origin.y = global_y_start_non_wrapped - local_y_start;
+            state.random_domain = {.x_size = width, .y_size = height};
 
             auto result = evaluator_t::evaluate(state);
             save_to(next, state.idx(), result);
@@ -252,7 +258,8 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
                                                         average_halo_radius,
                                                         block_size_x,
                                                         block_size_y>
-                        <<<gridDim, blockDim, required_buffers_bytes>>>(input_data, output_data, width, height, step);
+                        <<<gridDim, blockDim, required_buffers_bytes>>>(
+                            input_data, output_data, width, height, step, _random_seed);
 
                     if constexpr (mode == _run_mode::VERBOSE) {
                         call_callback(step + temporal_steps, next);

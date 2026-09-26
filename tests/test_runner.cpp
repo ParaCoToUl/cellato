@@ -6,6 +6,7 @@
 #include "bit_array_grid.hpp"
 #include "vector-int.hpp"
 #include "bit_evaluator.hpp"
+#include "probability.hpp"
 
 using namespace cellato::tests;
 
@@ -16,6 +17,7 @@ int main(int argc, char* argv[]) {
     register_bit_array_grid_tests();
     register_vector_int_tests();
     register_bit_evaluator_tests();
+    register_probability_tests();
     
     // If an argument is provided, run that specific test suite
     if (argc > 1) {

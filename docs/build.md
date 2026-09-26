@@ -1,6 +1,6 @@
 # Build Reference
 
-Cellato uses CMake presets. The main build configures C++ and CUDA, generates CUDA explicit-instantiation files, builds the `cellato` CLI, and builds the `cellato_tests` test executable.
+Cellato uses CMake presets. The main build configures C++ and CUDA, generates CUDA explicit-instantiation files, builds the `cellato` CLI, and builds the CPU and CUDA test executables.
 
 ## Presets
 
@@ -16,6 +16,7 @@ Artifacts:
 
 - `build/release/cellato`
 - `build/release/cellato_tests`
+- `build/release/cellato_probability_cuda_tests`
 - `build/release/generated/cuda_instantiations/`
 
 Verification:

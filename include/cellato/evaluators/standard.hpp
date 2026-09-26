@@ -2,10 +2,12 @@
 #define CELLATO_STANDARD_EVALUATORS_HPP
 
 #include <cstddef>
+#include <cstdint>
 
 #include <utility>
 
 #include "cellato/core/ast.hpp"
+#include "cellato/core/probability.hpp"
 #include "cellato/memory/idx_type.hpp"
 #include "cellato/memory/interface.hpp"
 
@@ -27,6 +29,19 @@ struct evaluator;
 
 template <typename cell_type, typename cell_ptr_type = cell_type*>
 using state_t = grids::point_in_grid<cell_ptr_type>;
+
+template <typename cell_type,
+          typename cell_ptr_type,
+          std::uint64_t Numerator,
+          std::uint64_t Denominator,
+          std::uint64_t Stream>
+struct evaluator<cell_type, probability<Numerator, Denominator, Stream>, cell_ptr_type> {
+    static CUDA_CALLABLE bool evaluate(state_t<cell_type, cell_ptr_type> state) {
+        const auto position = cellato::core::random::global_position(state);
+        return cellato::core::random::sample_cell<probability<Numerator, Denominator, Stream>>(
+            state, position.x, position.y);
+    }
+};
 
 template <typename cell_type, typename cell_ptr_type, auto Value>
 struct evaluator<cell_type, constant<Value>, cell_ptr_type> {

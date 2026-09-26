@@ -40,6 +40,7 @@ public:
 
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
+        _random_seed = static_cast<std::uint64_t>(params.seed);
 
         _temporal_tile_size_y = params.temporal_tile_size_y;
         _temporal_steps = params.temporal_steps;
@@ -113,6 +114,7 @@ private:
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;
     cuda_grid_t* _final_grid;
+    std::uint64_t _random_seed = 42;
 
     int _block_size_x = -1;
     int _block_size_y = -1;

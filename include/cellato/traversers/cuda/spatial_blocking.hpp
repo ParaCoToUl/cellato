@@ -35,6 +35,7 @@ public:
     void init(grid_t grid, const cellato::run::run_params& params) {
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
+        _random_seed = static_cast<std::uint64_t>(params.seed);
 
         _input_grid = std::move(grid);
 
@@ -68,6 +69,7 @@ private:
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;
     cuda_grid_t* _final_grid;
+    std::uint64_t _random_seed = 42;
 
     int _block_size_x = X_TILE_SIZE;
     int _block_size_y = Y_TILE_SIZE;

@@ -7,6 +7,7 @@ This page maps major source locations to responsibilities. It is not a generated
 | Path | Responsibility |
 | --- | --- |
 | [`include/cellato/core/ast.hpp`](../include/cellato/core/ast.hpp) | Type-level AST nodes, neighborhood tags, conditional aliases, binary predicate alias `p`, and `current_state`. |
+| [`include/cellato/core/probability.hpp`](../include/cellato/core/probability.hpp) | Exact rational sampling with random bit-plane words and reproducible streams across layouts. |
 | [`include/cellato/core/vector_int.hpp`](../include/cellato/core/vector_int.hpp) | Integer helpers used by bit-level evaluator implementations. |
 | [`include/cellato/utils/type_list.hpp`](../include/cellato/utils/type_list.hpp) | Compile-time type-list utilities used by automata and suite catalogs. |
 | [`include/cellato/utils/static_dispatcher.hpp`](../include/cellato/utils/static_dispatcher.hpp) | Static dispatch support for runtime values that must map to compile-time options. |

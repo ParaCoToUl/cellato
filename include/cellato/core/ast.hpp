@@ -1,7 +1,20 @@
 #ifndef CELLATO_AST_HPP
 #define CELLATO_AST_HPP
 
+#include <cstdint>
+
 namespace cellato::ast {
+
+// A reproducible Bernoulli predicate. Use distinct streams for independent events.
+template <std::uint64_t Numerator, std::uint64_t Denominator, std::uint64_t Stream = 0>
+struct probability {
+    static_assert(Denominator > 0, "Probability denominator must be positive");
+    static_assert(Numerator <= Denominator, "Probability must lie between zero and one");
+
+    static constexpr std::uint64_t numerator = Numerator;
+    static constexpr std::uint64_t denominator = Denominator;
+    static constexpr std::uint64_t stream = Stream;
+};
 
 template <auto Value>
 struct constant {

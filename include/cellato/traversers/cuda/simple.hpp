@@ -38,6 +38,7 @@ public:
 
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
+        _random_seed = static_cast<std::uint64_t>(params.seed);
 
         if (grid.x_size_physical() % _block_size_x != 0 || grid.y_size_physical() % _block_size_y != 0) {
             std::cerr << "Grid size must be divisible by block size.\n";
@@ -76,6 +77,7 @@ private:
     cuda_grid_t _input_grid_cuda;
     cuda_grid_t _intermediate_grid_cuda;
     cuda_grid_t* _final_grid;
+    std::uint64_t _random_seed = 42;
 
     int _block_size_x = 16;
     int _block_size_y = 16;

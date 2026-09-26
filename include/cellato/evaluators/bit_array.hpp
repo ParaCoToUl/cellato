@@ -2,6 +2,7 @@
 #define CELLATO_BIT_ARRAY_EVALUATORS_HPP
 
 #include "cellato/core/ast.hpp"
+#include "cellato/core/probability.hpp"
 #include "cellato/memory/idx_type.hpp"
 #include "cellato/memory/interface.hpp"
 #include <cstddef>
@@ -103,6 +104,19 @@ struct evaluator {
 using one_cell_int = std::int32_t;
 
 // Implement specific expression evaluators below
+
+template <typename grid_t,
+          std::uint64_t Numerator,
+          std::uint64_t Denominator,
+          std::uint64_t Stream,
+          idx_type subcell_offset>
+struct _impl_evaluator<grid_t, probability<Numerator, Denominator, Stream>, subcell_offset> {
+    CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
+        const auto position = cellato::core::random::global_position(state);
+        return cellato::core::random::sample_cell<probability<Numerator, Denominator, Stream>>(
+            state, position.x * grid_t::cells_per_word + subcell_offset, position.y);
+    }
+};
 
 // Constants
 template <typename grid_t, auto Value, idx_type subcell_offset>

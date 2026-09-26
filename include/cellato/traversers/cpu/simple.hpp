@@ -2,6 +2,7 @@
 #define CELLATO_TRAVERSERS_CPU_SIMPLE_HPP
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <thread>
@@ -26,7 +27,7 @@ public:
     static constexpr bool is_CUDA = false;
 
     void init(grid_t grid, const cellato::run::run_params& params) {
-        (void)params; // Unused parameter
+        _random_seed = static_cast<std::uint64_t>(params.seed);
 
         _input_grid = std::move(grid);
         _intermediate_grid = _input_grid;
@@ -45,6 +46,7 @@ public:
 
         state.properties.x_size = _input_grid.x_size_physical();
         state.properties.y_size = _input_grid.y_size_physical();
+        state.random_seed = _random_seed;
 
         if constexpr (!std::is_same_v<callback, no_callback>) {
             callback_func(0, _input_grid);
@@ -89,6 +91,7 @@ public:
 private:
     grid_t _input_grid, _intermediate_grid;
     grid_t* _final_grid;
+    std::uint64_t _random_seed = 42;
 };
 
 } // namespace cellato::traversers::cpu::simple
