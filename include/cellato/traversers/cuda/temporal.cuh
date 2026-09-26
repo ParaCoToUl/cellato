@@ -40,9 +40,12 @@ template <typename evaluator_t,
           typename grid_data_t,
           typename output_data_t>
 
-__global__ void process_grid_kernel_linear_temporal(
-    grid_data_t input_data, output_data_t output_data, idx_type width, idx_type height, idx_type time_step,
-    std::uint64_t random_seed = 42) {
+__global__ void process_grid_kernel_linear_temporal(grid_data_t input_data,
+                                                    output_data_t output_data,
+                                                    idx_type width,
+                                                    idx_type height,
+                                                    idx_type time_step,
+                                                    std::uint64_t random_seed = 42) {
     using grid_props = props<grid_data_t>;
     using store_t = typename grid_props::no_pointer_type;
     using prt_t = typename grid_props::ptr_type;
@@ -221,9 +224,8 @@ void traverser<evaluator_type, grid_type, average_halo_radius>::run_kernel(int s
                                                         word_tile_y,
                                                         average_halo_radius,
                                                         block_size_x,
-                                                        block_size_y>
-                        <<<gridDim, blockDim, required_buffers_bytes>>>(
-                            input_data, output_data, width, height, step, _random_seed);
+                                                        block_size_y><<<gridDim, blockDim, required_buffers_bytes>>>(
+                        input_data, output_data, width, height, step, _random_seed);
 
                     if constexpr (mode == _run_mode::VERBOSE) {
                         call_callback(step + temporal_steps, next);

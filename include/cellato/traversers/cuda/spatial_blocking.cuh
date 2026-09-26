@@ -16,9 +16,12 @@
 namespace cellato::traversers::cuda::spatial_blocking {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t, int Y_TILE_SIZE, int X_TILE_SIZE>
-__global__ void process_grid_kernel_blocked(
-    grid_data_t input_data, output_data_t output_data, size_t width, size_t height, int time_step,
-    std::uint64_t random_seed = 42) {
+__global__ void process_grid_kernel_blocked(grid_data_t input_data,
+                                            output_data_t output_data,
+                                            size_t width,
+                                            size_t height,
+                                            int time_step,
+                                            std::uint64_t random_seed = 42) {
     // Calculate base coordinates for this thread's tile
     int base_x = blockIdx.x * blockDim.x + threadIdx.x;
     int base_y = blockIdx.y * blockDim.y + threadIdx.y;

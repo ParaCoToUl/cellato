@@ -21,9 +21,12 @@ using idx_type = cellato::memory::idx_type;
 namespace {
 
 template <typename evaluator_t, typename grid_data_t, typename output_data_t>
-__global__ void process_grid_kernel_simple(
-    grid_data_t input_data, output_data_t output_data, idx_type width, idx_type height, idx_type time_step,
-    std::uint64_t random_seed = 42) {
+__global__ void process_grid_kernel_simple(grid_data_t input_data,
+                                           output_data_t output_data,
+                                           idx_type width,
+                                           idx_type height,
+                                           idx_type time_step,
+                                           std::uint64_t random_seed = 42) {
     const idx_type x = blockIdx.x * blockDim.x + threadIdx.x;
     const idx_type y = blockIdx.y * blockDim.y + threadIdx.y;
 
