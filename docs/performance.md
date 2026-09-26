@@ -62,7 +62,7 @@ There are two useful tendencies:
 
 ## Compile-Time Temporal Options
 
-Temporal kernel options are compiled into the binary. The current header [`include/cellato/traversers/cuda/temporal.cuh`](../include/cellato/traversers/cuda/temporal.cuh) selects option sets with compile definitions:
+Temporal kernel options are compiled into the binary. The current header [`include/cellato/traversers/cuda/temporal_options.hpp`](../include/cellato/traversers/cuda/temporal_options.hpp) selects option sets with compile definitions:
 
 | Build mode | Compile definition | Purpose |
 | --- | --- | --- |
