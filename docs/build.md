@@ -1,6 +1,20 @@
 # Build Reference
 
-Cellato uses CMake presets. The main build configures C++ and CUDA, generates CUDA explicit-instantiation files, builds the `cellato` CLI, and builds the CPU and CUDA test executables.
+Cellato uses CMake presets. The main build requires C++20 and Python 3 and builds the `cellato` CLI and CPU tests. When CUDA support is enabled, it also generates CUDA explicit-instantiation files and builds GPU traversers and CUDA tests.
+
+## Optional CUDA Support
+
+On the first configuration, `CELLATO_ENABLE_CUDA` defaults to `ON` if CMake detects a CUDA compiler and `OFF` otherwise. The choice is cached for subsequent configurations. Override it explicitly with:
+
+```sh
+cmake --preset release -DCELLATO_ENABLE_CUDA=OFF
+cmake --build --preset release --parallel 4
+ctest --preset release
+```
+
+A CPU-only build does not search for the CUDA toolkit, compile `.cu` files, or link the CUDA runtime. All CPU layouts and baseline reference implementations remain available. Requests for `--device CUDA` report that CUDA support is disabled. Set `-DCELLATO_ENABLE_CUDA=ON` to require CUDA; configuration fails if no usable CUDA compiler is found.
+
+For direct header use, ordinary C++ compilation defaults to CPU-only. To use CUDA APIs, define `CELLATO_ENABLE_CUDA=1` consistently in all translation units, supply the CUDA include directories, and link the CUDA runtime. Compilation with `nvcc` defaults to CUDA enabled. Explicitly defining `CELLATO_ENABLE_CUDA=0` disables CUDA APIs even when the toolkit is installed.
 
 ## Presets
 
@@ -16,8 +30,8 @@ Artifacts:
 
 - `build/release/cellato`
 - `build/release/cellato_tests`
-- `build/release/cellato_probability_cuda_tests`
-- `build/release/generated/cuda_instantiations/`
+- `build/release/cellato_probability_cuda_tests` (CUDA builds)
+- `build/release/generated/cuda_instantiations/` (CUDA builds)
 
 Verification:
 
@@ -68,7 +82,7 @@ Use this on CI, clusters, cross-compilation environments, or machines where the 
 
 ## Generated CUDA Instantiations
 
-During CMake configuration, the root [`CMakeLists.txt`](../CMakeLists.txt) runs:
+During CMake configuration with CUDA enabled, the root [`CMakeLists.txt`](../CMakeLists.txt) runs:
 
 ```text
 tools/generate_cuda_instantiations.py
@@ -108,11 +122,11 @@ cmake --build examples/your_own_ca/build/release --parallel 4
 examples/your_own_ca/build/release/your_own_ca
 ```
 
-The example uses `on_cpu::standard`, so it is the fastest path for learning the direct library API. Its CMake target still finds and links the CUDA runtime because it includes shared Cellato headers.
+The example uses `on_cpu::standard` and builds with just CMake and a C++20 compiler. It does not require CUDA headers or runtime libraries.
 
 ## Troubleshooting
 
-- If CMake cannot find CUDA, install a CUDA toolkit. The current standalone example also finds and links the CUDA runtime.
+- If CUDA is explicitly enabled and CMake cannot find it, install a CUDA toolkit or configure with `-DCELLATO_ENABLE_CUDA=OFF`. After installing a toolkit, use a fresh build directory or set `CMAKE_CUDA_COMPILER` to avoid a cached failed detection.
 - If `native` CUDA architecture detection fails, pass `-DCMAKE_CUDA_ARCHITECTURES=<arch>`.
 - If a temporal CLI run rejects an option value, use the preset that compiles that value or add it to the option set in `include/cellato/traversers/cuda/temporal_options.hpp`.
 - If an automaton is missing from CUDA dispatch, check `src/automata/registry.hpp`, reconfigure CMake, and inspect the generated instantiation sources.

@@ -1,14 +1,19 @@
 #ifndef REFERENCE_IMPL_MANAGER_HPP
 #define REFERENCE_IMPL_MANAGER_HPP
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
 
+#include "cellato/config.hpp"
+#if CELLATO_ENABLE_CUDA
 #include "cellato/traversers/cuda_utils.cuh"
 #include <cuda_runtime.h>
+#endif
 
 #include "./experiment_report.hpp"
 #include "./run_params.hpp"
@@ -62,7 +67,11 @@ private:
         // --- 2. Device-Specific Execution & Timing ---
         double duration_ms = 0.0;
         if (params.device == "CUDA") {
+#if CELLATO_ENABLE_CUDA
             duration_ms = time_cuda_run(runner, params);
+#else
+            throw std::runtime_error("CUDA support is disabled. Rebuild with CELLATO_ENABLE_CUDA=ON.");
+#endif
         } else {
             duration_ms = time_cpu_run(runner, params);
         }
@@ -77,6 +86,7 @@ private:
         return {duration_ms, checksum};
     }
 
+#if CELLATO_ENABLE_CUDA
     /**
      * @brief Handles CUDA-specific initialization, execution, and timing.
      * @return The execution time in milliseconds.
@@ -104,6 +114,8 @@ private:
 
         return static_cast<double>(milliseconds);
     }
+
+#endif
 
     /**
      * @brief Handles CPU-specific execution and timing.

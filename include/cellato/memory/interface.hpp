@@ -1,6 +1,8 @@
 #ifndef CELLATO_MEMORY_INTERFACE_HPP
 #define CELLATO_MEMORY_INTERFACE_HPP
 
+#include "../config.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #ifndef CUDA_CALLABLE

@@ -9,7 +9,15 @@ The CLI is useful for checking correctness and comparing execution variants on d
 
 ## Requirements
 
-Cellato is built with CMake and uses C++20 and CUDA. The top-level project enables both C++ and CUDA languages, so a CUDA toolkit must be available even when you only plan to run CPU examples from the main build. The standalone example is a C++ target, but it currently still finds and links the CUDA runtime because it includes the shared Cellato headers.
+Cellato requires a C++20 compiler, CMake, and Python 3 for the main build's tests and CUDA source generation. CUDA is optional: CMake enables GPU support when it detects a CUDA compiler, and otherwise builds the CPU CLI and tests without CUDA headers or runtime libraries. The standalone example needs only CMake and a C++20 compiler.
+
+To explicitly select a CPU-only build:
+
+```sh
+cmake --preset release -DCELLATO_ENABLE_CUDA=OFF
+```
+
+Use `-DCELLATO_ENABLE_CUDA=ON` to require CUDA support; configuration fails if the toolkit is unavailable.
 
 The default CUDA architecture is `native`. On machines where CMake cannot infer the local GPU or to compile for a specific architecture, pass an explicit option to the preset:
 
@@ -63,7 +71,7 @@ The option triplet `--traverser`, `--evaluator`, and `--layout` selects a precom
 
 ## Run A CUDA Smoke Test
 
-On a machine with a usable CUDA GPU, this command runs the same automaton with linear bit planes:
+With CUDA support enabled and a usable CUDA GPU, this command runs the same automaton with linear bit planes:
 
 ```sh
 build/release/cellato \

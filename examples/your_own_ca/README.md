@@ -20,7 +20,7 @@ cmake --build examples/your_own_ca/build/release --parallel 4
 examples/your_own_ca/build/release/your_own_ca
 ```
 
-The example CMake project is a C++ target, but it currently still finds and links the CUDA runtime because it includes shared Cellato headers.
+The example requires only CMake and a C++20 compiler. Its CPU-only target does not require CUDA headers or runtime libraries.
 
 ## File Layout
 

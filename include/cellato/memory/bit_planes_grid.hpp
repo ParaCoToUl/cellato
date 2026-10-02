@@ -1,11 +1,16 @@
 #ifndef CELLATO_BIT_PLANES_GRID_HPP
 #define CELLATO_BIT_PLANES_GRID_HPP
 
+#include "../config.hpp"
+
+#if CELLATO_ENABLE_CUDA
+#include <cuda_runtime.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cuda_runtime.h>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -29,6 +34,9 @@ struct cuda_params {
 
 template <typename store_word_type, typename states_dict_t, device device_type = device::CPU>
 class grid {
+    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU,
+                  "CUDA grids require CELLATO_ENABLE_CUDA=1");
+
 public:
     friend class cellato::memory::grids::bit_planes::grid<store_word_type, states_dict_t, device::CPU>;
     friend class cellato::memory::grids::bit_planes::grid<store_word_type, states_dict_t, device::CUDA>;
@@ -82,6 +90,7 @@ public:
     }
 
     void free_cuda_memory() {
+#if CELLATO_ENABLE_CUDA
         if constexpr (device_type == device::CUDA) {
             for (int i = 0; i < needed_bits; i++) {
                 if (_cuda_data[i]) {
@@ -90,6 +99,7 @@ public:
                 }
             }
         }
+#endif
     }
 
     original_state_t get_cell(std::size_t x, std::size_t y) const
@@ -133,6 +143,7 @@ public:
             std::move(grid_data), x_size_original(), y_size_original());
     }
 
+#if CELLATO_ENABLE_CUDA
     grid<store_word_type, states_dict_t, device::CUDA> to_cuda() const
         requires(device_type == device::CPU)
     {
@@ -165,6 +176,10 @@ public:
 
         return cpu_grid;
     }
+#else
+    grid<store_word_type, states_dict_t, device::CUDA> to_cuda() const
+        requires(device_type == device::CPU) = delete;
+#endif
 
     std::size_t x_size_original() const { return x_size_physical() * word_store_bits; }
 

@@ -9,12 +9,14 @@
 #include <tuple>
 #include <vector>
 
-#include <cuda_runtime.h>
-
 #include "./experiment_report.hpp"
 #include "./run_params.hpp"
+#include "cellato/config.hpp"
 #include "cellato/memory/standard_grid.hpp"
+#if CELLATO_ENABLE_CUDA
 #include "cellato/traversers/cuda_utils.cuh"
+#include <cuda_runtime.h>
+#endif
 
 namespace cellato::run {
 
@@ -73,9 +75,11 @@ private:
 
         auto execution_time = run_traverser(traverser, params);
 
-        if (traverser.is_CUDA) {
+#if CELLATO_ENABLE_CUDA
+        if constexpr (traverser_t::is_CUDA) {
             CUCH(cudaDeviceSynchronize());
         }
+#endif
 
         grid_t result = traverser.fetch_result();
         auto result_as_standard = result.to_standard();
@@ -96,11 +100,15 @@ private:
     }
 
     double run_traverser(traverser_t& traverser, const run_params& params) {
-        if (traverser.is_CUDA) {
+#if CELLATO_ENABLE_CUDA
+        if constexpr (traverser_t::is_CUDA) {
             return time_gpu_run(traverser, params);
         } else {
             return time_cpu_run(traverser, params);
         }
+#else
+        return time_cpu_run(traverser, params);
+#endif
     }
 
     void dispatch_run(traverser_t& traverser, const run_params& params) {
@@ -117,6 +125,7 @@ private:
         }
     }
 
+#if CELLATO_ENABLE_CUDA
     /**
      * @brief Times the workload using CUDA events for high-precision GPU measurement.
      */
@@ -143,6 +152,7 @@ private:
 
         return static_cast<double>(milliseconds);
     }
+#endif
 
     /**
      * @brief Times the workload using std::chrono, suitable for synchronous CPU code.

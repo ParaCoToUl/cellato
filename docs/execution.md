@@ -4,6 +4,8 @@ Execution combines an automaton config, a layout/evaluator pair, and a traverser
 
 This keeps runtime dispatch simple and keeps CUDA explicit instantiations aligned with the variants the CLI can actually run.
 
+CUDA suites are available only when built with CUDA support. A CPU-only build (`-DCELLATO_ENABLE_CUDA=OFF`) keeps all CPU suites and baseline implementations; `--help` lists only the compiled choices, and `--device CUDA` reports how to enable GPU support.
+
 ## Runtime Selection
 
 These CLI options identify a suite:

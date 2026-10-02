@@ -3,7 +3,10 @@
 
 #include "./algorithm.hpp"
 #include "cellato/experiments/run_params.hpp"
+#include "cellato/config.hpp"
+#if CELLATO_ENABLE_CUDA
 #include "cellato/traversers/cuda_utils.cuh"
+#endif
 #include "cuda_instantiation/indexing.hpp"
 #include <cstddef>
 #include <iostream>
@@ -21,16 +24,22 @@ struct runner {
 
         _x_size = params.x_size;
         _y_size = params.y_size;
+#if CELLATO_ENABLE_CUDA
         _block_size_x = params.cuda_block_size_x;
         _block_size_y = params.cuda_block_size_y;
+#endif
         _current_grid.resize(_x_size * _y_size);
         _next_grid.resize(_x_size * _y_size); // Pre-allocate next_grid
 
         if (params.device == "CUDA") {
+#if CELLATO_ENABLE_CUDA
             if ((_x_size - 2 * x_margin) % _block_size_x != 0 || (_y_size - 2 * y_margin) % _block_size_y != 0) {
                 std::cerr << "Grid size must be divisible by block size.\n";
                 throw std::runtime_error("Invalid grid size for CUDA traverser.");
             }
+#else
+            throw std::runtime_error("CUDA support is disabled. Rebuild with CELLATO_ENABLE_CUDA=ON.");
+#endif
         }
 
         // Copy input grid
@@ -43,6 +52,7 @@ struct runner {
     }
 
     void init_cuda() {
+#if CELLATO_ENABLE_CUDA
         const size_t grid_size = _x_size * _y_size * sizeof(traffic_cell_state);
 
         // Allocate device memory
@@ -51,6 +61,9 @@ struct runner {
 
         // Copy data to device
         CUCH(cudaMemcpy(d_current, _current_grid.data(), grid_size, cudaMemcpyHostToDevice));
+#else
+        throw std::runtime_error("CUDA support is disabled. Rebuild with CELLATO_ENABLE_CUDA=ON.");
+#endif
     }
 
     template <traffic_cell_state movable, traffic_cell_state stationary>
@@ -107,13 +120,19 @@ struct runner {
     }
 
     void run_on_cuda(int steps) {
+#if CELLATO_ENABLE_CUDA
         if (!d_current || !d_next) {
             init_cuda();
         }
         run_kernel(steps);
+#else
+        (void)steps;
+        throw std::runtime_error("CUDA support is disabled. Rebuild with CELLATO_ENABLE_CUDA=ON.");
+#endif
     }
 
     std::vector<traffic_cell_state> fetch_result() {
+#if CELLATO_ENABLE_CUDA
         if (d_current) {
             // Copy result back from device to host
             const size_t grid_size = _x_size * _y_size * sizeof(traffic_cell_state);
@@ -125,9 +144,11 @@ struct runner {
             d_current = nullptr;
             d_next = nullptr;
         }
+#endif
         return _current_grid;
     }
 
+#if CELLATO_ENABLE_CUDA
     ~runner() {
         if (d_current) {
             cudaFree(d_current);
@@ -138,19 +159,24 @@ struct runner {
             d_next = nullptr;
         }
     }
+#endif
 
 private:
     std::size_t _x_size, _y_size;
+#if CELLATO_ENABLE_CUDA
     int _block_size_x = 16;
     int _block_size_y = 16;
+#endif
     std::vector<traffic_cell_state> _current_grid;
     std::vector<traffic_cell_state> _next_grid;
 
+#if CELLATO_ENABLE_CUDA
     // Device pointers
     traffic_cell_state* d_current = nullptr;
     traffic_cell_state* d_next = nullptr;
 
     void run_kernel(int steps);
+#endif
 };
 
 } // namespace traffic::reference

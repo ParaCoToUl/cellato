@@ -2,7 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://isocpp.org/)
-[![CUDA](https://img.shields.io/badge/CUDA-required-76B900.svg)](https://developer.nvidia.com/cuda)
+[![CUDA](https://img.shields.io/badge/CUDA-optional-76B900.svg)](https://developer.nvidia.com/cuda)
 
 Cellato is a C++20 library and embedded DSL for cellular automata. It lets you describe an automaton rule as a type-level C++ expression, then run that same rule through different evaluators, memory layouts, and traversers.
 
@@ -35,6 +35,8 @@ Configure and build the default release profile:
 cmake --preset release
 cmake --build --preset release --parallel 4
 ```
+
+CUDA support is enabled when CMake detects a CUDA compiler. To build without the CUDA toolkit or runtime, configure with `cmake --preset release -DCELLATO_ENABLE_CUDA=OFF`. CPU traversers, layouts, and reference implementations remain available.
 
 Run unit tests:
 

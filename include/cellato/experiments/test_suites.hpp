@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "./run_params.hpp"
+#include "cellato/config.hpp"
 #include "cellato/evaluators/bit_array.hpp"
 #include "cellato/evaluators/bit_planes.hpp"
 #include "cellato/evaluators/standard.hpp"
@@ -13,9 +14,11 @@
 #include "cellato/memory/standard_grid.hpp"
 #include "cellato/memory/tiled_bit_planes_grid.hpp"
 #include "cellato/traversers/cpu/simple.hpp"
+#if CELLATO_ENABLE_CUDA
 #include "cellato/traversers/cuda/simple.hpp"
 #include "cellato/traversers/cuda/spatial_blocking.hpp"
 #include "cellato/traversers/cuda/temporal.hpp"
+#endif
 #include "cellato/utils/type_list.hpp"
 
 namespace cellato::run::test_suites {
@@ -25,11 +28,13 @@ namespace evaluators = cellato::evaluators;
 
 namespace detail {
 
-inline constexpr const char* cuda_opt = "CUDA";
 inline constexpr const char* cpu_opt = "CPU";
 inline constexpr const char* simple_opt = "simple";
+#if CELLATO_ENABLE_CUDA
+inline constexpr const char* cuda_opt = "CUDA";
 inline constexpr const char* temporal_opt = "temporal";
 inline constexpr const char* spatial_blocking_opt = "spatial_blocking";
+#endif
 
 struct standard_layout {
     template <typename cellular_automaton>
@@ -129,6 +134,7 @@ struct cpu_simple_traverser {
     static bool options_match(const cellato::run::run_params&) { return true; }
 };
 
+#if CELLATO_ENABLE_CUDA
 struct cuda_simple_traverser {
     static constexpr const char* device_name = cuda_opt;
     static constexpr const char* traverser_name = simple_opt;
@@ -164,6 +170,7 @@ struct cuda_spatial_blocking_traverser {
         return params.y_tile_size == y_tile_size && params.x_tile_size == x_tile_size;
     }
 };
+#endif
 
 template <typename cellular_automaton, typename layout, typename traverser>
 struct suite {
@@ -190,6 +197,7 @@ struct suite {
 
 } // namespace detail
 
+#if CELLATO_ENABLE_CUDA
 namespace on_cuda {
 
 template <typename cellular_automaton>
@@ -224,6 +232,7 @@ struct using_ {
 };
 
 } // namespace on_cuda
+#endif
 
 namespace on_cpu {
 
@@ -255,7 +264,9 @@ using suites_for =
                               on_cpu::using_<std::uint32_t>::bit_planes<automaton>,
                               on_cpu::using_<std::uint64_t>::bit_planes<automaton>,
                               on_cpu::using_<std::uint32_t>::tiled_bit_planes<automaton>,
-                              on_cpu::using_<std::uint64_t>::tiled_bit_planes<automaton>,
+                              on_cpu::using_<std::uint64_t>::tiled_bit_planes<automaton>
+#if CELLATO_ENABLE_CUDA
+                              ,
                               on_cuda::using_<std::uint32_t>::tiled_bit_planes<automaton>,
                               on_cuda::using_<std::uint64_t>::tiled_bit_planes<automaton>,
                               on_cuda::standard<automaton>,
@@ -269,7 +280,9 @@ using suites_for =
                               on_cuda::using_<std::uint32_t>::temporal_tiled_bit_planes<automaton>,
                               on_cuda::using_<std::uint64_t>::temporal_tiled_bit_planes<automaton>,
                               on_cuda::using_<std::uint32_t>::temporal_linear_bit_planes<automaton>,
-                              on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>>;
+                              on_cuda::using_<std::uint64_t>::temporal_linear_bit_planes<automaton>
+#endif
+                              >;
 
 template <typename automata>
 struct suites_for_all;

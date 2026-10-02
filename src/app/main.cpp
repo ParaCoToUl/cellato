@@ -264,18 +264,22 @@ void print_usage(const input::suite_catalog& catalog) {
     std::cout << "  --reference_impl <name>         Reference implementation to use (baseline)\n";
     std::cout << "  --x_size <number>               X size of the grid\n";
     std::cout << "  --y_size <number>               Y size of the grid\n";
+#if CELLATO_ENABLE_CUDA
     std::cout << "  --x_tile_size <number>          X tile size for CUDA\n";
     std::cout << "  --y_tile_size <number>          Y tile size for CUDA\n";
     std::cout << "  --temporal_steps <number>       Time steps per temporal CUDA batch\n";
     std::cout << "  --temporal_tile_size_y <number> Temporal CUDA tile height in words\n";
+#endif
     std::cout << "  --rounds <number>               Number of rounds to run\n";
     std::cout << "  --warmup_rounds <number>        Number of warmup rounds to run\n";
     std::cout << "  --steps <number>                Number of steps to run\n";
     std::cout << "  --word_size <number>            Packed storage word width (32, 64 bits)\n";
     std::cout << "  --seed <number>                 Random seed for initialization and probabilistic rules\n";
     std::cout << "  --print                         Print the grid after each step\n";
+#if CELLATO_ENABLE_CUDA
     std::cout << "  --cuda_block_size_x <number>    CUDA block size X (default: 32)\n";
     std::cout << "  --cuda_block_size_y <number>    CUDA block size Y (default: 8)\n";
+#endif
     std::cout << "  --print_csv_header              Print CSV header\n";
     std::cout << "  --help                          Show this help message\n";
 }

@@ -10,8 +10,11 @@
 #include <utility>
 #include <vector>
 
+#include "cellato/config.hpp"
 #include "cellato/experiments/run_params.hpp"
+#if CELLATO_ENABLE_CUDA
 #include "cellato/traversers/cuda/temporal_options.hpp"
+#endif
 #include "cellato/utils/type_list.hpp"
 
 namespace input {
@@ -86,6 +89,12 @@ inline std::vector<std::string> names(const suite_catalog& catalog, std::string_
 // First distinguish unknown names from known names in an unsupported combination.
 // Progressive filtering makes the suggested alternatives valid for earlier choices.
 inline suite_catalog select_suites(const run_params& params, const suite_catalog& catalog) {
+#if !CELLATO_ENABLE_CUDA
+    if (params.device == "CUDA") {
+        throw std::invalid_argument("CUDA support is disabled in this build. Available --device values: CPU. "
+                                    "Rebuild with -DCELLATO_ENABLE_CUDA=ON to enable CUDA.");
+    }
+#endif
     struct selector {
         const char* option;
         std::string_view suite_options::* field;
@@ -203,6 +212,7 @@ inline void validate_parameters(const run_params& params, const suite_catalog& c
     const auto& suite = matching.front();
     require_multiple("x_size", params.x_size, suite.cells_per_word_x, "for --layout " + params.layout);
     require_multiple("y_size", params.y_size, suite.cells_per_word_y, "for --layout " + params.layout);
+#if CELLATO_ENABLE_CUDA
     if (params.device != "CUDA") return;
 
     require_minimum("cuda_block_size_x", params.cuda_block_size_x, 1);
@@ -253,6 +263,7 @@ inline void validate_parameters(const run_params& params, const suite_catalog& c
         "x_size", params.x_size, effective_x * suite.cells_per_word_x, "for the effective temporal tile width");
     require_multiple(
         "y_size", params.y_size, effective_y * suite.cells_per_word_y, "for the effective temporal tile height");
+#endif
 }
 
 } // namespace input

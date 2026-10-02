@@ -1,12 +1,17 @@
 #ifndef CELLATO_MEMORY_STANDARD_GRID_HPP
 #define CELLATO_MEMORY_STANDARD_GRID_HPP
 
+#include "../config.hpp"
+
+#if CELLATO_ENABLE_CUDA
+#include <cuda_runtime.h>
+#endif
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cuda_runtime.h>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -30,6 +35,9 @@ struct cuda_params {
 
 template <typename cell_type, device device_type = device::CPU>
 class grid {
+    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU,
+                  "CUDA grids require CELLATO_ENABLE_CUDA=1");
+
 public:
     using store_type = cell_type;
     constexpr static bool HAS_OWN_PRINT = true;
@@ -134,6 +142,7 @@ public:
         }
     }
 
+#if CELLATO_ENABLE_CUDA
     grid<cell_type, device::CPU> to_cpu() const
         requires(device_type == device::CUDA)
     {
@@ -154,14 +163,20 @@ public:
 
         return grid<cell_type, device::CUDA>(params);
     }
+#else
+    grid<cell_type, device::CUDA> to_cuda() const
+        requires(device_type == device::CPU) = delete;
+#endif
 
     void free_cuda_memory() {
+#if CELLATO_ENABLE_CUDA
         if constexpr (device_type == device::CUDA) {
             if (_cuda_data) {
                 cudaFree(_cuda_data);
                 _cuda_data = nullptr;
             }
         }
+#endif
     }
 
     std::string get_checksum() const
