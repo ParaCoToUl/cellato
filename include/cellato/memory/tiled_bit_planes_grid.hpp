@@ -34,8 +34,7 @@ struct cuda_params {
 
 template <typename store_word_type, typename states_dict_t, device device_type = device::CPU>
 class grid {
-    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU,
-                  "CUDA grids require CELLATO_ENABLE_CUDA=1");
+    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU, "CUDA grids require CELLATO_ENABLE_CUDA=1");
 
 public:
     friend class cellato::memory::grids::tiled_bit_planes::grid<store_word_type, states_dict_t, device::CPU>;
@@ -188,7 +187,8 @@ public:
     }
 #else
     grid<store_word_type, states_dict_t, device::CUDA> to_cuda() const
-        requires(device_type == device::CPU) = delete;
+        requires(device_type == device::CPU)
+    = delete;
 #endif
 
     std::size_t x_size_original() const { return x_size_physical() * x_word_tile_size; }

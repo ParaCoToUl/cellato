@@ -35,8 +35,7 @@ struct cuda_params {
 
 template <typename cell_type, device device_type = device::CPU>
 class grid {
-    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU,
-                  "CUDA grids require CELLATO_ENABLE_CUDA=1");
+    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU, "CUDA grids require CELLATO_ENABLE_CUDA=1");
 
 public:
     using store_type = cell_type;
@@ -165,7 +164,8 @@ public:
     }
 #else
     grid<cell_type, device::CUDA> to_cuda() const
-        requires(device_type == device::CPU) = delete;
+        requires(device_type == device::CPU)
+    = delete;
 #endif
 
     void free_cuda_memory() {

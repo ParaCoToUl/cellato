@@ -79,8 +79,7 @@ public:
 
 template <typename states_dictionary_t, typename store_word_type = std::uint32_t, device device_type = device::CPU>
 class grid {
-    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU,
-                  "CUDA grids require CELLATO_ENABLE_CUDA=1");
+    static_assert(CELLATO_ENABLE_CUDA || device_type == device::CPU, "CUDA grids require CELLATO_ENABLE_CUDA=1");
 
 public:
     using states_dict_t = states_dictionary_t;
@@ -248,7 +247,8 @@ public:
     }
 #else
     grid<states_dict_t, store_word_type, device::CUDA> to_cuda() const
-        requires(device_type == device::CPU) = delete;
+        requires(device_type == device::CPU)
+    = delete;
 #endif
 
     // Size methods

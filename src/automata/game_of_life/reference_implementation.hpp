@@ -2,8 +2,8 @@
 #define GAME_OF_LIFE_REFERENCE_IMPLEMENTATION_HPP
 
 #include "./algorithm.hpp"
-#include "cellato/experiments/run_params.hpp"
 #include "cellato/config.hpp"
+#include "cellato/experiments/run_params.hpp"
 #if CELLATO_ENABLE_CUDA
 #include "cellato/traversers/cuda_utils.cuh"
 #endif
