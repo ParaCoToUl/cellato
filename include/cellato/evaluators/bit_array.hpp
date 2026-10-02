@@ -243,7 +243,8 @@ template <typename grid_t, typename Value, idx_type bit_idx, idx_type subcell_of
 struct _impl_evaluator<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         auto val = _impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
-        return (val & (1 << bit_idx)) != 0;
+        using Val = decltype(val);
+        return (val & (Val{1} << bit_idx)) != 0;
     }
 };
 
