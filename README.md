@@ -1,5 +1,7 @@
 # Cellato
 
+<img src="docs/assets/avatar.svg" alt="Cellato ice cream avatar" width="160" height="160" align="right" />
+
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://isocpp.org/)
 [![CUDA](https://img.shields.io/badge/CUDA-optional-76B900.svg)](https://developer.nvidia.com/cuda)

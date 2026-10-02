@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="380" height="380" viewBox="0 0 380 380"
+     role="img" aria-labelledby="title description">
+  <title id="title">Cell ice-cream icon — original orientation</title>
+  <desc id="description">A pink cell in the original orientation above a blue scoop and a golden waffle cone. All artwork consists of editable vector shapes, with no embedded raster images. The background and the spaces between the scoops and cone are transparent.</desc>
+  <defs>
+    <linearGradient id="cell-membrane-color" x1="165" y1="14" x2="196" y2="168" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dd5b6c"/>
+      <stop offset="1" stop-color="#d85266"/>
+    </linearGradient>
+    <linearGradient id="cell-interior-color" x1="165" y1="23" x2="204" y2="154" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f39ca4"/>
+      <stop offset="1" stop-color="#ef969f"/>
+    </linearGradient>
+    <linearGradient id="nucleus-color" x1="164" y1="89" x2="203" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e6d2"/>
+      <stop offset="1" stop-color="#f4dec9"/>
+    </linearGradient>
+    <linearGradient id="blue-scoop-color" x1="119" y1="169" x2="270" y2="162" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5cc5dc"/>
+      <stop offset="1" stop-color="#4bb6d7"/>
+    </linearGradient>
+    <linearGradient id="cone-color" x1="131" y1="257" x2="239" y2="289" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffb958"/>
+      <stop offset="1" stop-color="#ffb14d"/>
+    </linearGradient>
+    <linearGradient id="rim-color" x1="188" y1="194" x2="188" y2="215" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffcd76"/>
+      <stop offset="1" stop-color="#ffc16a"/>
+    </linearGradient>
+    <clipPath id="cone-clip" clipPathUnits="userSpaceOnUse">
+      <path d="M 126.2,212.2 H 249.6 L 205.4,354.2
+               C 202.1,365.9 195.8,371.5 186.5,371.5
+               C 177.5,371.5 172.2,366.2 169.3,357.0 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Original orientation; the horizontal reflection has been removed. -->
+  <g id="artwork">
+
+    <g id="waffle-cone">
+      <path id="cone-body" fill="url(#cone-color)"
+            d="M 126.2,212.2 H 249.6 L 205.4,354.2
+               C 202.1,365.9 195.8,371.5 186.5,371.5
+               C 177.5,371.5 172.2,366.2 169.3,357.0 Z"/>
+      <g id="cone-details" clip-path="url(#cone-clip)">
+        <path id="cone-right-shading" fill="#ee921f" fill-opacity="0.30"
+              d="M 232,212 H 254 L 206,365 L 187,376
+                 C 203,327 215,275 232,212 Z"/>
+        <g id="waffle-crosshatch" fill="none" stroke="#e98a24" stroke-width="8.2" stroke-linecap="butt">
+          <path id="waffle-descending" stroke-opacity="0.66"
+                d="M 65,28 L 315,278
+                   M 65,72 L 315,322
+                   M 65,116 L 315,366
+                   M 65,160 L 315,410
+                   M 65,204 L 315,454
+                   M 65,248 L 315,498
+                   M 65,292 L 315,542"/>
+          <path id="waffle-ascending" stroke-opacity="0.65"
+                d="M 65,239 L 315,-11
+                   M 65,283 L 315,33
+                   M 65,327 L 315,77
+                   M 65,371 L 315,121
+                   M 65,415 L 315,165
+                   M 65,459 L 315,209
+                   M 65,503 L 315,253
+                   M 65,547 L 315,297"/>
+        </g>
+        <path id="shadow-under-rim" fill="#ed871c" d="M 121,213 H 255 V 223 H 121 Z"/>
+      </g>
+      <path id="cone-rim" fill="url(#rim-color)"
+            d="M 120.6,193.8 H 253.9
+               C 259.0,193.8 262.0,197.0 260.0,201.8
+               L 257.4,208.4
+               C 255.7,213.0 252.9,214.8 248.0,214.8
+               H 128.1
+               C 123.6,214.8 120.9,212.7 119.1,208.7
+               L 114.9,201.7
+               C 112.5,197.1 115.5,193.8 120.6,193.8 Z"/>
+    </g>
+
+    <g id="blue-scoop">
+      <path id="blue-scoop-body" fill="url(#blue-scoop-color)"
+            d="M 108.8,174.8
+               C 124.1,174.5 138.7,162.2 155.5,167.0
+               C 176.1,173.5 192.4,173.8 208.8,158.8
+               C 220.0,148.4 227.7,149.4 240.2,147.9
+               C 254.5,146.3 264.1,139.8 270.6,129.7
+               C 279.0,150.6 274.5,173.4 256.1,184.6
+               C 255.0,185.3 252.7,185.7 249.7,185.7
+               H 130.6
+               C 120.6,185.7 112.9,183.2 108.8,174.8 Z"/>
+      <path id="blue-scoop-edge" fill="#43a6d1" fill-opacity="0.72"
+            d="M 270.6,129.7
+               C 279.0,150.6 274.5,173.4 256.1,184.6
+               C 255.0,185.3 252.7,185.7 249.7,185.7
+               H 130.6 C 124.8,185.7 120.0,184.9 116.1,182.8
+               H 227.4
+               C 239.7,182.8 248.3,180.8 254.6,176.6
+               C 268.0,167.9 272.0,150.0 270.6,129.7 Z"/>
+    </g>
+
+    <g id="pink-cell">
+      <path id="cell-membrane" fill="url(#cell-membrane-color)"
+            d="M 116.7,84.4
+               C 120.3,60.2 138.4,35.0 160.1,21.9
+               C 181.5,8.8 207.1,10.4 227.6,22.5
+               C 249.0,35.1 265.5,57.6 271.9,78.6
+               C 278.0,99.0 272.0,117.2 259.4,132.2
+               C 254.3,138.6 250.0,140.5 241.0,141.7
+               C 224.9,143.7 217.4,142.6 205.9,152.7
+               C 190.1,166.8 177.8,165.8 160.5,160.3
+               C 146.8,155.6 135.2,161.0 120.5,165.1
+               C 102.7,170.6 92.9,166.3 88.8,151.8
+               C 82.6,129.9 93.9,105.9 111.0,91.6
+               C 114.5,88.6 116.2,87.4 116.7,84.4 Z"/>
+      <path id="cell-interior" fill="url(#cell-interior-color)"
+            d="M 125.3,84.5
+               C 129.0,62.7 145.4,40.4 165.7,28.8
+               C 184.0,18.3 205.4,20.3 223.5,30.4
+               C 242.9,41.2 258.1,61.3 263.5,81.9
+               C 269.0,102.4 262.5,124.0 248.2,137.6
+               C 243.9,139.2 237.5,139.0 230.8,139.5
+               C 217.6,140.4 210.8,145.8 202.1,150.0
+               C 188.2,157.0 176.0,155.7 161.4,150.7
+               C 147.4,145.7 135.0,149.7 120.9,154.0
+               C 108.8,157.6 100.6,158.4 97.7,149.1
+               C 91.1,131.7 102.0,109.6 118.5,95.6
+               C 123.4,92.0 124.1,91.0 125.3,84.5 Z"/>
+      <g id="cell-spots" fill="#d85868">
+        <ellipse id="spot-top" cx="191.8" cy="45.6" rx="6.3" ry="7.0"/>
+        <ellipse id="spot-small-left" cx="160.5" cy="63.7" rx="6.5" ry="6.9"/>
+        <ellipse id="spot-large-right" cx="225.0" cy="64.2" rx="14.2" ry="14.4"/>
+        <ellipse id="spot-lower-right" cx="236.7" cy="101.8" rx="6.6" ry="7.3"/>
+      </g>
+      <ellipse id="nuclear-membrane" cx="182.0" cy="110.0" rx="30.5" ry="31.8" fill="#d95669"/>
+      <ellipse id="nucleus" cx="182.3" cy="110.0" rx="21.8" ry="22.5" fill="url(#nucleus-color)"/>
+    </g>
+  </g>
+</svg>
