@@ -273,7 +273,8 @@ private:
                             auto state = grid_input[y_grid * x_size_original() + x_grid];
                             auto state_idx = states_dict_t::state_to_index(state);
 
-                            store_type state_bit = (state_idx & (1 << bit_idx)) != 0;
+                            using type = decltype(state_idx);
+                            store_type state_bit = (state_idx & (static_cast<type>(1) << bit_idx)) != 0;
 
                             if (state_bit) {
                                 word |= (static_cast<store_word_type>(1) << (x_bit + y_bit * x_word_tile_size));

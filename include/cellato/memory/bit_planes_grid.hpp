@@ -255,7 +255,8 @@ private:
                         auto state = grid_input[y * x_size_original() + x * word_store_bits + i];
                         auto index = states_dict_t::state_to_index(state);
 
-                        auto set_bit = (index & (1 << bit_idx)) != 0;
+                        using type = decltype(index);
+                        auto set_bit = (index & (static_cast<type>(1) << bit_idx)) != 0;
 
                         if (set_bit) {
                             word |= (static_cast<store_word_type>(1) << i);
