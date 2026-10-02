@@ -124,6 +124,12 @@ examples/your_own_ca/build/release/your_own_ca
 
 The example uses `on_cpu::standard` and builds with just CMake and a C++20 compiler. It does not require CUDA headers or runtime libraries.
 
+## Continuous Integration
+
+The [GitHub Actions workflow](../.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatches. It builds and runs CTest on Ubuntu 24.04 with GCC 14 and Clang 18 using the release preset, plus GCC 14 using the verification preset. Both release jobs also build and run the standalone example.
+
+CI configures with `CELLATO_ENABLE_CUDA=OFF` and runs the C++ unit tests and Python CLI validation through CTest. CUDA compilation and GPU execution are outside this workflow's coverage.
+
 ## Troubleshooting
 
 - If CUDA is explicitly enabled and CMake cannot find it, install a CUDA toolkit or configure with `-DCELLATO_ENABLE_CUDA=OFF`. After installing a toolkit, use a fresh build directory or set `CMAKE_CUDA_COMPILER` to avoid a cached failed detection.

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cpu-tests:
+    name: CPU / ${{ matrix.compiler }} / ${{ matrix.preset }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: GCC 14
+            cxx: g++-14
+            preset: release
+          - compiler: Clang 18
+            cxx: clang++-18
+            preset: release
+          - compiler: GCC 14
+            cxx: g++-14
+            preset: verification
+    env:
+      CXX: ${{ matrix.cxx }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Configure CPU build
+        run: cmake --preset ${{ matrix.preset }} -G Ninja -DCELLATO_ENABLE_CUDA=OFF
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+
+      - name: Run tests
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone example
+        if: matrix.preset == 'release'
+        run: cmake --preset release -S examples/your_own_ca -G Ninja
+
+      - name: Build standalone example
+        if: matrix.preset == 'release'
+        run: cmake --build examples/your_own_ca/build/release --parallel 2
+
+      - name: Run standalone example
+        if: matrix.preset == 'release'
+        run: timeout 30s examples/your_own_ca/build/release/your_own_ca
