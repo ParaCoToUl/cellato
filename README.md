@@ -2,6 +2,7 @@
 
 <img src="docs/assets/avatar.svg" alt="Cellato ice cream avatar" width="160" height="160" align="right" />
 
+[![CI](https://github.com/ParaCoToUl/cellato/actions/workflows/ci.yml/badge.svg)](https://github.com/ParaCoToUl/cellato/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://isocpp.org/)
 [![CUDA](https://img.shields.io/badge/CUDA-optional-76B900.svg)](https://developer.nvidia.com/cuda)
@@ -58,6 +59,12 @@ ctest --preset verification
 cmake --preset benchmark
 cmake --build --preset benchmark --parallel 4
 ```
+
+## Continuous Integration
+
+[GitHub Actions](https://github.com/ParaCoToUl/cellato/actions/workflows/ci.yml) runs CPU builds, unit tests, CLI validation, and the standalone example on Ubuntu, macOS, and Windows, covering GCC, Clang, Apple Clang, MSVC, and MinGW toolchains. Checks run on pushes and pull requests, with manual runs also available.
+
+See the [CI build matrix](docs/build.md#continuous-integration) for platform and compiler details, including the additional verification build. CUDA compilation and GPU execution are outside CI coverage.
 
 ## CLI Example
 
