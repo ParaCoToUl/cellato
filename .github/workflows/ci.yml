@@ -13,26 +13,59 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cpu-tests:
-    name: CPU / ${{ matrix.compiler }} / ${{ matrix.preset }}
-    runs-on: ubuntu-24.04
+  linux:
+    name: Linux / ${{ matrix.os }} / ${{ matrix.cxx }} / ${{ matrix.preset || 'release' }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - compiler: GCC 14
+          - os: ubuntu-22.04
+            cxx: g++-10
+          - os: ubuntu-22.04
+            cxx: g++-11
+          - os: ubuntu-22.04
+            cxx: g++-12
+          - os: ubuntu-22.04
+            cxx: clang++-13
+          - os: ubuntu-22.04
+            cxx: clang++-14
+          - os: ubuntu-22.04
+            cxx: clang++-15
+          - os: ubuntu-24.04
+            cxx: g++-12
+          - os: ubuntu-24.04
+            cxx: g++-13
+          - os: ubuntu-24.04
             cxx: g++-14
-            preset: release
-          - compiler: Clang 18
+          - os: ubuntu-24.04
+            cxx: clang++-16
+          - os: ubuntu-24.04
+            cxx: clang++-17
+          - os: ubuntu-24.04
             cxx: clang++-18
-            preset: release
-          - compiler: GCC 14
+          - os: ubuntu-26.04
+            cxx: g++-13
+          - os: ubuntu-26.04
+            cxx: g++-14
+          - os: ubuntu-26.04
+            cxx: g++-15
+          - os: ubuntu-26.04
+            cxx: clang++-20
+          - os: ubuntu-26.04
+            cxx: clang++-21
+          - os: ubuntu-26.04
+            cxx: clang++-22
+          - os: ubuntu-24.04
             cxx: g++-14
             preset: verification
     env:
       CXX: ${{ matrix.cxx }}
-
+      CELLATO_CI_PRESET: ${{ matrix.preset || 'release' }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out source
         uses: actions/checkout@v7
@@ -40,22 +73,179 @@ jobs:
           persist-credentials: false
 
       - name: Configure CPU build
-        run: cmake --preset ${{ matrix.preset }} -G Ninja -DCELLATO_ENABLE_CUDA=OFF
+        run: cmake --preset "$CELLATO_CI_PRESET" -G Ninja -DCELLATO_ENABLE_CUDA=OFF
 
       - name: Build
-        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+        run: cmake --build --preset "$CELLATO_CI_PRESET" --parallel 2
 
       - name: Run tests
-        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 180
+        run: ctest --preset "$CELLATO_CI_PRESET" --output-on-failure --no-tests=error --timeout 180
 
       - name: Configure standalone example
-        if: matrix.preset == 'release'
+        if: matrix.preset != 'verification'
         run: cmake --preset release -S examples/your_own_ca -G Ninja
 
       - name: Build standalone example
-        if: matrix.preset == 'release'
+        if: matrix.preset != 'verification'
         run: cmake --build examples/your_own_ca/build/release --parallel 2
 
-      - name: Run standalone example
-        if: matrix.preset == 'release'
-        run: timeout 30s examples/your_own_ca/build/release/your_own_ca
+      - name: Test standalone example
+        if: matrix.preset != 'verification'
+        run: ctest --test-dir examples/your_own_ca/build/release --output-on-failure --no-tests=error --timeout 30
+
+  macos:
+    name: macOS / ${{ matrix.os }} / ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            compiler: Apple Clang
+          - os: macos-15-intel
+            compiler: Apple Clang
+          - os: macos-26
+            compiler: Apple Clang
+          - os: macos-15
+            compiler: LLVM 18
+            llvm: llvm@18
+          - os: macos-15-intel
+            compiler: LLVM 18
+            llvm: llvm@18
+          - os: macos-26
+            compiler: LLVM 20
+            llvm: llvm@20
+    env:
+      CXX: /usr/bin/clang++
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Select Homebrew LLVM
+        if: matrix.llvm != ''
+        env:
+          LLVM_FORMULA: ${{ matrix.llvm }}
+        run: echo "CXX=$(brew --prefix "$LLVM_FORMULA")/bin/clang++" >> "$GITHUB_ENV"
+
+      - name: Configure CPU build
+        run: cmake --preset release -G Ninja -DCELLATO_ENABLE_CUDA=OFF
+
+      - name: Build
+        run: cmake --build --preset release --parallel 2
+
+      - name: Run tests
+        run: ctest --preset release --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone example
+        run: cmake --preset release -S examples/your_own_ca -G Ninja
+
+      - name: Build standalone example
+        run: cmake --build examples/your_own_ca/build/release --parallel 2
+
+      - name: Test standalone example
+        run: ctest --test-dir examples/your_own_ca/build/release --output-on-failure --no-tests=error --timeout 30
+
+  windows:
+    name: Windows / ${{ matrix.os }} / ${{ matrix.cxx }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+        cxx: [cl, clang-cl]
+    env:
+      CXX: ${{ matrix.cxx }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Visual Studio environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CPU build
+        run: cmake --preset release -G Ninja -DCELLATO_ENABLE_CUDA=OFF
+
+      - name: Build
+        run: cmake --build --preset release --parallel 2
+
+      - name: Run tests
+        run: ctest --preset release --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone example
+        run: cmake --preset release -S examples/your_own_ca -G Ninja
+
+      - name: Build standalone example
+        run: cmake --build examples/your_own_ca/build/release --parallel 2
+
+      - name: Test standalone example
+        run: ctest --test-dir examples/your_own_ca/build/release --output-on-failure --no-tests=error --timeout 30
+
+  mingw:
+    name: Windows / MinGW / ${{ matrix.msystem }} / ${{ matrix.cxx }}
+    runs-on: windows-2025
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - msystem: UCRT64
+            cxx: g++
+            prefix: mingw-w64-ucrt-x86_64
+            package: gcc
+          - msystem: CLANG64
+            cxx: clang++
+            prefix: mingw-w64-clang-x86_64
+            package: clang
+    env:
+      CXX: ${{ matrix.cxx }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up MinGW toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          install: >-
+            ${{ matrix.prefix }}-${{ matrix.package }}
+            ${{ matrix.prefix }}-cmake
+            ${{ matrix.prefix }}-ninja
+            ${{ matrix.prefix }}-python
+
+      - name: Configure CPU build
+        run: cmake --preset release -G Ninja -DCELLATO_ENABLE_CUDA=OFF
+
+      - name: Build
+        run: cmake --build --preset release --parallel 2
+
+      - name: Run tests
+        run: ctest --preset release --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone example
+        run: cmake --preset release -S examples/your_own_ca -G Ninja
+
+      - name: Build standalone example
+        run: cmake --build examples/your_own_ca/build/release --parallel 2
+
+      - name: Test standalone example
+        run: ctest --test-dir examples/your_own_ca/build/release --output-on-failure --no-tests=error --timeout 30

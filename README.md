@@ -74,7 +74,7 @@ build/release/cellato \
   --seed 1
 ```
 
-This runs the Game of Life automaton on a CPU with a simple traverser, standard evaluator, and standard layout (equivalent to a standard 2D array of cells). The program should end quickly and print a report of the run, producing checksum values `0-0-0-0-0-0-1-0-0-3-1-1-2-0-0-0`.
+This runs the Game of Life automaton on a CPU with a simple traverser, standard evaluator, and standard layout (equivalent to a standard 2D array of cells). The program should end quickly and print a report of the run, including checksum values. Seeded initialization can produce different states with different C++ standard libraries.
 
 ## Make Your Own Automaton
 

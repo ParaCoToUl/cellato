@@ -134,7 +134,19 @@ ctest --test-dir examples/your_own_ca/build/release -C Release --output-on-failu
 
 ## Continuous Integration
 
-The [GitHub Actions workflow](../.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatches. It builds and runs CTest on Ubuntu 24.04 with GCC 14 and Clang 18 using the release preset, plus GCC 14 using the verification preset. Both release jobs also build and run the standalone example.
+The [GitHub Actions workflow](../.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatches. Its release matrix covers:
+
+| Runner | Compilers |
+| --- | --- |
+| Ubuntu 22.04 | GCC 10, 11, 12; Clang 13, 14, 15 |
+| Ubuntu 24.04 | GCC 12, 13, 14; Clang 16, 17, 18 |
+| Ubuntu 26.04 | GCC 13, 14, 15; Clang 20, 21, 22 |
+| macOS 15, ARM64 and Intel | Apple Clang; Homebrew LLVM 18 |
+| macOS 26, ARM64 | Apple Clang; Homebrew LLVM 20 |
+| Windows 2022 and 2025 | Visual Studio MSVC; clang-cl |
+| Windows 2025 with MSYS2 | MinGW GCC (UCRT64); MinGW Clang (CLANG64) |
+
+Every release job builds the CLI and unit tests, runs CTest, and builds and tests the standalone example. An additional GCC 14 job on Ubuntu 24.04 exercises the verification preset. Compiler major versions on Linux and Homebrew LLVM versions on macOS are selected explicitly; Apple Clang and Visual Studio versions follow their runner images.
 
 CI configures with `CELLATO_ENABLE_CUDA=OFF` and runs the C++ unit tests and Python CLI validation through CTest. CUDA compilation and GPU execution are outside this workflow's coverage.
 
