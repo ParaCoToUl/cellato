@@ -12,7 +12,8 @@ if(NOT DEFINED CELLATO_ENABLE_CUDA OR CELLATO_ENABLE_CUDA)
         set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING "CUDA architectures")
     endif()
 
-    if(NOT DEFINED CMAKE_CUDA_HOST_COMPILER)
+    # Let nvcc select its default MSVC host compiler on Windows.
+    if(NOT DEFINED CMAKE_CUDA_HOST_COMPILER AND NOT WIN32)
         find_program(CELLATO_DEFAULT_CUDA_HOST_COMPILER g++)
         if(CELLATO_DEFAULT_CUDA_HOST_COMPILER)
             set(CMAKE_CUDA_HOST_COMPILER "${CELLATO_DEFAULT_CUDA_HOST_COMPILER}" CACHE FILEPATH "CUDA host compiler")
@@ -115,6 +116,26 @@ if(CELLATO_ENABLE_CUDA)
     list(APPEND CELLATO_TARGETS cellato_probability_cuda_tests)
 endif()
 
+if(MSVC)
+    # These options also apply to clang-cl, which uses the MSVC command line.
+    set(CELLATO_CXX_OPTIONS /W4 /O2 /permissive- /Zc:__cplusplus /bigobj /utf-8)
+else()
+    set(CELLATO_CXX_OPTIONS -Wall -Wextra -Wpedantic -O3)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-march=native" CELLATO_HAS_MARCH_NATIVE)
+    check_cxx_compiler_flag("-mtune=native" CELLATO_HAS_MTUNE_NATIVE)
+    if(CELLATO_HAS_MARCH_NATIVE)
+        list(APPEND CELLATO_CXX_OPTIONS -march=native)
+    endif()
+    if(CELLATO_HAS_MTUNE_NATIVE)
+        list(APPEND CELLATO_CXX_OPTIONS -mtune=native)
+    endif()
+    if(MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # The CLI instantiates enough templates to exceed ordinary COFF limits.
+        list(APPEND CELLATO_CXX_OPTIONS -Wa,-mbig-obj)
+    endif()
+endif()
+
 foreach(target IN LISTS CELLATO_TARGETS)
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -129,10 +150,18 @@ foreach(target IN LISTS CELLATO_TARGETS)
     target_compile_definitions(${target} PRIVATE NDEBUG CELLATO_ENABLE_CUDA=$<BOOL:${CELLATO_ENABLE_CUDA}>)
 
     target_compile_options(${target} PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -O3 -march=native -mtune=native>
+        "$<$<COMPILE_LANGUAGE:CXX>:${CELLATO_CXX_OPTIONS}>"
         $<$<COMPILE_LANGUAGE:CUDA>:-Wreorder -Wext-lambda-captures-this -O3 -Wno-deprecated-gpu-targets --expt-relaxed-constexpr>
-        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-std=c++20,-Wall,-Wextra,-march=native,-mtune=native>
     )
+    if(CMAKE_CUDA_SIMULATE_ID STREQUAL "MSVC")
+        target_compile_options(${target} PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/W4,/bigobj,/utf-8,/Zc:__cplusplus>
+        )
+    else()
+        target_compile_options(${target} PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-std=c++20,-Wall,-Wextra,-march=native,-mtune=native>
+        )
+    endif()
 
     if(CELLATO_COMPILE_MODE STREQUAL "BENCHMARK")
         if(NOT target STREQUAL "cellato_probability_cuda_tests")

@@ -1,6 +1,6 @@
 # Build Reference
 
-Cellato uses CMake presets. The main build requires C++20 and Python 3 and builds the `cellato` CLI and CPU tests. When CUDA support is enabled, it also generates CUDA explicit-instantiation files and builds GPU traversers and CUDA tests.
+Cellato uses CMake presets, which require CMake 3.25 or newer. The main build requires C++20 and Python 3 and builds the `cellato` CLI and CPU tests. When CUDA support is enabled, it also generates CUDA explicit-instantiation files and builds GPU traversers and CUDA tests.
 
 ## Optional CUDA Support
 
@@ -51,6 +51,8 @@ cmake --build --preset benchmark --parallel 4
 ```
 
 Artifacts are under `build/benchmark/`. This preset defines `CELLATO_COMPILE_MODE=BENCHMARK`, which compiles a broader temporal option set and can take substantially longer.
+
+Build and test presets explicitly select the Release configuration for generators such as Visual Studio and Ninja Multi-Config. These generators place executables in an additional `Release/` subdirectory.
 
 ## Compile Modes
 
@@ -118,11 +120,17 @@ The standalone example has its own presets:
 
 ```sh
 cmake --preset release -S examples/your_own_ca
-cmake --build examples/your_own_ca/build/release --parallel 4
+cmake --build examples/your_own_ca/build/release --config Release --parallel 4
 examples/your_own_ca/build/release/your_own_ca
 ```
 
 The example uses `on_cpu::standard` and builds with just CMake and a C++20 compiler. It does not require CUDA headers or runtime libraries.
+
+Its smoke test can also be run through CTest, including on Windows where the executable has an `.exe` suffix:
+
+```sh
+ctest --test-dir examples/your_own_ca/build/release -C Release --output-on-failure
+```
 
 ## Continuous Integration
 

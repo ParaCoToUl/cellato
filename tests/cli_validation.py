@@ -166,8 +166,15 @@ class CLIValidation(unittest.TestCase):
                           device=None, traverser=None, evaluator="bit_planes", layout=None)
 
     def test_successful_cpu_runs_and_checksum(self):
-        expected = "0-0-0-0-0-0-1-0-0-3-1-1-2-0-0-0"
-        result = self.run_cli(self.base | dict(x_size=8, y_size=8, steps=2, seed=1))
+        params = self.base | dict(x_size=8, y_size=8, steps=2, seed=1)
+        # Standard-library random distributions may produce different initial
+        # grids for the same seed. Compare against this build's reference run.
+        baseline = self.run_cli(params | dict(reference_impl="baseline", device=None,
+                                             traverser=None, evaluator=None, layout=None))
+        self.assertEqual(baseline.returncode, 0, baseline.stderr)
+        expected = baseline.stdout.strip().split(",")[-1]
+        self.assertRegex(expected, r"^[0-9]+(?:-[0-9]+){15}$")
+        result = self.run_cli(params)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip().split(",")[-1], expected)
         for layout in ("standard", "bit_array", "bit_planes", "tiled_bit_planes"):

@@ -14,7 +14,8 @@
   "buildPresets": [
     {
       "name": "release",
-      "configurePreset": "release"
+      "configurePreset": "release",
+      "configuration": "Release"
     }
   ]
 }

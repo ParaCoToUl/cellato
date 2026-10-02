@@ -34,21 +34,25 @@
   "buildPresets": [
     {
       "name": "release",
-      "configurePreset": "release"
+      "configurePreset": "release",
+      "configuration": "Release"
     },
     {
       "name": "verification",
-      "configurePreset": "verification"
+      "configurePreset": "verification",
+      "configuration": "Release"
     },
     {
       "name": "benchmark",
-      "configurePreset": "benchmark"
+      "configurePreset": "benchmark",
+      "configuration": "Release"
     }
   ],
   "testPresets": [
     {
       "name": "release",
       "configurePreset": "release",
+      "configuration": "Release",
       "output": {
         "outputOnFailure": true
       }
@@ -56,6 +60,7 @@
     {
       "name": "verification",
       "configurePreset": "verification",
+      "configuration": "Release",
       "output": {
         "outputOnFailure": true
       }

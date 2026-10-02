@@ -18,8 +18,12 @@ target_include_directories(your_own_ca PRIVATE
 
 target_compile_definitions(your_own_ca PRIVATE CELLATO_ENABLE_CUDA=0)
 
-target_compile_options(your_own_ca PRIVATE
-    -Wall
-    -Wextra
-    -Wpedantic
-)
+if(MSVC)
+    target_compile_options(your_own_ca PRIVATE /W4 /permissive- /Zc:__cplusplus /bigobj /utf-8)
+else()
+    target_compile_options(your_own_ca PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+enable_testing()
+add_test(NAME your_own_ca_smoke COMMAND your_own_ca)
+set_tests_properties(your_own_ca_smoke PROPERTIES TIMEOUT 30)
