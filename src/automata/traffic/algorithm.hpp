@@ -25,21 +25,21 @@ struct one_direction {
 
     // clang-format off
     using move_to_outgoing_if_possible =
-        if_< outgoing_is_empty >::template then_<
+        typename if_< outgoing_is_empty >::template then_<
             empty
         >::template else_<
             movable_car
         >;
 
     using move_incoming_neighbor_if_possible =
-        if_< incoming_is_movable_car >::template then_<
+        typename if_< incoming_is_movable_car >::template then_<
             movable_car
         >::template else_<
             empty
         >;
 
     using algorithm =
-        if_< is_movable_car >::template then_<
+        typename if_< is_movable_car >::template then_<
             move_to_outgoing_if_possible
 
         >::template elif_< is_empty >::template then_<

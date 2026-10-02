@@ -42,7 +42,7 @@ public:
         auto current = &_input_grid;
         auto next = &_intermediate_grid;
 
-        auto state = cellato::memory::grids::point_in_grid(current->data());
+        cellato::memory::grids::point_in_grid<decltype(current->data())> state{current->data()};
 
         state.properties.x_size = _input_grid.x_size_physical();
         state.properties.y_size = _input_grid.y_size_physical();

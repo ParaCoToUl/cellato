@@ -2,8 +2,11 @@
 #define WIRE_DATA_INIT_HPP
 
 #include "cellato/experiments/run_params.hpp"
+#include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <random>
+#include <utility>
 #include <vector>
 
 namespace wire {
@@ -118,11 +121,11 @@ struct wire_random_init {
             // Draw the circle
             for (int angle = 0; angle < 360; angle += 5) {
                 // Convert angle to radians
-                double rad = angle * M_PI / 180.0;
+                double rad = angle * std::numbers::pi / 180.0;
 
                 // Calculate point on circle
-                int x = cx + static_cast<int>(radius * cos(rad));
-                int y = cy + static_cast<int>(radius * sin(rad));
+                int x = cx + static_cast<int>(radius * std::cos(rad));
+                int y = cy + static_cast<int>(radius * std::sin(rad));
 
                 if (x >= 0 && x < static_cast<int>(params.x_size) && y >= 0 && y < static_cast<int>(params.y_size)) {
                     int idx = y * params.x_size + x;
