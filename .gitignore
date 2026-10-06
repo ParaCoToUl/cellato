@@ -1,10 +1,32 @@
+# Build artifacts
 **/*.out
 **/bin
 **/build
 /bin_*
 **/obj
 **/_deps
+cmake-build-*/
+compile_commands.json
+
+# Python & testing
 **/venv
-**/_obsolete
 **/__pycache__
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Temporary & logs
+**/_obsolete
 **/__slurm__
+results/*.logs/
