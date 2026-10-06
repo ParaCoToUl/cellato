@@ -114,10 +114,10 @@ Cellato builds on the DSL paper and the follow-up work on bit-plane encoding and
     journal = {Journal of Object Technology},
     volume = {25},
     number = {1},
-    issn = {1660-1769},
     year = {2026},
     month = mar,
     pages = {1:1--13},
+    issn = {1660-1769},
     doi = {10.5381/jot.2026.25.1.a13},
     url = {https://www.jot.fm/contents/issue_2026_01/a13.html},
     note = {ECOOP 2025 Workshops}
@@ -126,7 +126,7 @@ Cellato builds on the DSL paper and the follow-up work on bit-plane encoding and
 
 - **Improving Cellular Automata Performance with Bit-Planes Encoding and Bitwise Vectorization**
   - Matyáš Brabec, Jiří Klepl, and Martin Kruliš.
-  - *Parallel Computing*, article 103226, 2026.
+  - *Parallel Computing*, volume 130, article 103226, December 2026.
   - DOI: [10.1016/j.parco.2026.103226](https://doi.org/10.1016/j.parco.2026.103226)
   - Artifact: [matyas-brabec/2026-cellato-journal](https://github.com/matyas-brabec/2026-cellato-journal)
 
@@ -137,11 +137,13 @@ Cellato builds on the DSL paper and the follow-up work on bit-plane encoding and
     title = {Improving cellular automata performance with bit-planes encoding and bitwise vectorization},
     author = {Matyáš Brabec and Jiří Klepl and Martin Kruliš},
     journal = {Parallel Computing},
-    pages = {103226},
+    volume = {130},
     year = {2026},
+    month = dec,
+    pages = {103226},
     issn = {0167-8191},
     doi = {10.1016/j.parco.2026.103226},
-    url = {https://doi.org/10.1016/j.parco.2026.103226}
+    url = {https://www.sciencedirect.com/science/article/pii/S016781912600044X}
   }
   ```
 

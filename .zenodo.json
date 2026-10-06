@@ -1,0 +1,59 @@
+{
+  "title": "Cellato: A C++20 Library and Embedded DSL for Cellular Automata",
+  "description": "<p>Cellato is a high-performance C++20 library and embedded domain-specific language (DSL) for cellular automata. It lets users describe cellular automaton rules as type-level C++ expressions and execute them across multiple evaluators, memory layouts (standard cells, bit arrays, bit planes, tiled bit planes), and traversers (CPU, CUDA, spatial blocking, temporal blocking).</p>",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "mit",
+  "version": "0.1.0",
+  "language": "eng",
+  "creators": [
+    {
+      "name": "Brabec, Matyáš",
+      "affiliation": "Charles University",
+      "orcid": "0009-0008-4470-2748"
+    },
+    {
+      "name": "Klepl, Jiří",
+      "affiliation": "Charles University",
+      "orcid": "0000-0002-2231-4073"
+    },
+    {
+      "name": "Kruliš, Martin",
+      "affiliation": "Charles University",
+      "orcid": "0000-0002-0985-8949"
+    }
+  ],
+  "keywords": [
+    "cellular automata",
+    "domain-specific language",
+    "C++20",
+    "CUDA",
+    "GPU",
+    "bit-plane encoding",
+    "bitwise vectorization",
+    "temporal blocking",
+    "high-performance computing"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.1016/j.parco.2026.103226",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "10.5381/jot.2026.25.1.a13",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "https://github.com/matyas-brabec/2026-cellato-journal",
+      "relation": "isDerivedFrom",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/matyas-brabec/2025-icooolps-cellato",
+      "relation": "isDerivedFrom",
+      "resource_type": "software"
+    }
+  ]
+}

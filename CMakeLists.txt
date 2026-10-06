@@ -4,7 +4,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-project(cellato LANGUAGES CXX)
+project(cellato VERSION 0.1.0 LANGUAGES CXX)
 
 # Detect CUDA by default, but an explicit OFF must not probe or require the toolkit.
 if(NOT DEFINED CELLATO_ENABLE_CUDA OR CELLATO_ENABLE_CUDA)

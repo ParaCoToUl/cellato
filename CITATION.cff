@@ -1,0 +1,77 @@
+cff-version: 1.2.0
+message: "If you use Cellato in your research, please cite both the software and the corresponding publications."
+title: "Cellato: A C++20 Library and Embedded DSL for Cellular Automata"
+type: software
+authors:
+  - family-names: "Brabec"
+    given-names: "Matyáš"
+    affiliation: "Charles University"
+    orcid: "https://orcid.org/0009-0008-4470-2748"
+    email: "matyas.brabec@seznam.cz"
+  - family-names: "Klepl"
+    given-names: "Jiří"
+    affiliation: "Charles University"
+    orcid: "https://orcid.org/0000-0002-2231-4073"
+    email: "klepl@d3s.mff.cuni.cz"
+  - family-names: "Kruliš"
+    given-names: "Martin"
+    affiliation: "Charles University"
+    orcid: "https://orcid.org/0000-0002-0985-8949"
+    email: "martin.krulis@mff.cuni.cz"
+version: 0.1.0
+date-released: "2026-10-06"
+license: MIT
+repository-code: "https://github.com/ParaCoToUl/cellato"
+url: "https://github.com/ParaCoToUl/cellato"
+abstract: >-
+  Cellato is a C++20 library and embedded domain-specific language (DSL) for cellular automata.
+  It lets you describe an automaton rule as a type-level C++ expression, then run that same rule
+  through different evaluators, memory layouts (standard cells, bit arrays, bit planes, tiled bit planes),
+  and traversers (CPU, CUDA, spatial blocking, temporal blocking).
+keywords:
+  - "cellular automata"
+  - "domain-specific language"
+  - "c++20"
+  - "cuda"
+  - "gpgpu"
+  - "bit-plane encoding"
+  - "bitwise vectorization"
+  - "temporal blocking"
+  - "high-performance computing"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Brabec"
+      given-names: "Matyáš"
+    - family-names: "Klepl"
+      given-names: "Jiří"
+    - family-names: "Kruliš"
+      given-names: "Martin"
+  title: "Improving cellular automata performance with bit-planes encoding and bitwise vectorization"
+  journal: "Parallel Computing"
+  volume: 130
+  year: 2026
+  month: 12
+  pages: "103226"
+  issn: "0167-8191"
+  doi: "10.1016/j.parco.2026.103226"
+  url: "https://www.sciencedirect.com/science/article/pii/S016781912600044X"
+references:
+  - type: article
+    authors:
+      - family-names: "Brabec"
+        given-names: "Matyáš"
+      - family-names: "Klepl"
+        given-names: "Jiří"
+      - family-names: "Kruliš"
+        given-names: "Martin"
+    title: "Cellato: a DSL for Cellular Automata based on C++ Template Meta-programming"
+    journal: "Journal of Object Technology"
+    volume: 25
+    issue: 1
+    year: 2026
+    month: 3
+    pages: "1:1-13"
+    issn: "1660-1769"
+    doi: "10.5381/jot.2026.25.1.a13"
+    url: "https://www.jot.fm/contents/issue_2026_01/a13.html"
