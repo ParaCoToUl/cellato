@@ -490,7 +490,6 @@ inline void register_bit_planes_grid_tests() {
     static bit_planes_grid_test_suite<linear_bit_planes, uint8_t, linear_planes_tag> linear_planes_suite;
     test_manager::instance().register_suite(&linear_planes_suite);
 
-    // TODO finish tiled planes tests
     static constexpr char tiled_planes_tag[] = "Tiled Bit Planes";
     static bit_planes_grid_test_suite<tiled_bit_planes, uint64_t, tiled_planes_tag> tiled_planes_suite;
     test_manager::instance().register_suite(&tiled_planes_suite);

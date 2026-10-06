@@ -43,7 +43,7 @@ public:
     constexpr static bool HAS_OWN_PRINT = false;
 
     constexpr static int needed_bits = states_dict_t::needed_bits;
-    // TODO this shit should be dealt with
+    // Word bit width determines the 2D tile aspect ratio (e.g., 8x4 for 32-bit, 8x8 for 64-bit).
     static constexpr int word_store_bits = sizeof(store_word_type) * 8;
 
     static constexpr int x_word_tile_size = 8;
