@@ -6,6 +6,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://isocpp.org/)
 [![CUDA](https://img.shields.io/badge/CUDA-optional-76B900.svg)](https://developer.nvidia.com/cuda)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23198118.svg)](https://doi.org/10.5281/zenodo.23198118)
 
 Cellato is a C++20 library and embedded DSL for cellular automata. It lets you describe an automaton rule as a type-level C++ expression, then run that same rule through different evaluators, memory layouts, and traversers.
 
