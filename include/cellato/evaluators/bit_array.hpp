@@ -18,6 +18,14 @@ namespace cellato::evaluators::bit_array {
 
 using idx_type = cellato::memory::idx_type;
 
+namespace detail {
+
+// Implementation evaluator - processes a single subcell
+template <typename grid_t, typename Expression, idx_type subcell_offset>
+struct _evaluator_impl;
+
+} // namespace detail
+
 using namespace cellato::ast;
 using namespace cellato::memory;
 
@@ -66,10 +74,6 @@ struct indexer {
     }
 };
 
-// Implementation evaluator - processes a single subcell
-template <typename grid_t, typename Expression, idx_type subcell_offset>
-struct _impl_evaluator;
-
 // Main evaluator - processes an entire word at once
 template <typename bit_array_grid_t, typename Expression>
 struct evaluator {
@@ -84,7 +88,7 @@ struct evaluator {
         // Iterate over each subcell and evaluate the expression
         static_for<cells_per_word>::apply([&]<idx_type subcell_idx>() {
             // Calculate and evaluate each subcell
-            auto cell_result = _impl_evaluator<bit_array_grid_t, Expression, subcell_idx>::evaluate(state);
+            auto cell_result = detail::_evaluator_impl<bit_array_grid_t, Expression, subcell_idx>::evaluate(state);
             // #ifndef __CUDACC__
             // std::cout << "Subcell " << subcell_idx << ": " << cell_result << std::endl;
             // #endif
@@ -103,14 +107,14 @@ struct evaluator {
 
 using one_cell_int = std::int32_t;
 
-// Implement specific expression evaluators below
+namespace detail {
 
 template <typename grid_t,
           std::uint64_t Numerator,
           std::uint64_t Denominator,
           std::uint64_t Stream,
           idx_type subcell_offset>
-struct _impl_evaluator<grid_t, probability<Numerator, Denominator, Stream>, subcell_offset> {
+struct _evaluator_impl<grid_t, probability<Numerator, Denominator, Stream>, subcell_offset> {
     CUDA_CALLABLE static bool evaluate(state_t<grid_t> state) {
         const auto position = cellato::core::random::global_position(state);
         return cellato::core::random::sample_cell<probability<Numerator, Denominator, Stream>>(
@@ -120,13 +124,13 @@ struct _impl_evaluator<grid_t, probability<Numerator, Denominator, Stream>, subc
 
 // Constants
 template <typename grid_t, auto Value, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, constant<Value>, subcell_offset> {
+struct _evaluator_impl<grid_t, constant<Value>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> /* state */) { return Value; }
 };
 
 // State constants
 template <typename grid_t, typename state_type, state_type Value, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, state_constant<Value>, subcell_offset> {
+struct _evaluator_impl<grid_t, state_constant<Value>, subcell_offset> {
     using dictionary_t = typename grid_t::states_dict_t;
 
     CUDA_CALLABLE static one_cell_int evaluate(state_t<grid_t> /* state */) {
@@ -137,112 +141,112 @@ struct _impl_evaluator<grid_t, state_constant<Value>, subcell_offset> {
 
 // Conditional evaluation
 template <typename grid_t, typename Condition, typename Then, typename Else, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, if_then_else<Condition, Then, Else>, subcell_offset> {
+struct _evaluator_impl<grid_t, if_then_else<Condition, Then, Else>, subcell_offset> {
 
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        if (_impl_evaluator<grid_t, Condition, subcell_offset>::evaluate(state)) {
-            return _impl_evaluator<grid_t, Then, subcell_offset>::evaluate(state);
+        if (_evaluator_impl<grid_t, Condition, subcell_offset>::evaluate(state)) {
+            return _evaluator_impl<grid_t, Then, subcell_offset>::evaluate(state);
         } else {
-            return _impl_evaluator<grid_t, Else, subcell_offset>::evaluate(state);
+            return _evaluator_impl<grid_t, Else, subcell_offset>::evaluate(state);
         }
     }
 };
 
 // Arithmetic operators
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, bit_and_<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, bit_and_<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) &
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) &
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, plus<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, plus<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) +
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) +
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, modulo<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, modulo<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) %
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) %
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, bit_or_<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, bit_or_<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) |
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) |
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 // Logical operators
 
 template <typename grid_t, typename Value, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, not_<Value>, subcell_offset> {
+struct _evaluator_impl<grid_t, not_<Value>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return !_impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
+        return !_evaluator_impl<grid_t, Value, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, and_<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, and_<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) &&
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) &&
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, or_<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, or_<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) ||
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) ||
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 // Comparison operators
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, equals<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, equals<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) ==
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) ==
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, not_equals<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, not_equals<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) !=
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) !=
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, greater_than<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, greater_than<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) >
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) >
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Left, typename Right, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, less_than<Left, Right>, subcell_offset> {
+struct _evaluator_impl<grid_t, less_than<Left, Right>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        return _impl_evaluator<grid_t, Left, subcell_offset>::evaluate(state) <
-               _impl_evaluator<grid_t, Right, subcell_offset>::evaluate(state);
+        return _evaluator_impl<grid_t, Left, subcell_offset>::evaluate(state) <
+               _evaluator_impl<grid_t, Right, subcell_offset>::evaluate(state);
     }
 };
 
 template <typename grid_t, typename Value, idx_type bit_idx, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
+struct _evaluator_impl<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
-        auto val = _impl_evaluator<grid_t, Value, subcell_offset>::evaluate(state);
+        auto val = _evaluator_impl<grid_t, Value, subcell_offset>::evaluate(state);
         using Val = decltype(val);
         return (val & (Val{1} << bit_idx)) != 0;
     }
@@ -251,20 +255,20 @@ struct _impl_evaluator<grid_t, has_bit_set<Value, bit_idx>, subcell_offset> {
 // MISC
 
 template <typename grid_t, idx_type subcell_offset, typename Even, typename Odd>
-struct _impl_evaluator<grid_t, alternate_algorithms<Even, Odd>, subcell_offset> {
+struct _evaluator_impl<grid_t, alternate_algorithms<Even, Odd>, subcell_offset> {
 
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         if ((state.time_step % 2) == 0) {
-            return _impl_evaluator<grid_t, Even, subcell_offset>::evaluate(state);
+            return _evaluator_impl<grid_t, Even, subcell_offset>::evaluate(state);
         } else {
-            return _impl_evaluator<grid_t, Odd, subcell_offset>::evaluate(state);
+            return _evaluator_impl<grid_t, Odd, subcell_offset>::evaluate(state);
         }
     }
 };
 
 // Neighborhood access
 template <typename grid_t, idx_type x_offset, idx_type y_offset, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> {
+struct _evaluator_impl<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> {
     CUDA_CALLABLE static auto evaluate(state_t<grid_t> state) {
         constexpr auto cells_per_word = grid_t::cells_per_word;
 
@@ -278,13 +282,13 @@ struct _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset> 
 
 // Neighbor counting
 template <typename grid_t, typename CellStateValue, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, moore_8_neighbors>, subcell_offset> {
+struct _evaluator_impl<grid_t, count_neighbors<CellStateValue, moore_8_neighbors>, subcell_offset> {
 
     template <idx_type x_offset, idx_type y_offset>
-    using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
+    using cell_at = _evaluator_impl<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
 
     CUDA_CALLABLE static int evaluate(state_t<grid_t> state) {
-        auto target_state = _impl_evaluator<grid_t, CellStateValue, subcell_offset>::evaluate(state);
+        auto target_state = _evaluator_impl<grid_t, CellStateValue, subcell_offset>::evaluate(state);
 
         auto top_left_c = cell_at<-1, -1>::evaluate(state) == target_state ? 1 : 0;
         auto top_c = cell_at<0, -1>::evaluate(state) == target_state ? 1 : 0;
@@ -300,10 +304,10 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, moore_8_neighbors
 };
 
 template <typename grid_t, typename CellStateValue, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternating_neighborhood>, subcell_offset> {
+struct _evaluator_impl<grid_t, count_neighbors<CellStateValue, margolus_alternating_neighborhood>, subcell_offset> {
 
     CUDA_CALLABLE static int evaluate(state_t<grid_t> state) {
-        auto target_value = _impl_evaluator<grid_t, CellStateValue, subcell_offset>::evaluate(state);
+        auto target_value = _evaluator_impl<grid_t, CellStateValue, subcell_offset>::evaluate(state);
 
         constexpr auto cells_per_word = grid_t::cells_per_word;
         idx_type x_original = indexer::get_x(state, state.position.x * cells_per_word + subcell_offset);
@@ -357,7 +361,7 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
     }
 
     template <idx_type x_offset, idx_type y_offset>
-    using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
+    using cell_at = _evaluator_impl<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
 
     CUDA_CALLABLE static one_cell_int get_cell_at(state_t<grid_t> state, idx_type x_offset, idx_type y_offset) {
         if (x_offset == 0) {
@@ -389,7 +393,7 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, margolus_alternat
 };
 
 template <typename grid_t, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, margolus_180_neighbor, subcell_offset> {
+struct _evaluator_impl<grid_t, margolus_180_neighbor, subcell_offset> {
 
     CUDA_CALLABLE static one_cell_int evaluate(state_t<grid_t> state) {
         // Determine the absolute original coordinates of the specific sub-cell.
@@ -449,7 +453,7 @@ struct _impl_evaluator<grid_t, margolus_180_neighbor, subcell_offset> {
     // Helper to get the state of a cell at a relative offset.
     // This is identical to the one in your example to ensure consistent cell access.
     template <idx_type x_offset, idx_type y_offset>
-    using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
+    using cell_at = _evaluator_impl<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
 
     CUDA_CALLABLE static one_cell_int get_cell_at(state_t<grid_t> state, idx_type x_offset, idx_type y_offset) {
         if (x_offset == 0) {
@@ -481,13 +485,13 @@ struct _impl_evaluator<grid_t, margolus_180_neighbor, subcell_offset> {
 };
 
 template <typename grid_t, typename CellStateValue, idx_type subcell_offset>
-struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, von_neumann_4_neighbors>, subcell_offset> {
+struct _evaluator_impl<grid_t, count_neighbors<CellStateValue, von_neumann_4_neighbors>, subcell_offset> {
 
     template <idx_type x_offset, idx_type y_offset>
-    using cell_at = _impl_evaluator<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
+    using cell_at = _evaluator_impl<grid_t, neighbor_at<x_offset, y_offset>, subcell_offset>;
 
     CUDA_CALLABLE static int evaluate(state_t<grid_t> state) {
-        auto target_state = _impl_evaluator<grid_t, CellStateValue, subcell_offset>::evaluate(state);
+        auto target_state = _evaluator_impl<grid_t, CellStateValue, subcell_offset>::evaluate(state);
 
         auto top_c = cell_at<0, -1>::evaluate(state) == target_state ? 1 : 0;
         auto left_c = cell_at<-1, 0>::evaluate(state) == target_state ? 1 : 0;
@@ -497,6 +501,8 @@ struct _impl_evaluator<grid_t, count_neighbors<CellStateValue, von_neumann_4_nei
         return top_c + left_c + right_c + bottom_c;
     }
 };
+
+} // namespace detail
 
 } // namespace cellato::evaluators::bit_array
 

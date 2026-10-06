@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -33,6 +34,13 @@ using namespace cellato::ast;
 using namespace cellato::core::bitwise;
 using namespace cellato::memory::grids::utils;
 
+namespace detail {
+
+template <typename params, typename Expression>
+struct _evaluator_impl;
+
+} // namespace detail
+
 template <typename cell_row_type,
           typename state_dictionary_type,
           template <typename, typename> class recursive_evaluator>
@@ -44,12 +52,10 @@ struct implementation_params {
     using evaluator_t = recursive_evaluator<params, Expression>;
 };
 
-template <typename params, typename Expression>
-struct _evaluator_impl {};
-
 template <typename cell_row_type, typename state_dictionary_type, typename Expression>
 using evaluator =
-    _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
+    detail::_evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, detail::_evaluator_impl>,
+                            Expression>;
 
 template <typename cell_row_type, typename state_dictionary_type>
 using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::needed_bits>;
@@ -57,6 +63,8 @@ using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::ne
 template <typename params>
 using state_t = cellato::memory::grids::point_in_grid<
     grid_cell_data_type<typename params::cell_row_t, typename params::state_dict_t>>;
+
+namespace detail {
 
 template <typename params, std::uint64_t Numerator, std::uint64_t Denominator, std::uint64_t Stream>
 struct _evaluator_impl<params, probability<Numerator, Denominator, Stream>> {
@@ -186,11 +194,9 @@ struct _evaluator_impl<params, modulo<Left, constant<ConstValue>>> {
     template <typename E>
     using evaluator_t = typename params::template evaluator_t<params, E>;
 
-    static_assert((ConstValue & (ConstValue - 1)) == 0, "Only modulo by power of two is supported");
+    static_assert(std::has_single_bit(static_cast<unsigned>(ConstValue)), "Only modulo by power of two is supported");
 
-    static constexpr int log2(int n) { return (n < 2) ? 0 : 1 + log2(n / 2); }
-
-    static constexpr int number_of_bits = log2(ConstValue);
+    static constexpr int number_of_bits = std::countr_zero(static_cast<unsigned>(ConstValue));
 
     CUDA_CALLABLE static auto evaluate(state_t<params> state) {
         auto left = evaluator_t<Left>::evaluate(state);
@@ -654,6 +660,8 @@ struct _evaluator_impl<params, count_neighbors<state_constant<CellStateValue>, v
             .get_added(left);
     }
 };
+
+} // namespace detail
 
 } // namespace cellato::evaluators::bit_planes
 

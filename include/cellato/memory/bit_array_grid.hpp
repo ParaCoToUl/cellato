@@ -40,7 +40,7 @@ class BitArrayProxy {
 private:
     store_word_type* _data;
     static constexpr int _bits_per_cell = states_dict_t::needed_bits;
-    static constexpr store_word_type _cell_mask = (1 << _bits_per_cell) - 1;
+    static constexpr store_word_type _cell_mask = (static_cast<store_word_type>(1) << _bits_per_cell) - 1;
 
 public:
     // Reference proxy class to allow both read and write operations
@@ -93,7 +93,7 @@ public:
     constexpr static int cells_per_word = sizeof(store_word_type) * 8 / bits_per_cell;
 
     // Bit mask for a single cell
-    constexpr static store_word_type cell_mask = (1 << bits_per_cell) - 1;
+    constexpr static store_word_type cell_mask = (static_cast<store_word_type>(1) << bits_per_cell) - 1;
 
     using original_state_t = typename states_dict_t::state_t;
     using cell_t = original_state_t;

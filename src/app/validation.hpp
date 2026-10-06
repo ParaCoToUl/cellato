@@ -139,7 +139,7 @@ inline suite_catalog select_suites(const run_params& params, const suite_catalog
                                         entry.option + " values for " + selected + ": " +
                                         join(names(candidates, entry.field)) + ".");
         }
-        if (!selected.empty()) selected += " ";
+        if (!selected.empty()) selected += ' ';
         selected += choice;
         candidates = std::move(matching);
     }

@@ -35,6 +35,13 @@ using namespace cellato::ast;
 using namespace cellato::core::bitwise;
 using namespace cellato::memory::grids::utils;
 
+namespace detail {
+
+template <typename params, typename Expression>
+struct _evaluator_impl;
+
+} // namespace detail
+
 template <typename cell_row_type,
           typename state_dictionary_type,
           template <typename, typename> class recursive_evaluator>
@@ -46,12 +53,9 @@ struct implementation_params {
     using evaluator_t = recursive_evaluator<params, Expression>;
 };
 
-template <typename params, typename Expression>
-struct _evaluator_impl;
-
 template <typename cell_row_type, typename state_dictionary_type, typename Expression>
-using _simple_bit_planes_evaluator_implementation = cellato::evaluators::bit_planes::
-    _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
+using _simple_bit_planes_evaluator_implementation = cellato::evaluators::bit_planes::detail::
+    _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, detail::_evaluator_impl>, Expression>;
 
 template <typename cell_row_type, typename state_dictionary_type>
 using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::needed_bits>;
@@ -59,6 +63,13 @@ using grid_cell_data_type = std::array<cell_row_type*, state_dictionary_type::ne
 template <typename params>
 using state_t = cellato::memory::grids::point_in_grid<
     grid_cell_data_type<typename params::cell_row_t, typename params::state_dict_t>>;
+
+template <typename cell_row_type, typename state_dictionary_type, typename Expression>
+using evaluator =
+    detail::_evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, detail::_evaluator_impl>,
+                            Expression>;
+
+namespace detail {
 
 template <typename params, typename Expression>
 struct _evaluator_impl {
@@ -72,10 +83,6 @@ struct _evaluator_impl {
                                                            Expression>::evaluate(state);
     }
 };
-
-template <typename cell_row_type, typename state_dictionary_type, typename Expression>
-using evaluator =
-    _evaluator_impl<implementation_params<cell_row_type, state_dictionary_type, _evaluator_impl>, Expression>;
 
 template <typename params, std::uint64_t Numerator, std::uint64_t Denominator, std::uint64_t Stream>
 struct _evaluator_impl<params, probability<Numerator, Denominator, Stream>> {
@@ -388,6 +395,8 @@ private:
         return current_state.get_with_switched_pairs_of_numbers().get_with_switched_rows_of_8();
     }
 };
+
+} // namespace detail
 
 } // namespace cellato::evaluators::tiled_bit_planes
 

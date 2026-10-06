@@ -18,18 +18,18 @@ int main(int argc, char* argv[]) {
     register_vector_int_tests();
     register_bit_evaluator_tests();
     register_probability_tests();
-    
+
     // If an argument is provided, run that specific test suite
     if (argc > 1) {
         std::string suite_name = argv[1];
         std::cout << "Running test suite: " << suite_name << std::endl;
-        
+
         test_result result = test_manager::instance().run_suite(suite_name);
         return result.all_passed() ? 0 : 1;
-    } 
+    }
     else {
         std::cout << "Running all test suites" << std::endl;
-        
+
         test_result result = test_manager::instance().run_all();
         return result.all_passed() ? 0 : 1;
     }

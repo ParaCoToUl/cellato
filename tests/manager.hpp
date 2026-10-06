@@ -27,8 +27,8 @@ public:
     void add(const test_result& other) {
         total += other.total;
         passed += other.passed;
-        failed_messages.insert(failed_messages.end(), 
-                              other.failed_messages.begin(), 
+        failed_messages.insert(failed_messages.end(),
+                              other.failed_messages.begin(),
                               other.failed_messages.end());
     }
 
@@ -56,7 +56,7 @@ private:
     bool verbose_output = true;
 
     test_manager() = default;
-    
+
 public:
     // Get the singleton instance
     static test_manager& instance() {
@@ -81,14 +81,14 @@ public:
         std::cout << "========================================" << RESET << std::endl;
 
         test_result overall;
-        
+
         for (auto* suite : test_suites) {
             std::cout << BLUE << "\n====== RUNNING TEST SUITE: " << suite->name() << " ======" << RESET << std::endl;
-            
+
             test_result suite_result = suite->run();
             overall.add(suite_result);
-            
-            std::cout << BLUE << "====== COMPLETED TEST SUITE: " << suite->name() 
+
+            std::cout << BLUE << "====== COMPLETED TEST SUITE: " << suite->name()
                      << " (" << suite_result.passed << "/" << suite_result.total << " passed) ======" << RESET << std::endl;
         }
 
@@ -101,17 +101,17 @@ public:
         for (auto* suite : test_suites) {
             if (suite->name() == suite_name) {
                 std::cout << BLUE << "\n====== RUNNING TEST SUITE: " << suite->name() << " ======" << RESET << std::endl;
-                
+
                 test_result result = suite->run();
-                
-                std::cout << BLUE << "====== COMPLETED TEST SUITE: " << suite->name() 
+
+                std::cout << BLUE << "====== COMPLETED TEST SUITE: " << suite->name()
                          << " (" << result.passed << "/" << result.total << " passed) ======" << RESET << std::endl;
-                
+
                 print_summary(result);
                 return result;
             }
         }
-        
+
         std::cout << RED << "Test suite '" << suite_name << "' not found!" << RESET << std::endl;
         return {};
     }
@@ -120,7 +120,7 @@ private:
     void print_summary(const test_result& result) {
         std::cout << YELLOW << "\n====== TEST SUMMARY ======" << RESET << std::endl << std::endl;
         std::cout << BLUE << "Total tests: " << result.total << std::endl;
-        
+
         std::cout << GREEN << "  Tests passed: " << result.passed << RESET << std::endl;
         std::cout << RED << "  Tests failed: " << result.failed() << RESET << std::endl << std::endl;
 
@@ -138,20 +138,20 @@ private:
 // Helper for assert functions
 class test_case {
 public:
-    test_case(test_result& result, bool verbose = true, bool silent_if_passed_flag = false) 
+    test_case(test_result& result, bool verbose = true, bool silent_if_passed_flag = false)
         : result(result), verbose(verbose), silent_if_passed_flag(silent_if_passed_flag) {}
 
     template<typename T, typename U>
     void assert_equal(T expected, U actual, const std::string& message) {
         result.total++;
-        
+
         if (expected == static_cast<T>(actual)) {
             if (verbose && !silent_if_passed_flag) {
                 std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;
             }
             result.passed++;
         } else {
-            std::string failure_msg = message + " (Expected: " + to_string(expected) + 
+            std::string failure_msg = message + " (Expected: " + to_string(expected) +
                                      ", Got: " + to_string(actual) + ")";
             if (verbose) {
                 std::cout << RED << "✗ FAIL: " << failure_msg << RESET << std::endl;
@@ -162,7 +162,7 @@ public:
 
     void assert_true(bool condition, const std::string& message) {
         result.total++;
-        
+
         if (condition) {
             if (verbose && !silent_if_passed_flag) {
                 std::cout << GREEN << "✓ PASS: " << message << RESET << std::endl;

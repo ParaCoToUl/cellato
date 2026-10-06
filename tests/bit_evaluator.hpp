@@ -19,8 +19,8 @@ enum class BitEvalTestState {
 
 // Define the state dictionary for testing
 using BitEvalTestDict = cellato::memory::grids::state_dictionary<
-    BitEvalTestState::DEAD, 
-    BitEvalTestState::ALIVE, 
+    BitEvalTestState::DEAD,
+    BitEvalTestState::ALIVE,
     BitEvalTestState::DYING
 >;
 
@@ -47,7 +47,7 @@ public:
         test_neighbor_accessor(tc);
         test_neighborhood_sum(tc);
         test_if_then_else(tc);
-        
+
         return result;
     }
 
@@ -55,9 +55,9 @@ private:
     // Test neighbor accessors
     void test_neighbor_accessor(test_case& tc) {
         std::cout << BLUE << "\n--- Testing neighbor accessor functionality ---" << RESET << std::endl;
-        
+
         using namespace cellato::ast;
-        
+
         // Define neighbor accessors
         using top_left = neighbor_at<-1, -1>;
         using top = neighbor_at<0, -1>;
@@ -73,7 +73,7 @@ private:
         std::vector<uint8_t> grid_0th_bit = {
             0b00000000, 0b00000000, 0b00000000,
             0b10000000, 0b00000010, 0b00000000,
-            0b10000000, 0b00000101, 0b00000000, 
+            0b10000000, 0b00000101, 0b00000000,
             0b10000000, 0b00001000, 0b00000000,
         };
 
@@ -86,7 +86,7 @@ private:
 
         // Create grid configuration
         std::array<uint8_t*, 2> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
-        
+
         // Set up the state for evaluation
         cellato::memory::grids::point_in_grid<decltype(grid)> state;
         state.grid = grid;
@@ -98,21 +98,21 @@ private:
         // Test various neighbor accessors
         auto top_left_res = bit_evaluator_t<top_left>::evaluate(state);
         tc.assert_true(top_left_res.get_at(0) == 1, "Top-left should access the correct cell");
-        
+
         auto top_res = bit_evaluator_t<top>::evaluate(state);
         tc.assert_true(top_res.get_at(1) == 1, "Top should access the correct cell");
-        
+
         auto self_res = bit_evaluator_t<self>::evaluate(state);
-        tc.assert_true(self_res.get_at(0) == 1 && self_res.get_at(2) == 1, 
+        tc.assert_true(self_res.get_at(0) == 1 && self_res.get_at(2) == 1,
                       "Self accessor should return the current cell state");
-                      
+
         auto bottom_res = bit_evaluator_t<bottom>::evaluate(state);
         tc.assert_true(bottom_res.get_at(3) == 1, "Bottom should access the correct cell");
 
         // Test that other neighbors are correctly empty
         auto top_right_res = bit_evaluator_t<top_right>::evaluate(state);
         tc.assert_true(top_right_res.get_at(0) == 1, "Top-right should access the correct cell");
-        
+
         auto right_res = bit_evaluator_t<right>::evaluate(state);
         tc.assert_true(right_res.get_at(0) == 0, "Right should be empty");
     }
@@ -120,9 +120,9 @@ private:
     // Test neighborhood sum functionality
     void test_neighborhood_sum(test_case& tc) {
         std::cout << BLUE << "\n--- Testing neighborhood sum functionality ---" << RESET << std::endl;
-        
+
         using namespace cellato::ast;
-        
+
         // Define a sum expression
         using sum = count_neighbors<alive, moore_8_neighbors>;
 
@@ -143,7 +143,7 @@ private:
 
         // Create grid configuration
         std::array<uint8_t*, 2> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
-        
+
         // Set up the state for evaluation
         cellato::memory::grids::point_in_grid<decltype(grid)> state;
         state.grid = grid;
@@ -154,28 +154,28 @@ private:
 
         // Evaluate the neighborhood sum
         auto result = bit_evaluator_t<sum>::evaluate(state);
-        
+
         // We should have some alive cells in the neighborhood
         // The specific count depends on the bit patterns set above
         // Based on the binary patterns, we expect several alive cells
         tc.assert_true(result.get_at(0) > 0, "Should find alive cells in the neighborhood");
-        
+
         // Check the type of the result
-        tc.assert_true(std::is_same_v<decltype(result), 
-                                      cellato::core::bitwise::vector_int<uint8_t, 4>>, 
+        tc.assert_true(std::is_same_v<decltype(result),
+                                      cellato::core::bitwise::vector_int<uint8_t, 4>>,
                       "Result should be a 4-bit vector_int for Moore-8 neighbors");
     }
 
     // Test if-then-else conditional functionality
     void test_if_then_else(test_case& tc) {
         std::cout << BLUE << "\n--- Testing if-then-else functionality ---" << RESET << std::endl;
-        
+
         using namespace cellato::ast;
-        
+
         // Define expressions for testing
         using current = current_state;
         using cell_is_dying = p<current, equals, dying>;
-        
+
         // Define two equivalent if-then-else expressions
         using next_state = if_<cell_is_dying>::then_<dead>::else_<alive>;
         using next_state_no_sugar = if_then_else<cell_is_dying, dead, alive>;
@@ -197,7 +197,7 @@ private:
 
         // Create grid configuration
         std::array<uint8_t*, 2> grid = { grid_0th_bit.data(), grid_1st_bit.data() };
-        
+
         // Set up the state for evaluation
         cellato::memory::grids::point_in_grid<decltype(grid)> state;
         state.grid = grid;
@@ -208,25 +208,25 @@ private:
 
         // Get current state at the test position
         // auto curr_state = bit_evaluator_t<current>::evaluate(state);
-        
+
         // Check if any cells are in DYING state
         auto is_dying_result = bit_evaluator_t<cell_is_dying>::evaluate(state);
-        
+
         // Evaluate the if-then-else expression
         auto result = bit_evaluator_t<next_state>::evaluate(state);
         auto result_no_sugar = bit_evaluator_t<next_state_no_sugar>::evaluate(state);
-        
+
         // The results from both expressions should be identical
-        tc.assert_true(result.equals_to(result_no_sugar) == 0xFF, 
+        tc.assert_true(result.equals_to(result_no_sugar) == 0xFF,
                       "Sugar and non-sugar syntax should produce identical results");
-        
+
         // Check the behavior of the if-then-else
         // Cells that were dying should now be dead, others should be alive
         for (int i = 0; i < 8; i++) {
             bool is_dying_at_i = ((is_dying_result >> i) & 1) != 0;
             bool is_dead_at_i = result.get_at(i) == BitEvalTestDict::state_to_index(BitEvalTestState::DEAD);
             bool is_alive_at_i = result.get_at(i) == BitEvalTestDict::state_to_index(BitEvalTestState::ALIVE);
-            
+
             if (is_dying_at_i) {
                 tc.assert_true(is_dead_at_i, "Cells that were dying should now be dead");
             } else {

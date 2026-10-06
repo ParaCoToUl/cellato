@@ -185,7 +185,7 @@ public:
             auto ith_bit = static_cast<vector_store_type>((value >> bit_idx) & 1);
 
             auto old_value = std::get<bit_idx>(numbers);
-            auto new_value = (old_value & ~(1 << index)) | (ith_bit << index);
+            auto new_value = (old_value & ~((static_cast<vector_store_type>(1) << index))) | (ith_bit << index);
 
             std::get<bit_idx>(numbers) = new_value;
         });

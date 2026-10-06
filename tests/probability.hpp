@@ -206,7 +206,7 @@ private:
         static_assert(std::is_same_v<decltype(scalar_evaluator<Event>::evaluate(scalar)), bool>);
         static_assert(std::is_same_v<decltype(plane_evaluator<Word, Event>::evaluate(planes)), Word>);
         static_assert(std::is_same_v<decltype(tile_evaluator<Word, Event>::evaluate(tiles)), Word>);
-        static_assert(std::is_same_v<decltype(evaluators::bit_array::_impl_evaluator<packed_grid, Event, 0>::evaluate(packed)), bool>);
+        static_assert(std::is_same_v<decltype(evaluators::bit_array::detail::_evaluator_impl<packed_grid, Event, 0>::evaluate(packed)), bool>);
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 scalar.position = {x, y};
