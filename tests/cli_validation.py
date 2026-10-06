@@ -170,7 +170,7 @@ class CLIValidation(unittest.TestCase):
         # Standard-library random distributions may produce different initial
         # grids for the same seed. Compare against this build's reference run.
         baseline = self.run_cli(params | dict(reference_impl="baseline", device=None,
-                                             traverser=None, evaluator=None, layout=None))
+                                              traverser=None, evaluator=None, layout=None))
         self.assertEqual(baseline.returncode, 0, baseline.stderr)
         expected = baseline.stdout.strip().split(",")[-1]
         self.assertRegex(expected, r"^[0-9]+(?:-[0-9]+){15}$")
@@ -190,14 +190,14 @@ class CLIValidation(unittest.TestCase):
         automata_line = next(line for line in help_result.stdout.splitlines() if "--automaton <name>" in line)
         automata = automata_line.split("<name>", 1)[1].strip().split(", ")
         layouts = [("standard", 0)] + [(layout, word_size)
-                                      for layout in ("bit_array", "bit_planes", "tiled_bit_planes")
-                                      for word_size in (32, 64)]
+                                       for layout in ("bit_array", "bit_planes", "tiled_bit_planes")
+                                       for word_size in (32, 64)]
         for automaton in automata:
             for seed in (1, 42):
                 # Align every packed layout, including 3-bit and 5-bit cells in 32/64-bit words.
                 params = self.base | dict(automaton=automaton, x_size=6720, y_size=16, steps=4, seed=seed)
                 baseline = self.run_cli(params | dict(reference_impl="baseline", device=None,
-                                                     traverser=None, evaluator=None, layout=None))
+                                                      traverser=None, evaluator=None, layout=None))
                 self.assertEqual(baseline.returncode, 0, baseline.stderr)
                 expected = baseline.stdout.strip().split(",")[-1]
                 for layout, word_size in layouts:
