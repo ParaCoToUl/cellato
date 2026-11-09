@@ -1,0 +1,97 @@
+name: CUDA tests (simulated H100)
+
+# Optional, non-required check. The hosted runners have no GPU, so this builds
+# Cellato with CELLATO_ENABLE_CUDA=ON and runs the CUDA tests on a simulated
+# NVIDIA H100 (https://github.com/pantheongpu/pantheonsim). A simulator cannot
+# reproduce hardware-specific behavior or timing, so it complements real-GPU
+# testing and does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "include/**"
+      - "src/**"
+      - "tests/**"
+      - "tools/**"
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cuda-sim:
+    name: Simulated H100, CUDA 13.0
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up the simulated GPU and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@ca87fe3143b29166822b923d6050945c5179408c # v0.1.5
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build
+
+      # The simulator runs PTX only (90-virtual) and needs a shared CUDA runtime.
+      - name: Configure CUDA build
+        run: |
+          cmake --preset release -G Ninja \
+                -DCELLATO_ENABLE_CUDA=ON \
+                -DCMAKE_CUDA_COMPILER=/usr/local/cuda-13.0/bin/nvcc \
+                -DCUDAToolkit_ROOT=/usr/local/cuda-13.0 \
+                -DCMAKE_CUDA_ARCHITECTURES=90-virtual \
+                -DCMAKE_CUDA_RUNTIME_LIBRARY=Shared
+
+      - name: Build
+        run: cmake --build --preset release -j3
+
+      - name: Run CUDA unit tests
+        run: vgpu run ctest --preset release --output-on-failure --no-tests=error --timeout 900 -R cellato_probability_cuda_tests
+
+      # Run the CUDA traversers on the simulated H100 and compare the final
+      # grid checksum with the CPU run of the same configuration.
+      - name: Compare CUDA traversers with the CPU
+        run: |
+          cellato=build/release/cellato
+          checksum() { grep -E '^game-of-life,' | tail -n 1 | awk -F, '{print $NF}'; }
+          # check NAME "CUDA-only options" common options...
+          check() {
+            name=$1; extra=$2; shift 2
+            echo "::group::$name"
+            cpu=$("$cellato" --device CPU --traverser simple --automaton game-of-life "$@" | checksum)
+            # shellcheck disable=SC2086
+            cuda=$(vgpu run "$cellato" --device CUDA --automaton game-of-life $extra "$@" | checksum)
+            echo "CPU:  $cpu"
+            echo "CUDA: $cuda"
+            echo "::endgroup::"
+            if [ -z "$cpu" ] || [ "$cpu" != "$cuda" ]; then
+              echo "::error::$name checksum differs from the CPU run"
+              return 1
+            fi
+          }
+          status=0
+          check simple "--traverser simple" --evaluator standard --layout standard \
+                --x_size 2048 --y_size 64 --steps 4 --seed 1 || status=1
+          check spatial_blocking "--traverser spatial_blocking --x_tile_size 1 --y_tile_size 4" \
+                --evaluator standard --layout standard \
+                --x_size 2048 --y_size 64 --steps 4 --seed 1 || status=1
+          check temporal "--traverser temporal --temporal_steps 4 --temporal_tile_size_y 32 --cuda_block_size_x 32 --cuda_block_size_y 8" \
+                --evaluator bit_planes --layout bit_planes --word_size 64 \
+                --x_size 3840 --y_size 48 --steps 8 --seed 1 || status=1
+          exit $status
